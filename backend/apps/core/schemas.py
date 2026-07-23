@@ -1,23 +1,12 @@
 from ninja import Schema
 
+from apps.accounts.schemas import AccountUserSchema
+
 
 class ShellConfigurationSchema(Schema):
     site_name: str
     organization_name: str
     sidebar_title: str
-
-
-class ShellUserSchema(Schema):
-    id: int
-    username: str
-    display_name: str
-    email: str
-    is_staff: bool
-
-
-class AuthenticationSessionSchema(Schema):
-    authenticated: bool
-    user: ShellUserSchema | None
 
 
 class NavigationItemSchema(Schema):
@@ -31,14 +20,5 @@ class NavigationItemSchema(Schema):
 
 class CoreBootstrapSchema(Schema):
     configuration: ShellConfigurationSchema
-    user: ShellUserSchema
+    user: AccountUserSchema
     navigation: list[NavigationItemSchema]
-
-
-class LoginRequestSchema(Schema):
-    username: str
-    password: str
-
-
-class ErrorSchema(Schema):
-    detail: str
