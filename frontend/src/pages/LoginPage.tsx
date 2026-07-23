@@ -2,8 +2,9 @@ import { useState, type FormEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { LockKeyhole } from "lucide-react";
 
-import { ApiError, login } from "../api/client";
-
+import { ApiError } from "../api/http";
+import { login } from "../features/auth/api";
+import { authQueryKeys } from "../features/auth/queryKeys";
 
 export function LoginPage() {
   const queryClient = useQueryClient();
@@ -12,8 +13,8 @@ export function LoginPage() {
 
   const loginMutation = useMutation({
     mutationFn: login,
-    onSuccess: (user) => {
-      queryClient.setQueryData(["auth-session"], user);
+    onSuccess: (session) => {
+      queryClient.setQueryData(authQueryKeys.session, session);
       void queryClient.invalidateQueries({ queryKey: ["core-bootstrap"] });
     },
   });
