@@ -43,6 +43,7 @@
   --color-surface: var(--palette-white);
   --color-surface-subtle: var(--palette-neutral-50);
   --color-surface-raised: var(--palette-white);
+  --color-surface-avatar: var(--palette-neutral-150);
   --color-surface-hover: var(--palette-brand-50);
   --color-surface-selected: var(--palette-brand-100);
   --color-text: var(--palette-neutral-800);
@@ -67,6 +68,7 @@
   --color-danger-surface: var(--palette-danger-50);
   --color-overlay: rgb(17 31 45 / 40%);
   --color-header-surface: rgb(255 255 255 / 96%);
+  --color-login-accent: rgb(22 65 148 / 7%);
   --color-focus-ring: rgb(22 65 148 / 18%);
 
   /* Typography */
