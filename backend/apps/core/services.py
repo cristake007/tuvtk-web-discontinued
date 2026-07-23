@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractBaseUser
+from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 from django.http import HttpRequest
 
 from .models import ApplicationConfiguration, NavigationItem
@@ -20,6 +20,21 @@ def serialize_shell_user(user: AbstractBaseUser) -> dict[str, object]:
         "display_name": display_name,
         "email": user.email,
         "is_staff": user.is_staff,
+    }
+
+
+def serialize_authentication_session(
+    user: AbstractBaseUser | AnonymousUser,
+) -> dict[str, object]:
+    if not user.is_authenticated:
+        return {
+            "authenticated": False,
+            "user": None,
+        }
+
+    return {
+        "authenticated": True,
+        "user": serialize_shell_user(user),
     }
 
 
