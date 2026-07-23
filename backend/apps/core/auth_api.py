@@ -2,13 +2,16 @@ from django.contrib.auth import authenticate
 from django.contrib.auth import login as django_login
 from django.contrib.auth import logout as django_logout
 from django.http import HttpRequest, HttpResponse
-from django.views.decorators.csrf import csrf_exempt, csrf_protect, ensure_csrf_cookie
+from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from ninja import Router
 from ninja.decorators import decorate_view
-from ninja.security import django_auth
 
-from .schemas import ErrorSchema, LoginRequestSchema, ShellUserSchema
-from .services import serialize_shell_user
+from .schemas import (
+    AuthenticationSessionSchema,
+    ErrorSchema,
+    LoginRequestSchema,
+)
+from .services import serialize_authentication_session
 
 
 router = Router(tags=["authentication"])
@@ -20,16 +23,25 @@ router = Router(tags=["authentication"])
     response={204: None},
     summary="Set the Django CSRF cookie",
 )
-@ensure_csrf_cookie
-@csrf_exempt
+@decorate_view(ensure_csrf_cookie)
 def csrf_cookie(request: HttpRequest) -> HttpResponse:
     return HttpResponse(status=204)
+
+
+@router.get(
+    "/session",
+    auth=None,
+    response=AuthenticationSessionSchema,
+    summary="Return the current browser session state",
+)
+def session(request: HttpRequest) -> dict[str, object]:
+    return serialize_authentication_session(request.user)
 
 
 @router.post(
     "/login",
     auth=None,
-    response={200: ShellUserSchema, 401: ErrorSchema},
+    response={200: AuthenticationSessionSchema, 401: ErrorSchema},
     summary="Create a Django login session",
 )
 @decorate_view(csrf_protect)
@@ -47,25 +59,16 @@ def login(
         return 401, {"detail": "Invalid username or password."}
 
     django_login(request, user)
-    return serialize_shell_user(user)
-
-
-@router.get(
-    "/me",
-    auth=django_auth,
-    response=ShellUserSchema,
-    summary="Return the authenticated session user",
-)
-def current_user(request: HttpRequest) -> dict[str, object]:
-    return serialize_shell_user(request.auth)
+    return serialize_authentication_session(user)
 
 
 @router.post(
     "/logout",
-    auth=django_auth,
+    auth=None,
     response={204: None},
     summary="End the current Django login session",
 )
+@decorate_view(csrf_protect)
 def logout(request: HttpRequest) -> tuple[int, None]:
     django_logout(request)
     return 204, None
