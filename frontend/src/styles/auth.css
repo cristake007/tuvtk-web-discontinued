@@ -57,7 +57,7 @@
   place-items: center;
   padding: var(--space-7);
   background:
-    linear-gradient(135deg, rgb(22 65 148 / 7%), transparent 48%),
+    linear-gradient(135deg, var(--color-login-accent), transparent 48%),
     var(--color-canvas);
 }
 
