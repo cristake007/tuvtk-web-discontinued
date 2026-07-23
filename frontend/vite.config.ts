@@ -16,6 +16,9 @@ export default defineConfig({
       "/media": {
         target: "http://backend:8000",
       },
+      "/static": {
+        target: "http://backend:8000",
+      },
     },
   },
 });
