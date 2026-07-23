@@ -6,9 +6,14 @@ from ninja import NinjaAPI, Schema
 from ninja.security import django_auth
 
 
+class DatabaseHealth(Schema):
+    alias: str
+    status: Literal["ok", "error"]
+
+
 class HealthResponse(Schema):
-    status: Literal["ok"]
-    database: Literal["ok"]
+    status: Literal["ok", "degraded"]
+    databases: dict[str, DatabaseHealth]
 
 
 class CurrentUserResponse(Schema):
@@ -30,19 +35,45 @@ api = NinjaAPI(
 )
 
 
+def _database_status(alias: str) -> Literal["ok", "error"]:
+    try:
+        with connections[alias].cursor() as cursor:
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+    except Exception:
+        return "error"
+
+    return "ok"
+
+
 @api.get(
     "/health",
-    response=HealthResponse,
+    response={200: HealthResponse, 503: HealthResponse},
     auth=None,
     tags=["system"],
-    summary="Check API and core database health",
+    summary="Check API and database health",
 )
-def health(request: HttpRequest) -> dict[str, str]:
-    with connections["default"].cursor() as cursor:
-        cursor.execute("SELECT 1")
-        cursor.fetchone()
+def health(request: HttpRequest) -> tuple[int, dict[str, object]]:
+    databases = {
+        "core": {
+            "alias": "default",
+            "status": _database_status("default"),
+        },
+        "registry": {
+            "alias": "registry",
+            "status": _database_status("registry"),
+        },
+    }
 
-    return {"status": "ok", "database": "ok"}
+    healthy = all(database["status"] == "ok" for database in databases.values())
+
+    return (
+        200 if healthy else 503,
+        {
+            "status": "ok" if healthy else "degraded",
+            "databases": databases,
+        },
+    )
 
 
 @api.get(
