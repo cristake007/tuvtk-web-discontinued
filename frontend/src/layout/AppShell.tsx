@@ -115,6 +115,11 @@ export function AppShell() {
     },
   });
 
+  const navigation = useMemo(
+    () => buildNavigationTree(bootstrapQuery.data?.navigation ?? []),
+    [bootstrapQuery.data?.navigation],
+  );
+
   if (bootstrapQuery.isPending) {
     return (
       <div className="auth-state" role="status">
@@ -136,10 +141,6 @@ export function AppShell() {
   }
 
   const bootstrap = bootstrapQuery.data;
-  const navigation = useMemo(
-    () => buildNavigationTree(bootstrap.navigation),
-    [bootstrap.navigation],
-  );
   const currentItem = bootstrap.navigation.find((item) => item.path === location.pathname);
   const pageTitle = currentItem?.label ?? "Workspace";
   const closeMobileSidebar = () => setMobileSidebarOpen(false);
