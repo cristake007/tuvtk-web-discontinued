@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Building2,
@@ -15,8 +15,16 @@ import {
 } from "lucide-react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
-import { fetchCoreBootstrap, logout } from "../api/client";
-import type { NavigationItem } from "../api/types";
+import { fetchCoreBootstrap } from "../api/core";
+import { ApiError } from "../api/http";
+import type { AuthenticationSession, NavigationItem } from "../api/types";
+import { logout } from "../features/auth/api";
+import { authQueryKeys } from "../features/auth/queryKeys";
+
+const unauthenticatedSession: AuthenticationSession = {
+  authenticated: false,
+  user: null,
+};
 
 const icons: Record<string, LucideIcon> = {
   "building-2": Building2,
@@ -103,6 +111,7 @@ export function AppShell() {
   const bootstrapQuery = useQuery({
     queryKey: ["core-bootstrap"],
     queryFn: fetchCoreBootstrap,
+    retry: false,
     staleTime: 60_000,
   });
 
@@ -110,9 +119,16 @@ export function AppShell() {
     mutationFn: logout,
     onSuccess: () => {
       queryClient.removeQueries({ queryKey: ["core-bootstrap"] });
-      queryClient.setQueryData(["auth-session"], null);
+      queryClient.setQueryData(authQueryKeys.session, unauthenticatedSession);
     },
   });
+
+  useEffect(() => {
+    if (bootstrapQuery.error instanceof ApiError && bootstrapQuery.error.status === 401) {
+      queryClient.removeQueries({ queryKey: ["core-bootstrap"] });
+      queryClient.setQueryData(authQueryKeys.session, unauthenticatedSession);
+    }
+  }, [bootstrapQuery.error, queryClient]);
 
   const navigation = useMemo(
     () => buildNavigationTree(bootstrapQuery.data?.navigation ?? []),
@@ -239,7 +255,9 @@ export function AppShell() {
         <main className="app-content">
           {logoutMutation.isError ? (
             <div className="notice notice--warning" role="alert">
-              Sign out failed. Please try again.
+              {logoutMutation.error instanceof ApiError
+                ? logoutMutation.error.message
+                : "Sign out failed. Please try again."}
             </div>
           ) : null}
           <Outlet />
