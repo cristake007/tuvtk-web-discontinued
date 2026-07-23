@@ -1,9 +1,8 @@
 import { createBrowserRouter } from "react-router-dom";
 
-import { AuthenticationGate } from "../auth/AuthenticationGate";
+import { AuthenticationGate } from "../features/auth/AuthenticationGate";
 import { DashboardPage } from "../pages/DashboardPage";
 import { ModulePlaceholderPage } from "../pages/ModulePlaceholderPage";
-
 
 export const router = createBrowserRouter([
   {
