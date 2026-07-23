@@ -18,7 +18,6 @@ import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { fetchCoreBootstrap, logout } from "../api/client";
 import type { NavigationItem } from "../api/types";
 
-
 const icons: Record<string, LucideIcon> = {
   "building-2": Building2,
   "file-text": FileText,
@@ -109,9 +108,9 @@ export function AppShell() {
 
   const logoutMutation = useMutation({
     mutationFn: logout,
-    onSuccess: async () => {
+    onSuccess: () => {
       queryClient.removeQueries({ queryKey: ["core-bootstrap"] });
-      await queryClient.invalidateQueries({ queryKey: ["auth-session"] });
+      queryClient.setQueryData(["auth-session"], null);
     },
   });
 
