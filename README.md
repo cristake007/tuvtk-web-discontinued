@@ -76,6 +76,13 @@ Start the environment and initialize Django:
 ./dev admin-create
 ```
 
+The first frontend start generates `frontend/package-lock.json` when it is missing. Review and commit that file immediately:
+
+```bash
+git add frontend/package-lock.json
+git commit -m "Lock frontend dependencies"
+```
+
 Open:
 
 ```text
@@ -87,7 +94,7 @@ OpenAPI JSON:      http://localhost:5173/api/v1/openapi.json
 
 Sign into the React application with the Django account created by `./dev admin-create`.
 
-Normal Python, TypeScript, React, and CSS edits do not require a container restart. Rebuild or recreate containers only after dependency, Docker, or environment changes.
+Normal Python, TypeScript, React, and CSS edits do not require a container restart. Restart the frontend after changing `package.json` or `package-lock.json` so dependencies are synchronized before Vite starts.
 
 ## Project structure
 
@@ -109,6 +116,7 @@ Normal Python, TypeScript, React, and CSS edits do not require a container resta
 │   ├── manage.py
 │   └── requirements.txt
 ├── frontend/
+│   ├── scripts/                 Dependency synchronization and Vite startup
 │   ├── src/
 │   │   ├── api/                 Shared HTTP transport, core API calls, and contracts
 │   │   ├── app/                 React Router configuration
@@ -117,9 +125,34 @@ Normal Python, TypeScript, React, and CSS edits do not require a container resta
 │   │   ├── pages/               Login and route-level pages
 │   │   └── styles/
 │   ├── package.json
+│   ├── package-lock.json        Committed deterministic dependency tree
 │   └── vite.config.ts
 └── .env.example
 ```
+
+## Frontend dependency workflow
+
+`frontend/node_modules` is stored in the bind-mounted frontend directory and ignored by Git. This lets a host or Remote SSH editor resolve TypeScript, React, and `vite/client` definitions while the Node container remains the authoritative runtime.
+
+`frontend/package-lock.json` must be committed. npm documents the lockfile as the exact dependency tree used to make teammate, deployment, and CI installs reproducible. `npm ci` requires that committed lockfile and refuses to silently rewrite it when it differs from `package.json`.
+
+On frontend startup:
+
+1. If the lockfile is missing, the development entrypoint runs `npm install`, creates it, and prints a commit reminder.
+2. If `node_modules` is missing or its recorded lockfile hash differs, it runs `npm ci`.
+3. If the installed tree already matches the lockfile, Vite starts without reinstalling packages.
+
+After adding, removing, or updating packages:
+
+```bash
+./dev npm install <package> --save-exact
+./dev frontend-lock
+./dev restart frontend
+git add frontend/package.json frontend/package-lock.json
+git commit
+```
+
+Do not use `--no-package-lock`, and do not commit `node_modules`.
 
 ## Authentication contract
 
@@ -197,7 +230,7 @@ backend/apps/companies/tests.py
 
 Frontend transport and feature API code are separated:
 
-- `frontend/src/api/http.ts` owns fetch, JSON handling, credentials, errors, and CSRF headers.
+- `frontend/src/api/http.ts` owns fetch, empty-body and JSON handling, credentials, errors, and CSRF headers.
 - `frontend/src/api/core.ts` owns core/system API calls.
 - `frontend/src/features/auth/api.ts` owns authentication requests.
 - TanStack Query owns server-state caching; components do not call `fetch` directly.
@@ -241,7 +274,8 @@ The Vite development server is not a production web server. A production deploym
 ./dev migrate
 ./dev shell
 
-./dev frontend-install
+./dev frontend-sync
+./dev frontend-lock
 ./dev frontend-typecheck
 ./dev frontend-build
 ./dev npm <arguments>
@@ -249,7 +283,7 @@ The Vite development server is not a production web server. A production deploym
 ./dev validate
 ```
 
-`./dev validate` runs Django checks and tests, then TypeScript validation and the Vite production build.
+`./dev validate` runs Django checks and tests, synchronizes frontend dependencies, then runs TypeScript validation and the Vite production build.
 
 Database reset commands are destructive and request explicit confirmation:
 
