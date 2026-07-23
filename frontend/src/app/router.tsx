@@ -1,13 +1,14 @@
 import { createBrowserRouter } from "react-router-dom";
 
-import { AppShell } from "../layout/AppShell";
+import { AuthenticationGate } from "../auth/AuthenticationGate";
 import { DashboardPage } from "../pages/DashboardPage";
 import { ModulePlaceholderPage } from "../pages/ModulePlaceholderPage";
+
 
 export const router = createBrowserRouter([
   {
     path: "/",
-    element: <AppShell />,
+    element: <AuthenticationGate />,
     children: [
       {
         index: true,
