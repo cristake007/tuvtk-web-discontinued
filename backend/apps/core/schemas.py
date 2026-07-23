@@ -15,6 +15,11 @@ class ShellUserSchema(Schema):
     is_staff: bool
 
 
+class AuthenticationSessionSchema(Schema):
+    authenticated: bool
+    user: ShellUserSchema | None
+
+
 class NavigationItemSchema(Schema):
     key: str
     label: str
