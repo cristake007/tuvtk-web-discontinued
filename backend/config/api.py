@@ -5,6 +5,8 @@ from django.http import HttpRequest
 from ninja import NinjaAPI, Schema
 from ninja.security import django_auth
 
+from apps.core.api import router as core_router
+
 
 class DatabaseHealth(Schema):
     alias: str
@@ -33,6 +35,8 @@ api = NinjaAPI(
     docs_url="/docs",
     openapi_url="/openapi.json",
 )
+
+api.add_router("/core", core_router)
 
 
 def _database_status(alias: str) -> Literal["ok", "error"]:
