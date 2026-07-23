@@ -103,11 +103,31 @@ Register each app in `backend/config/settings.py` using its complete Python path
 The API is mounted under `/api/v1/`. The first endpoints are:
 
 ```text
-GET /api/v1/health          Public API and core database health check
+GET /api/v1/health          Public API and database health check
 GET /api/v1/me              Current Django user; session authentication required
 GET /api/v1/docs            Interactive API documentation
 GET /api/v1/openapi.json    Machine-readable OpenAPI schema
 ```
+
+The health endpoint checks both configured database aliases and names them explicitly:
+
+```json
+{
+  "status": "ok",
+  "databases": {
+    "core": {
+      "alias": "default",
+      "status": "ok"
+    },
+    "registry": {
+      "alias": "registry",
+      "status": "ok"
+    }
+  }
+}
+```
+
+It returns HTTP `503` with `"status": "degraded"` when either database connection fails.
 
 Browser-facing internal endpoints use Django session authentication. The `/me` endpoint therefore works with the same login session as Django admin. Public endpoints must explicitly declare that authentication is disabled.
 
