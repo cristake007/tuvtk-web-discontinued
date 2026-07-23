@@ -9,6 +9,28 @@ services:
     environment:
       DJANGO_DEBUG: "true"
 
+  frontend_permissions:
+    image: node:24-bookworm-slim
+
+    working_dir: /app
+
+    user: "0:0"
+
+    environment:
+      LOCAL_UID: "${LOCAL_UID:-1000}"
+      LOCAL_GID: "${LOCAL_GID:-1000}"
+
+    volumes:
+      - type: bind
+        source: ./frontend
+        target: /app
+
+    command:
+      - /bin/sh
+      - ./scripts/prepare-node-modules.sh
+
+    restart: "no"
+
   frontend:
     image: node:24-bookworm-slim
 
@@ -33,6 +55,8 @@ services:
     depends_on:
       backend:
         condition: service_started
+      frontend_permissions:
+        condition: service_completed_successfully
 
     command:
       - /bin/sh
