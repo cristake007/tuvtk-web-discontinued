@@ -24,7 +24,7 @@ Do not place component selectors in `theme.css`. Do not hard-code reusable brand
 
 ## Token groups
 
-- `--palette-*`: raw color primitives; only `theme.css` should consume them.
+- `--palette-*`: raw color primitives; only `theme.css` consumes them.
 - `--color-*`: semantic UI roles used by components.
 - `--font-*`, `--line-height-*`, `--letter-spacing-*`: typography.
 - `--space-*`: spacing scale.
@@ -40,8 +40,24 @@ The default theme is declared on the document:
 <html data-theme="tuvtk">
 ```
 
-`:root` also receives the same values so the application remains usable before or without an explicit theme attribute. Future themes should override semantic tokens under another `data-theme` selector rather than duplicating component rules.
+`:root` receives the same values so the application remains usable before or without an explicit theme attribute. Future themes override semantic tokens under another `data-theme` selector rather than duplicating component rules.
 
 ## Reset policy
 
-`modern-normalize` handles modern browser inconsistencies. `reset.css` contains only application-level behavior that normalization intentionally does not provide, such as consistent box sizing, margin removal, media defaults, focus visibility, and reduced-motion handling.
+`modern-normalize` handles modern browser inconsistencies. `reset.css` contains application-level behavior that normalization intentionally does not provide, including consistent box sizing, margin removal, media defaults, focus visibility, and reduced-motion handling.
+
+## Validation
+
+Run the token contract check directly with:
+
+```bash
+npm run theme:check
+```
+
+It also runs automatically during `npm run build` and therefore during `./dev frontend-build` and `./dev validate`.
+
+The check fails when a component stylesheet:
+
+- references an undefined custom property;
+- consumes a raw `--palette-*` token;
+- contains a raw hex, RGB, or HSL color instead of a semantic token.
