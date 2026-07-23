@@ -16,16 +16,16 @@ services:
 
     working_dir: /app
 
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+
     environment:
       CHOKIDAR_USEPOLLING: "true"
+      NPM_CONFIG_CACHE: /tmp/npm-cache
 
     volumes:
       - type: bind
         source: ./frontend
         target: /app
-      - type: volume
-        source: frontend_node_modules
-        target: /app/node_modules
 
     ports:
       - "${FRONTEND_PORT:-5173}:5173"
@@ -36,11 +36,7 @@ services:
 
     command:
       - /bin/sh
-      - -c
-      - npm install --include=dev --no-package-lock && exec npm run dev -- --host 0.0.0.0
+      - ./scripts/start-dev.sh
 
+    init: true
     restart: unless-stopped
-
-volumes:
-  frontend_node_modules:
-    name: ${FRONTEND_NODE_MODULES_VOLUME_NAME:-tuvtk_frontend_node_modules}
