@@ -2,39 +2,37 @@
 
 ## Purpose
 
-This repository contains a Dockerized React frontend and Django backend with a versioned Django Ninja API. Keep changes small, explicit, testable, and compatible with the development harness.
+This repository contains a Dockerized React frontend and Django backend with a versioned Django Ninja API. Keep changes small, explicit, testable, and compatible with the root `./dev` harness.
 
 ## Architecture
 
-- Root `compose.yaml` defines Django and two independent PostgreSQL 18 services.
-- Root `compose.override.yaml` is the only development override; it starts Django `runserver` and the Vite frontend.
-- `backend/` is bind-mounted into the Django container.
-- `frontend/` is bind-mounted into the Node container.
-- `frontend/node_modules/` is host-visible, ignored by Git, and populated by the Node container so Remote SSH editors can resolve frontend types.
-- React owns the visible application, routing, login page, header, sidebar, and feature pages.
+- `compose.yaml` defines Django and two independent PostgreSQL 18 services.
+- `compose.override.yaml` is the only development override; it starts Django `runserver` and Vite.
+- `backend/` and `frontend/` are bind-mounted for development reload.
+- The frontend container runs as the current host UID/GID. Do not add a root-running frontend or permission-initializer service.
+- React owns all visible application pages, routing, login, header, sidebar, and feature UI.
 - Django owns authentication, permissions, data access, business logic, administration, and the API.
-- Django is internal to the Compose network on port 8000 and is reached through Vite's `/api`, `/admin`, and `/media` proxies.
-- `db_core` stores Django system tables and normal operational data.
-- `db_registry` is reserved for the large ONRC registry and related reference data.
-- Django database aliases are `default` for core and `registry` for ONRC data.
-- `backend/config/api.py` owns only the main Django Ninja instance, system endpoints, and router registration.
+- Django is internal on port 8000 and is reached through Vite proxies for `/api`, `/admin`, `/media`, and `/static`.
+- `db_core` stores Django system tables and operational data.
+- `db_registry` stores ONRC registry and reference data.
+- Django aliases are `default` for core and `registry` for ONRC data.
 
-Do not create Django admin, auth, session, or content-type tables in the registry database. Do not introduce cross-database foreign keys. Reference registry companies from core data using stable values such as CUI.
+Do not create Django auth, admin, session, or content-type tables in the registry database. Do not create cross-database foreign keys. Reference registry companies through stable identifiers such as CUI.
 
 ## Repository layout
 
 ```text
-backend/config/                 Project-wide Django configuration and API entrypoint
-backend/apps/accounts/          Session authentication API and account contracts
-backend/apps/core/              Shell configuration and permission-aware navigation
-backend/apps/<domain>/          Other backend domain applications
-backend/tests/                  Project-level backend integration tests
-frontend/scripts/               Dependency synchronization and frontend startup
-frontend/src/api/               Shared HTTP transport, core API calls, and contracts
+backend/config/                 Django project configuration and API entrypoint
+backend/apps/accounts/          Browser session authentication API
+backend/apps/core/              Shell configuration and navigation
+backend/apps/<domain>/          Other backend domains
+backend/tests/                  Project-level backend tests
+frontend/scripts/               Dependency synchronization and Vite startup
+frontend/src/api/               Shared HTTP transport and core API calls
 frontend/src/features/auth/     Authentication API, query keys, and gate
-frontend/src/layout/            Shared React application shell
-frontend/src/pages/             Route-level React pages
-frontend/src/styles/            Shared frontend styles
+frontend/src/layout/            Shared application shell
+frontend/src/pages/             Route-level pages
+frontend/src/styles/            Shared styles
 ```
 
 Create Django apps with:
@@ -43,13 +41,11 @@ Create Django apps with:
 ./dev app <name>
 ```
 
-Apps must remain under `backend/apps/<name>/`, use the Python path `apps.<name>`, and be registered with their complete `AppConfig` path.
+Apps belong under `backend/apps/<name>/`, use `apps.<name>`, and must be registered with their complete `AppConfig` path.
 
 ## Authentication
 
-Use Django's built-in users, groups, permissions, password hashing, server-side sessions, and CSRF protection.
-
-The browser authentication contract is:
+Use Django users, groups, permissions, password hashing, server-side sessions, and CSRF protection.
 
 ```text
 GET  /api/v1/auth/csrf
@@ -60,66 +56,63 @@ POST /api/v1/auth/logout
 
 Rules:
 
-- `GET /auth/session` always returns `200` with `{authenticated, user}`. Anonymous state is not an exception.
+- `GET /auth/session` always returns `200` with `{authenticated, user}`.
 - Invalid login credentials return `401`.
-- Logout is CSRF-protected, idempotent, and returns `204` even when the session has expired.
+- Logout is CSRF-protected, idempotent, and returns `204`.
 - Protected business routes use Django session authentication and return `401` without a valid session.
-- Browser requests use same-origin cookies.
-- Unsafe requests must include Django's CSRF header.
-- Do not add JWT, a second user table, or frontend-only authorization without a concrete external-client requirement.
-- Permission checks belong in Django. React may hide unavailable controls but must not be the security boundary.
+- Unsafe requests include Django's CSRF header.
+- Permission checks belong in Django; React is not the security boundary.
+- Do not add JWT or another user store without a concrete external-client requirement.
 
-Authentication endpoints and contracts belong to `backend/apps/accounts/`. Shell configuration and navigation belong to `backend/apps/core/`.
+Authentication belongs to `backend/apps/accounts/`. Shell configuration and navigation belong to `backend/apps/core/`.
 
 ## API conventions
 
-The public API prefix is `/api/v1/`. Preserve explicit versioning.
-
-Domain endpoints belong to the app that owns the domain:
+The public API prefix is `/api/v1/`. Domain endpoints belong to the owning app:
 
 ```text
 backend/apps/<app>/api.py
 backend/apps/<app>/schemas.py
 backend/apps/<app>/services.py
+backend/apps/<app>/models.py
 backend/apps/<app>/tests.py
 ```
 
-Keep responsibilities separated:
+Responsibilities:
 
-- `api.py`: HTTP routes, authentication, permissions, status codes, and response mapping.
+- `api.py`: HTTP routes, authentication, permissions, statuses, and response mapping.
 - `schemas.py`: Django Ninja input and output contracts.
 - `services.py`: business workflows and transaction boundaries.
 - `models.py`: persistence and database constraints.
 - `tests.py`: success, authentication, permission, CSRF, validation, and important error behavior.
 
-Endpoint functions must remain thin. Do not put substantial ORM queries or workflows directly in route functions.
+Keep route functions thin. Do not place substantial ORM queries or workflows directly in endpoints.
 
 ## Frontend conventions
 
 - React and TypeScript own all user-facing pages.
 - Use React Router for routes and TanStack Query for server state.
-- `frontend/src/api/http.ts` is the only shared fetch/empty-body/JSON/error/credentials/CSRF transport.
-- Domain API calls belong to focused modules such as `frontend/src/api/core.ts` or `frontend/src/features/<feature>/api.ts`.
+- `frontend/src/api/http.ts` is the shared HTTP, credentials, CSRF, empty-body, JSON, and error transport.
+- Feature API calls and query keys belong to focused feature modules.
 - Components must not call `fetch` directly or duplicate CSRF handling.
-- Centralize TanStack Query keys inside the owning feature.
-- Keep authentication code in `frontend/src/features/auth/`.
-- Keep the shared header/sidebar in `frontend/src/layout/`.
+- Keep authentication in `frontend/src/features/auth/`.
+- Keep the shared header and sidebar in `frontend/src/layout/`.
 - Treat Django responses and permissions as authoritative.
-- Prefer focused feature folders over a large global component directory.
-- Do not introduce a second frontend framework.
+- Prefer focused feature folders over a global component dump.
+- Do not introduce another frontend framework.
 
-## Frontend dependency rules
+## Frontend dependencies and generated files
 
-- `frontend/package-lock.json` is required and must be committed.
-- Direct dependencies remain pinned to exact versions.
-- Do not use `--no-package-lock`.
-- Do not edit `package-lock.json` manually.
-- Do not commit `frontend/node_modules/`.
-- The frontend startup script generates the initial lockfile only when it is missing, then uses `npm ci` whenever the installed dependency hash differs from the committed lockfile.
-- After changing dependencies, update both `package.json` and `package-lock.json`, restart the frontend, and run validation.
-- The Node container runs with the host UID/GID so generated lockfiles and `node_modules` remain owned by the developer.
+- `frontend/package-lock.json` is required and committed.
+- Direct dependencies are pinned to exact versions.
+- Do not use `--no-package-lock` or edit the lockfile manually.
+- Do not commit `frontend/node_modules/` or build output.
+- Startup generates the initial lockfile only when missing, then uses `npm ci` whenever the installed dependency hash differs.
+- The frontend container runs as the host UID/GID. Do not run `sudo npm` or create root-owned files in `frontend/`.
+- Development validation sets `VITE_BUILD_OUT_DIR=/tmp/tuvtk-frontend-dist`; it must not write or clean `frontend/dist`.
+- A production build without the development override uses the conventional `frontend/dist` output.
 
-Preferred dependency workflow:
+Dependency workflow:
 
 ```bash
 ./dev npm install <package> --save-exact
@@ -147,7 +140,7 @@ Prefer the root harness:
 ./dev validate
 ```
 
-Useful shells and passthrough commands:
+Useful passthrough commands:
 
 ```bash
 ./dev backend-shell
@@ -156,13 +149,11 @@ Useful shells and passthrough commands:
 ./dev npm <arguments>
 ```
 
-`./dev up` uses `compose.yaml` plus the automatically loaded `compose.override.yaml`. Normal Python and frontend source edits reload without a container restart. Restart the frontend after dependency or lockfile changes.
-
-Use direct `docker compose` commands only when diagnosing Docker or improving the harness.
+Normal source edits reload automatically. Restart the frontend after dependency or lockfile changes. Use direct Docker Compose commands only for diagnosis or harness work.
 
 Never run `migrate-registry` or `migrate-all` until a registry-specific app and database router explicitly control registry migrations.
 
-The following commands are destructive and require the user's explicit request:
+Destructive commands require the user's explicit request:
 
 ```bash
 ./dev reset-core-db
@@ -171,43 +162,42 @@ The following commands are destructive and require the user's explicit request:
 ./dev wipe
 ```
 
-## Production and security rules
+## Production and security
 
 - Production uses one HTTPS origin for React, `/api/`, `/admin/`, and `/media/`.
-- The Vite development server is never a production web server.
-- Production frontend images and CI must install from the committed lockfile with `npm ci`.
-- Production enables secure session and CSRF cookies, HTTPS redirection, and appropriate HSTS only after HTTPS is verified.
-- Only trust `X-Forwarded-Proto` when the trusted reverse proxy strips client-supplied forwarding headers and sets it itself.
+- Vite's development server is never a production server.
+- Production frontend images and CI install from the committed lockfile with `npm ci`.
+- Enable secure session and CSRF cookies, HTTPS redirection, and HSTS only after HTTPS is verified.
+- Trust `X-Forwarded-Proto` only when the trusted proxy strips client-supplied forwarding headers and sets it itself.
 - Keep `SESSION_COOKIE_HTTPONLY` enabled.
-- The CSRF cookie remains readable by the SPA because the frontend sends it in `X-CSRFToken`.
-- Do not weaken CSRF protection to work around frontend bugs.
+- Keep the CSRF cookie readable by the SPA so it can send `X-CSRFToken`.
+- Do not weaken CSRF protection to work around frontend defects.
 
 ## Implementation rules
 
 - Inspect relevant files before changing architecture or dependencies.
 - Reuse Django, Django Ninja, React, TanStack Query, and PostgreSQL before adding frameworks or services.
-- Keep domain logic inside the owning Django app, not in `config/`.
+- Keep domain logic in the owning Django app, not in `config/`.
 - Use database constraints for persistent invariants.
-- Pin direct dependencies and commit lock files when dependency installation is finalized.
-- Do not commit `.env`, secrets, database dumps, logs, uploaded media, collected static files, `node_modules`, or frontend build output.
+- Preserve host ownership of source and generated lockfiles.
 - Update `.env.example`, `README.md`, and this file when architecture or setup changes.
-- Preserve host ownership of generated source files.
+- Do not commit secrets, dumps, logs, uploads, collected static files, `node_modules`, or frontend bundles.
 
-## Validation before completion
+## Validation
 
-Run the smallest relevant checks. For changes spanning both sides, use:
+For cross-stack changes:
 
 ```bash
 ./dev validate
 ```
 
-For model changes, also create and inspect migrations:
+For model changes:
 
 ```bash
 ./dev migrations
 ./dev migrate
 ```
 
-For API changes, verify `/api/v1/openapi.json` remains available through the frontend proxy and ensure tests cover authentication and response contracts.
+For API changes, verify `/api/v1/openapi.json` through the frontend proxy and ensure tests cover authentication and response contracts.
 
 Report what changed, which checks ran, and anything that could not be verified.
