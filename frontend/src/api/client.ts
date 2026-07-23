@@ -32,6 +32,15 @@ function readCookie(name: string): string | null {
   return null;
 }
 
+function readErrorDetail(body: unknown): string | undefined {
+  if (!body || typeof body !== "object" || !("detail" in body)) {
+    return undefined;
+  }
+
+  const detail = (body as { detail?: unknown }).detail;
+  return typeof detail === "string" ? detail : undefined;
+}
+
 async function apiRequest<T>(
   path: string,
   options: ApiRequestOptions = {},
@@ -60,16 +69,15 @@ async function apiRequest<T>(
   });
 
   const contentType = response.headers.get("content-type") ?? "";
-  const body = contentType.includes("application/json")
-    ? ((await response.json()) as { detail?: string } | T)
+  const body: unknown = contentType.includes("application/json")
+    ? await response.json()
     : null;
 
   if (!response.ok) {
-    const detail =
-      body && typeof body === "object" && "detail" in body
-        ? body.detail
-        : undefined;
-    throw new ApiError(detail ?? `API request failed: ${response.status}`, response.status);
+    throw new ApiError(
+      readErrorDetail(body) ?? `API request failed: ${response.status}`,
+      response.status,
+    );
   }
 
   if (response.status === 204) {
