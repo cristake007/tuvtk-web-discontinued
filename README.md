@@ -1,20 +1,43 @@
 # TUVTK Web
 
-Dockerized Django development environment with a versioned API and two independent PostgreSQL 18 containers:
+Dockerized React and Django application with a versioned API and two independent PostgreSQL 18 databases:
 
-- `db_core` — Django users, authentication, administration, and operational application data.
+- `db_core` — users, authentication, application configuration, navigation, and operational data.
 - `db_registry` — the large ONRC company registry and related reference data.
-
-The host directory `backend/` is bind-mounted to `/app` in the Django container. Source files always remain directly editable on the host.
 
 ## Stack
 
+### Backend
+
 - Python 3.14
 - Django 6
-- Django Ninja and Pydantic-based API schemas
-- Gunicorn
+- Django Ninja
+- Gunicorn for production-style execution
 - PostgreSQL 18
-- Docker Compose
+
+### Frontend
+
+- React 19
+- TypeScript
+- Vite
+- React Router
+- TanStack Query
+
+## Development architecture
+
+```text
+Browser
+  └── React/Vite :5173
+        ├── /api/*   ──proxy──> Django :8000
+        ├── /admin/* ──proxy──> Django :8000
+        └── application routes rendered by React
+
+Django
+  ├── default database  ──> db_core
+  └── registry database ──> db_registry
+```
+
+`compose.override.yaml` is loaded automatically by Docker Compose in development. It replaces Gunicorn with Django `runserver` and starts the Vite frontend. Both backend and frontend source directories are bind-mounted, so Python changes reload automatically and React changes use Vite Fast Refresh.
 
 ## Requirements
 
@@ -33,113 +56,102 @@ cp .env.example .env
 chmod +x dev
 ```
 
-Edit `.env` and replace the example Django secret and both database passwords. Useful generators:
+Edit `.env` and replace the example Django secret and both database passwords.
 
 ```bash
 openssl rand -base64 48
 openssl rand -hex 24
 ```
 
-Start or rebuild the environment:
+Start the development environment and create the core tables:
 
 ```bash
 ./dev up
-./dev status
-```
-
-`./dev up` includes `--build`, so it installs changed Python dependencies after a pull.
-
-Create the core Django tables and an administrator:
-
-```bash
 ./dev migrate
 ./dev admin-create
 ```
 
-The development interfaces are available at:
+Development interfaces:
 
 ```text
-Django admin:  http://localhost:8000/admin/
-API docs:      http://localhost:8000/api/v1/docs
-OpenAPI JSON:  http://localhost:8000/api/v1/openapi.json
+React application: http://localhost:5173/
+Django admin:      http://localhost:5173/admin/
+API docs:          http://localhost:5173/api/v1/docs
+OpenAPI JSON:      http://localhost:5173/api/v1/openapi.json
+Direct backend:    http://localhost:8000/
 ```
 
-Do not migrate Django authentication or administration tables into the registry database. The registry database remains empty until registry-specific models and a database router are added.
+After the initial start, normal Python, TypeScript, React, CSS, and template edits do not require a container restart.
+
+Restart or rebuild only after changing dependencies, Docker configuration, or environment variables.
 
 ## Project structure
 
 ```text
 .
 ├── Dockerfile
-├── compose.yaml
+├── compose.yaml                 Production-style backend services
+├── compose.override.yaml        Development backend and Vite frontend
 ├── dev
 ├── backend/
-│   ├── apps/                 Local domain applications
+│   ├── apps/
+│   │   └── core/                Application shell configuration and API
 │   ├── config/
-│   │   ├── api.py            Main versioned API instance
+│   │   ├── api.py               Main versioned Django Ninja API
 │   │   ├── settings.py
 │   │   └── urls.py
-│   ├── tests/                Project-level integration tests
+│   ├── tests/
 │   ├── manage.py
 │   └── requirements.txt
+├── frontend/
+│   ├── src/
+│   │   ├── api/                 Typed API client and contracts
+│   │   ├── app/                 React Router configuration
+│   │   ├── layout/              Header, sidebar, and application shell
+│   │   ├── pages/               Route-level pages
+│   │   └── styles/
+│   ├── package.json
+│   └── vite.config.ts
 └── .env.example
 ```
 
-Create local Django applications under `backend/apps/`:
+## Core application shell
 
-```bash
-./dev app users
-./dev app audits
-```
+The `core` Django app owns the shared application shell data:
 
-Register each app in `backend/config/settings.py` using its complete Python path, for example:
+- `ApplicationConfiguration` stores application and organization labels.
+- `NavigationItem` stores ordered, nested, permission-aware navigation entries.
+- `GET /api/v1/core/bootstrap` returns configuration, current user information, and permitted navigation.
 
-```python
-"apps.users.apps.UsersConfig"
-```
+React owns the complete visible shell. It loads the bootstrap endpoint and renders the header, sidebar, routes, and user information.
 
-## API
-
-The API is mounted under `/api/v1/`. The first endpoints are:
+Manage the shell data through Django admin:
 
 ```text
-GET /api/v1/health          Public API and database health check
-GET /api/v1/me              Current Django user; session authentication required
-GET /api/v1/docs            Interactive API documentation
-GET /api/v1/openapi.json    Machine-readable OpenAPI schema
+http://localhost:5173/admin/
 ```
 
-The health endpoint checks both configured database aliases and names them explicitly:
+## API conventions
 
-```json
-{
-  "status": "ok",
-  "databases": {
-    "core": {
-      "alias": "default",
-      "status": "ok"
-    },
-    "registry": {
-      "alias": "registry",
-      "status": "ok"
-    }
-  }
-}
-```
-
-It returns HTTP `503` with `"status": "degraded"` when either database connection fails.
-
-Browser-facing internal endpoints use Django session authentication. The `/me` endpoint therefore works with the same login session as Django admin. Public endpoints must explicitly declare that authentication is disabled.
-
-`backend/config/api.py` owns only the main `NinjaAPI` instance and project-wide system endpoints. As domain applications are added, each app should own its API router:
+The API is mounted under `/api/v1/`.
 
 ```text
-backend/apps/audits/api.py
-backend/apps/audits/schemas.py
-backend/apps/audits/services.py
+GET /api/v1/health
+GET /api/v1/me
+GET /api/v1/core/bootstrap
+GET /api/v1/docs
+GET /api/v1/openapi.json
 ```
 
-The central API then mounts that router. Keep endpoint functions thin:
+Each domain application should own its router, schemas, and services:
+
+```text
+backend/apps/companies/api.py
+backend/apps/companies/schemas.py
+backend/apps/companies/services.py
+```
+
+Keep responsibilities separated:
 
 - `api.py` handles HTTP input, authentication, status codes, and response mapping.
 - `schemas.py` defines request and response contracts.
@@ -152,8 +164,10 @@ The central API then mounts that router. Keep endpoint functions thin:
 ./dev help
 ./dev up
 ./dev down
+./dev restart backend
 ./dev status
 ./dev logs backend
+./dev logs frontend
 ./dev backend-shell
 ./dev check
 ./dev test
@@ -172,8 +186,6 @@ Database reset commands are destructive and request explicit confirmation:
 ./dev wipe
 ```
 
-These commands remove Docker state and database volumes, not the bind-mounted `backend/` source directory.
-
 ## Databases
 
 Django aliases:
@@ -185,11 +197,14 @@ The core database owns normal Django and platform data. The registry database is
 
 Cross-database foreign keys are not used. Core records should reference registry companies through stable identifiers such as CUI.
 
-## Validation
+Do not migrate Django authentication or administration tables into the registry database.
 
-Run the standard project checks before committing:
+## Validation
 
 ```bash
 ./dev check
 ./dev test
+
+docker compose exec frontend npm run typecheck
+docker compose exec frontend npm run build
 ```
