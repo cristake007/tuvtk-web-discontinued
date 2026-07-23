@@ -4,6 +4,7 @@ from django.contrib.auth import logout as django_logout
 from django.http import HttpRequest, HttpResponse
 from django.views.decorators.csrf import csrf_exempt, csrf_protect, ensure_csrf_cookie
 from ninja import Router
+from ninja.decorators import decorate_view
 from ninja.security import django_auth
 
 from .schemas import ErrorSchema, LoginRequestSchema, ShellUserSchema
@@ -31,7 +32,7 @@ def csrf_cookie(request: HttpRequest) -> HttpResponse:
     response={200: ShellUserSchema, 401: ErrorSchema},
     summary="Create a Django login session",
 )
-@csrf_protect
+@decorate_view(csrf_protect)
 def login(
     request: HttpRequest,
     payload: LoginRequestSchema,
