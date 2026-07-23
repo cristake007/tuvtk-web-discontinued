@@ -36,10 +36,31 @@ class SessionAuthenticationApiTests(TestCase):
             HTTP_X_CSRFTOKEN=token,
         )
 
-    def test_current_user_requires_authentication(self):
-        response = self.client.get("/api/v1/auth/me")
+    def test_session_reports_anonymous_user_without_an_error(self):
+        response = self.client.get("/api/v1/auth/session")
 
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            {
+                "authenticated": False,
+                "user": None,
+            },
+        )
+
+    def test_login_requires_csrf(self):
+        response = self.client.post(
+            "/api/v1/auth/login",
+            data=json.dumps(
+                {
+                    "username": "frontend-user",
+                    "password": "test-password-123",
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 403)
 
     def test_login_rejects_invalid_credentials(self):
         response = self.login(password="incorrect-password")
@@ -54,16 +75,26 @@ class SessionAuthenticationApiTests(TestCase):
         response = self.login()
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["username"], "frontend-user")
+        self.assertTrue(response.json()["authenticated"])
+        self.assertEqual(response.json()["user"]["username"], "frontend-user")
 
-        current_user_response = self.client.get("/api/v1/auth/me")
-        self.assertEqual(current_user_response.status_code, 200)
+        session_response = self.client.get("/api/v1/auth/session")
+        self.assertEqual(session_response.status_code, 200)
+        self.assertTrue(session_response.json()["authenticated"])
         self.assertEqual(
-            current_user_response.json()["email"],
+            session_response.json()["user"]["email"],
             "frontend@example.com",
         )
 
-    def test_logout_ends_the_session(self):
+    def test_logout_requires_csrf(self):
+        login_response = self.login()
+        self.assertEqual(login_response.status_code, 200)
+
+        response = self.client.post("/api/v1/auth/logout")
+
+        self.assertEqual(response.status_code, 403)
+
+    def test_logout_ends_the_session_and_is_idempotent(self):
         login_response = self.login()
         self.assertEqual(login_response.status_code, 200)
 
@@ -74,7 +105,20 @@ class SessionAuthenticationApiTests(TestCase):
         )
 
         self.assertEqual(logout_response.status_code, 204)
-        self.assertEqual(self.client.get("/api/v1/auth/me").status_code, 401)
+        self.assertEqual(
+            self.client.get("/api/v1/auth/session").json(),
+            {
+                "authenticated": False,
+                "user": None,
+            },
+        )
+
+        anonymous_token = self.csrf_token()
+        second_logout_response = self.client.post(
+            "/api/v1/auth/logout",
+            HTTP_X_CSRFTOKEN=anonymous_token,
+        )
+        self.assertEqual(second_logout_response.status_code, 204)
 
 
 class CoreBootstrapApiTests(TestCase):
