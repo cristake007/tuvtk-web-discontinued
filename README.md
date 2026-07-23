@@ -12,7 +12,7 @@ Dockerized React and Django application with a versioned API and two independent
 - Python 3.14
 - Django 6
 - Django Ninja
-- Django session authentication and CSRF protection
+- Django sessions and CSRF protection
 - Gunicorn outside the development override
 - PostgreSQL 18
 
@@ -40,9 +40,11 @@ Django :8000
   └── registry database ──> db_registry
 ```
 
-The Django container is not published on a host port. Use the React development address for the application, admin, API documentation, and API requests.
+The Django container is not published on a host port. Use the React address for the application, Django admin, API documentation, and API requests.
 
-`compose.override.yaml` is the only development override. Docker Compose loads it automatically. It replaces Gunicorn with Django `runserver` and starts Vite. Python changes use Django auto-reload and React changes use Vite Fast Refresh.
+`compose.override.yaml` is the only development override. It replaces Gunicorn with Django `runserver` and starts Vite. Both source trees are bind-mounted for automatic reload.
+
+The frontend container runs as the current host UID/GID. It does not run as root and does not use a root permission-initializer service.
 
 ## Initial setup
 
@@ -68,7 +70,7 @@ openssl rand -base64 48
 openssl rand -hex 24
 ```
 
-Start the environment and initialize Django:
+Start and initialize the application:
 
 ```bash
 ./dev up
@@ -76,7 +78,7 @@ Start the environment and initialize Django:
 ./dev admin-create
 ```
 
-The first frontend start generates `frontend/package-lock.json` when it is missing. Review and commit that file immediately:
+The first frontend start generates `frontend/package-lock.json` when it is missing. Commit it immediately:
 
 ```bash
 git add frontend/package-lock.json
@@ -92,67 +94,74 @@ API docs:          http://localhost:5173/api/v1/docs
 OpenAPI JSON:      http://localhost:5173/api/v1/openapi.json
 ```
 
-Sign into the React application with the Django account created by `./dev admin-create`.
+Sign in with the Django account created by `./dev admin-create`.
 
-Normal Python, TypeScript, React, and CSS edits do not require a container restart. Restart the frontend after changing `package.json` or `package-lock.json` so dependencies are synchronized before Vite starts.
+Normal Python, TypeScript, React, and CSS edits do not require a restart. Restart the frontend after changing `package.json` or `package-lock.json`.
 
 ## Project structure
 
 ```text
 .
 ├── Dockerfile
-├── compose.yaml                 Base backend and database services
-├── compose.override.yaml        Development runserver and Vite services
-├── dev                          Development command harness
+├── compose.yaml
+├── compose.override.yaml
+├── dev
 ├── backend/
 │   ├── apps/
-│   │   ├── accounts/            Session authentication API and account contracts
-│   │   └── core/                Shell configuration and permission-aware navigation
-│   ├── config/
-│   │   ├── api.py               Main versioned Django Ninja API
-│   │   ├── settings.py
-│   │   └── urls.py
+│   │   ├── accounts/       Session authentication API
+│   │   └── core/           Shell configuration and navigation
+│   ├── config/             Django settings, URLs, and API entrypoint
 │   ├── tests/
 │   ├── manage.py
 │   └── requirements.txt
 ├── frontend/
-│   ├── scripts/                 Dependency synchronization and Vite startup
+│   ├── scripts/            Dependency synchronization and Vite startup
 │   ├── src/
-│   │   ├── api/                 Shared HTTP transport, core API calls, and contracts
-│   │   ├── app/                 React Router configuration
-│   │   ├── features/auth/       Session API, query keys, and authentication boundary
-│   │   ├── layout/              Header, sidebar, and application shell
-│   │   ├── pages/               Login and route-level pages
+│   │   ├── api/            Shared HTTP transport and core API calls
+│   │   ├── app/            React Router configuration
+│   │   ├── features/auth/  Session API and authentication boundary
+│   │   ├── layout/         Header, sidebar, and application shell
+│   │   ├── pages/          Route-level pages
 │   │   └── styles/
 │   ├── package.json
-│   ├── package-lock.json        Committed deterministic dependency tree
+│   ├── package-lock.json
 │   └── vite.config.ts
 └── .env.example
 ```
 
 ## Frontend dependency workflow
 
-`frontend/node_modules` is stored in the bind-mounted frontend directory and ignored by Git. This lets a host or Remote SSH editor resolve TypeScript, React, and `vite/client` definitions while the Node container remains the authoritative runtime.
+`frontend/node_modules` is stored in the bind-mounted frontend directory and ignored by Git. This allows Remote SSH and local editors to resolve TypeScript, React, and `vite/client` definitions while Docker remains the runtime environment.
 
-`frontend/package-lock.json` must be committed. npm documents the lockfile as the exact dependency tree used to make teammate, deployment, and CI installs reproducible. `npm ci` requires that committed lockfile and refuses to silently rewrite it when it differs from `package.json`.
+`frontend/package-lock.json` is required and must be committed. Startup behavior is deterministic:
 
-On frontend startup:
+1. A missing lockfile is generated once with `npm install`.
+2. Missing or stale dependencies are synchronized with `npm ci`.
+3. Matching dependencies are reused without reinstalling.
 
-1. If the lockfile is missing, the development entrypoint runs `npm install`, creates it, and prints a commit reminder.
-2. If `node_modules` is missing or its recorded lockfile hash differs, it runs `npm ci`.
-3. If the installed tree already matches the lockfile, Vite starts without reinstalling packages.
-
-After adding, removing, or updating packages:
+After changing dependencies:
 
 ```bash
 ./dev npm install <package> --save-exact
 ./dev frontend-lock
 ./dev restart frontend
+./dev validate
 git add frontend/package.json frontend/package-lock.json
-git commit
 ```
 
-Do not use `--no-package-lock`, and do not commit `node_modules`.
+Do not use `sudo npm`, `--no-package-lock`, or commit `node_modules`.
+
+### Build output
+
+Development validation must not write generated bundles into the bind-mounted source tree. The development Compose service sets:
+
+```text
+VITE_BUILD_OUT_DIR=/tmp/tuvtk-frontend-dist
+```
+
+Therefore `./dev frontend-build` and `./dev validate` write their temporary bundle inside the container. A production build without this development environment variable continues to use Vite's conventional `frontend/dist` output.
+
+An old host-side `frontend/dist` directory is ignored and is not read or modified by development validation.
 
 ## Authentication contract
 
@@ -165,7 +174,7 @@ POST /api/v1/auth/login
 POST /api/v1/auth/logout
 ```
 
-`GET /api/v1/auth/session` always returns HTTP `200`. An anonymous browser is normal application state, not an API exception:
+`GET /api/v1/auth/session` always returns HTTP `200`. Anonymous state is normal:
 
 ```json
 {
@@ -174,24 +183,9 @@ POST /api/v1/auth/logout
 }
 ```
 
-An authenticated response contains the current account:
+`POST /login` returns `401` only for invalid credentials. `POST /logout` is CSRF-protected, idempotent, and returns `204`. Protected business endpoints return `401` without a valid session.
 
-```json
-{
-  "authenticated": true,
-  "user": {
-    "id": 1,
-    "username": "admin",
-    "display_name": "admin",
-    "email": "",
-    "is_staff": true
-  }
-}
-```
-
-`POST /login` returns `401` only for invalid credentials. `POST /logout` is CSRF-protected and idempotent: it returns `204` even if the browser session has already expired. Protected business endpoints continue to return `401` when no valid session exists.
-
-The browser stores only Django's session identifier. Frontend requests include same-origin credentials and send `X-CSRFToken` for unsafe methods. Do not add JWT, a second user table, or frontend-only authorization without a concrete external-client requirement.
+Do not add JWT, a second user table, or frontend-only authorization without a concrete external-client requirement.
 
 ## Core application shell
 
@@ -201,39 +195,30 @@ The `core` Django app owns shared shell data:
 - `NavigationItem` stores ordered, nested, permission-aware navigation entries.
 - `GET /api/v1/core/bootstrap` returns the authenticated user's shell configuration and permitted navigation.
 
-React owns the complete visible shell: login, header, sidebar, routing, and pages. Django does not render a root application page.
-
-Manage users and shell records through:
-
-```text
-http://localhost:5173/admin/
-```
+React owns the visible login page, header, sidebar, routing, and feature pages. Django does not render a root application page.
 
 ## API conventions
 
-The API is mounted under `/api/v1/`.
-
-Each domain app owns its router, schemas, services, and tests:
+The API is mounted under `/api/v1/`. Each Django domain app owns its router, schemas, services, models, and tests:
 
 ```text
 backend/apps/companies/api.py
 backend/apps/companies/schemas.py
 backend/apps/companies/services.py
+backend/apps/companies/models.py
 backend/apps/companies/tests.py
 ```
 
-- `api.py` handles HTTP input, authentication, permissions, status codes, and response mapping.
+- `api.py` handles HTTP input, authentication, permissions, statuses, and response mapping.
 - `schemas.py` defines request and response contracts.
-- `services.py` contains business workflows and transactions.
+- `services.py` contains business workflows and transaction boundaries.
 - `models.py` owns persistence and database constraints.
-- `tests.py` verifies success, authentication, permission, CSRF, validation, and important error behavior.
+- `tests.py` verifies success, authentication, permissions, CSRF, validation, and important errors.
 
-Frontend transport and feature API code are separated:
+Frontend components do not call `fetch` directly:
 
-- `frontend/src/api/http.ts` owns fetch, empty-body and JSON handling, credentials, errors, and CSRF headers.
-- `frontend/src/api/core.ts` owns core/system API calls.
-- `frontend/src/features/auth/api.ts` owns authentication requests.
-- TanStack Query owns server-state caching; components do not call `fetch` directly.
+- `frontend/src/api/http.ts` owns HTTP, credentials, CSRF, empty-body, JSON, and error handling.
+- Feature modules own their API calls and TanStack Query keys.
 
 ## Security settings
 
@@ -252,9 +237,9 @@ DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS=true
 DJANGO_SECURE_HSTS_PRELOAD=true
 ```
 
-Only enable `DJANGO_TRUST_X_FORWARDED_PROTO` when the trusted reverse proxy removes client-supplied forwarding headers and sets `X-Forwarded-Proto` itself.
+Only trust `X-Forwarded-Proto` when the trusted reverse proxy removes client-supplied forwarding headers and sets it itself.
 
-The Vite development server is not a production web server. A production deployment must serve the compiled React output behind the same HTTPS origin that proxies `/api/`, `/admin/`, and `/media/` to Django.
+The Vite development server is not a production web server. Production must serve the compiled React output behind the same HTTPS origin that proxies `/api/`, `/admin/`, and `/media/` to Django.
 
 ## Development commands
 
@@ -283,7 +268,7 @@ The Vite development server is not a production web server. A production deploym
 ./dev validate
 ```
 
-`./dev validate` runs Django checks and tests, synchronizes frontend dependencies, then runs TypeScript validation and the Vite production build.
+`./dev validate` runs Django checks and tests, synchronizes frontend dependencies, runs TypeScript validation, and creates a temporary Vite production bundle inside the container.
 
 Database reset commands are destructive and request explicit confirmation:
 
