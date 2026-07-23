@@ -38,6 +38,8 @@ class SessionAuthenticationApiTests(TestCase):
         response = self.client.get("/api/v1/auth/session")
 
         self.assertEqual(response.status_code, 200)
+        self.assertIn("no-cache", response.headers["Cache-Control"])
+        self.assertIn("no-store", response.headers["Cache-Control"])
         self.assertEqual(
             response.json(),
             {
