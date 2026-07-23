@@ -19,6 +19,12 @@ backend/staticfiles/*
 !backend/media/.gitkeep
 !backend/staticfiles/.gitkeep
 
+# Frontend
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+*.tsbuildinfo
+
 # Testing and tooling
 .pytest_cache/
 .mypy_cache/
