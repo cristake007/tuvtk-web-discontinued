@@ -1,0 +1,6 @@
+#!/bin/sh
+set -eu
+
+sh ./scripts/sync-dependencies.sh
+
+exec npm run dev -- --host 0.0.0.0
