@@ -12,6 +12,11 @@ export type ShellUser = {
   is_staff: boolean;
 };
 
+export type LoginCredentials = {
+  username: string;
+  password: string;
+};
+
 export type NavigationItem = {
   key: string;
   label: string;
@@ -23,7 +28,7 @@ export type NavigationItem = {
 
 export type CoreBootstrap = {
   configuration: ShellConfiguration;
-  user: ShellUser | null;
+  user: ShellUser;
   navigation: NavigationItem[];
 };
 
