@@ -196,7 +196,7 @@
   place-items: center;
   border: var(--border-width) solid var(--color-border-strong);
   border-radius: var(--radius-sm);
-  background: var(--palette-neutral-150);
+  background: var(--color-surface-avatar);
   color: var(--color-action-primary);
   font-weight: var(--font-weight-extrabold);
 }
