@@ -4,8 +4,8 @@ from django.db import connections
 from django.http import HttpRequest
 from ninja import NinjaAPI, Schema
 
+from apps.accounts.api import router as auth_router
 from apps.core.api import router as core_router
-from apps.core.auth_api import router as auth_router
 
 
 class DatabaseHealth(Schema):
