@@ -2,7 +2,7 @@
 
 ## Purpose
 
-This repository contains a Dockerized React frontend and Django backend with a versioned Django Ninja API. Keep changes small, explicit, and compatible with the existing development harness.
+This repository contains a Dockerized React frontend and Django backend with a versioned Django Ninja API. Keep changes small, explicit, testable, and compatible with the development harness.
 
 ## Architecture
 
@@ -16,21 +16,23 @@ This repository contains a Dockerized React frontend and Django backend with a v
 - `db_core` stores Django system tables and normal operational data.
 - `db_registry` is reserved for the large ONRC registry and related reference data.
 - Django database aliases are `default` for core and `registry` for ONRC data.
-- `backend/config/api.py` owns the main Django Ninja API mounted at `/api/v1/`.
+- `backend/config/api.py` owns only the main Django Ninja instance, system endpoints, and router registration.
 
 Do not create Django admin, auth, session, or content-type tables in the registry database. Do not introduce cross-database foreign keys. Reference registry companies from core data using stable values such as CUI.
 
 ## Repository layout
 
 ```text
-backend/config/          Project-wide Django configuration and API entrypoint
-backend/apps/            Local Django domain applications
-backend/tests/           Project-level backend integration tests
-frontend/src/api/        Typed HTTP client and API contracts
-frontend/src/auth/       Session authentication boundary
-frontend/src/layout/     Shared React application shell
-frontend/src/pages/      Route-level React pages
-frontend/src/styles/     Shared frontend styles
+backend/config/                 Project-wide Django configuration and API entrypoint
+backend/apps/accounts/          Session authentication API and account contracts
+backend/apps/core/              Shell configuration and permission-aware navigation
+backend/apps/<domain>/          Other backend domain applications
+backend/tests/                  Project-level backend integration tests
+frontend/src/api/               Shared HTTP transport, core API calls, and contracts
+frontend/src/features/auth/     Authentication API, query keys, and gate
+frontend/src/layout/            Shared React application shell
+frontend/src/pages/             Route-level React pages
+frontend/src/styles/            Shared frontend styles
 ```
 
 Create Django apps with:
@@ -43,24 +45,33 @@ Apps must remain under `backend/apps/<name>/`, use the Python path `apps.<name>`
 
 ## Authentication
 
-Use Django's built-in users, groups, permissions, password hashing, sessions, and CSRF protection.
+Use Django's built-in users, groups, permissions, password hashing, server-side sessions, and CSRF protection.
 
-- React authenticates through `/api/v1/auth/*`.
-- Browser requests use same-origin session cookies.
-- State-changing requests must include Django's CSRF header.
-- Internal API routes should use `django_auth` unless explicitly public.
+The browser authentication contract is:
+
+```text
+GET  /api/v1/auth/csrf
+GET  /api/v1/auth/session
+POST /api/v1/auth/login
+POST /api/v1/auth/logout
+```
+
+Rules:
+
+- `GET /auth/session` always returns `200` with `{authenticated, user}`. Anonymous state is not an exception.
+- Invalid login credentials return `401`.
+- Logout is CSRF-protected, idempotent, and returns `204` even when the session has expired.
+- Protected business routes use Django session authentication and return `401` without a valid session.
+- Browser requests use same-origin cookies.
+- Unsafe requests must include Django's CSRF header.
 - Do not add JWT, a second user table, or frontend-only authorization without a concrete external-client requirement.
 - Permission checks belong in Django. React may hide unavailable controls but must not be the security boundary.
+
+Authentication endpoints and contracts belong to `backend/apps/accounts/`. Shell configuration and navigation belong to `backend/apps/core/`.
 
 ## API conventions
 
 The public API prefix is `/api/v1/`. Preserve explicit versioning.
-
-`backend/config/api.py` should contain only:
-
-- the main `NinjaAPI` instance;
-- project-wide system endpoints such as health checks;
-- router registration.
 
 Domain endpoints belong to the app that owns the domain:
 
@@ -68,6 +79,7 @@ Domain endpoints belong to the app that owns the domain:
 backend/apps/<app>/api.py
 backend/apps/<app>/schemas.py
 backend/apps/<app>/services.py
+backend/apps/<app>/tests.py
 ```
 
 Keep responsibilities separated:
@@ -76,18 +88,22 @@ Keep responsibilities separated:
 - `schemas.py`: Django Ninja input and output contracts.
 - `services.py`: business workflows and transaction boundaries.
 - `models.py`: persistence and database constraints.
+- `tests.py`: success, authentication, permission, CSRF, validation, and important error behavior.
 
-Endpoint functions must remain thin. Every new endpoint should test success, authentication or permission behavior, validation failures, and important error statuses.
+Endpoint functions must remain thin. Do not put substantial ORM queries or workflows directly in route functions.
 
 ## Frontend conventions
 
 - React and TypeScript own all user-facing pages.
-- Use React Router for application routes and TanStack Query for server state.
-- Keep API calls in `frontend/src/api/`; components must not duplicate fetch and CSRF handling.
-- Keep authentication flow in `frontend/src/auth/` and the login page.
+- Use React Router for routes and TanStack Query for server state.
+- `frontend/src/api/http.ts` is the only shared fetch/JSON/error/credentials/CSRF transport.
+- Domain API calls belong to focused modules such as `frontend/src/api/core.ts` or `frontend/src/features/<feature>/api.ts`.
+- Components must not call `fetch` directly or duplicate CSRF handling.
+- Centralize TanStack Query keys inside the owning feature.
+- Keep authentication code in `frontend/src/features/auth/`.
 - Keep the shared header/sidebar in `frontend/src/layout/`.
 - Treat Django responses and permissions as authoritative.
-- Prefer focused components and feature folders over a large global component directory.
+- Prefer focused feature folders over a large global component directory.
 - Do not introduce a second frontend framework.
 
 ## Development commands
@@ -130,13 +146,23 @@ The following commands are destructive and require the user's explicit request:
 ./dev wipe
 ```
 
+## Production and security rules
+
+- Production uses one HTTPS origin for React, `/api/`, `/admin/`, and `/media/`.
+- The Vite development server is never a production web server.
+- Production enables secure session and CSRF cookies, HTTPS redirection, and appropriate HSTS only after HTTPS is verified.
+- Only trust `X-Forwarded-Proto` when the trusted reverse proxy strips client-supplied forwarding headers and sets it itself.
+- Keep `SESSION_COOKIE_HTTPONLY` enabled.
+- The CSRF cookie remains readable by the SPA because the frontend sends it in `X-CSRFToken`.
+- Do not weaken CSRF protection to work around frontend bugs.
+
 ## Implementation rules
 
 - Inspect relevant files before changing architecture or dependencies.
 - Reuse Django, Django Ninja, React, TanStack Query, and PostgreSQL before adding frameworks or services.
 - Keep domain logic inside the owning Django app, not in `config/`.
 - Use database constraints for persistent invariants.
-- Pin dependencies and add them only for a concrete requirement.
+- Pin direct dependencies and commit lock files when dependency installation is finalized.
 - Do not commit `.env`, secrets, database dumps, logs, uploaded media, collected static files, `node_modules`, or frontend build output.
 - Update `.env.example`, `README.md`, and this file when architecture or setup changes.
 - Preserve host ownership of generated source files.
