@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Building2,
   Circle,
   FileText,
   Files,
   LayoutDashboard,
+  LogOut,
   Menu,
   PanelLeftClose,
   Settings,
@@ -14,27 +15,9 @@ import {
 } from "lucide-react";
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 
-import { fetchCoreBootstrap } from "../api/client";
-import type { CoreBootstrap, NavigationItem } from "../api/types";
+import { fetchCoreBootstrap, logout } from "../api/client";
+import type { NavigationItem } from "../api/types";
 
-const fallbackBootstrap: CoreBootstrap = {
-  configuration: {
-    site_name: "TUVTK",
-    organization_name: "TÜV Thüringen Karpat",
-    sidebar_title: "Workspace",
-  },
-  user: null,
-  navigation: [
-    {
-      key: "dashboard",
-      label: "Dashboard",
-      path: "/",
-      icon: "layout-dashboard",
-      position: 10,
-      parent_key: null,
-    },
-  ],
-};
 
 const icons: Record<string, LucideIcon> = {
   "building-2": Building2,
@@ -116,6 +99,7 @@ export function AppShell() {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const location = useLocation();
+  const queryClient = useQueryClient();
 
   const bootstrapQuery = useQuery({
     queryKey: ["core-bootstrap"],
@@ -123,15 +107,41 @@ export function AppShell() {
     staleTime: 60_000,
   });
 
-  const bootstrap = bootstrapQuery.data ?? fallbackBootstrap;
+  const logoutMutation = useMutation({
+    mutationFn: logout,
+    onSuccess: async () => {
+      queryClient.removeQueries({ queryKey: ["core-bootstrap"] });
+      await queryClient.invalidateQueries({ queryKey: ["auth-session"] });
+    },
+  });
+
+  if (bootstrapQuery.isPending) {
+    return (
+      <div className="auth-state" role="status">
+        <div className="auth-state__spinner" />
+        <span>Loading the application…</span>
+      </div>
+    );
+  }
+
+  if (bootstrapQuery.isError) {
+    return (
+      <div className="auth-state auth-state--error" role="alert">
+        <strong>The application shell could not be loaded.</strong>
+        <button onClick={() => void bootstrapQuery.refetch()} type="button">
+          Try again
+        </button>
+      </div>
+    );
+  }
+
+  const bootstrap = bootstrapQuery.data;
   const navigation = useMemo(
     () => buildNavigationTree(bootstrap.navigation),
     [bootstrap.navigation],
   );
-
   const currentItem = bootstrap.navigation.find((item) => item.path === location.pathname);
   const pageTitle = currentItem?.label ?? "Workspace";
-
   const closeMobileSidebar = () => setMobileSidebarOpen(false);
 
   return (
@@ -165,7 +175,7 @@ export function AppShell() {
 
         <div className="sidebar-footer">
           <span>Application shell</span>
-          <small>{bootstrapQuery.isError ? "API unavailable" : "Connected"}</small>
+          <small>Connected</small>
         </div>
       </aside>
 
@@ -207,20 +217,29 @@ export function AppShell() {
 
           <div className="header-user">
             <div className="user-avatar" aria-hidden="true">
-              {(bootstrap.user?.display_name ?? "Guest").charAt(0).toUpperCase()}
+              {bootstrap.user.display_name.charAt(0).toUpperCase()}
             </div>
             <div className="user-copy">
-              <strong>{bootstrap.user?.display_name ?? "Guest user"}</strong>
-              <span>{bootstrap.user?.email || "Not signed in"}</span>
+              <strong>{bootstrap.user.display_name}</strong>
+              <span>{bootstrap.user.email || bootstrap.user.username}</span>
             </div>
+            <button
+              aria-label="Sign out"
+              className="icon-button"
+              disabled={logoutMutation.isPending}
+              onClick={() => logoutMutation.mutate()}
+              title="Sign out"
+              type="button"
+            >
+              <LogOut size={19} />
+            </button>
           </div>
         </header>
 
         <main className="app-content">
-          {bootstrapQuery.isError ? (
-            <div className="notice notice--warning" role="status">
-              The shell is using fallback navigation because the Django bootstrap API could
-              not be reached.
+          {logoutMutation.isError ? (
+            <div className="notice notice--warning" role="alert">
+              Sign out failed. Please try again.
             </div>
           ) : null}
           <Outlet />
