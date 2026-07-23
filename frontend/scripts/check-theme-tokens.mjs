@@ -3,19 +3,37 @@ import { join, relative } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const frontendRoot = fileURLToPath(new URL("..", import.meta.url));
-const stylesDirectory = join(frontendRoot, "src", "styles");
-const themePath = join(stylesDirectory, "theme.css");
+const sourceDirectory = join(frontendRoot, "src");
+const themePath = join(sourceDirectory, "styles", "theme.css");
+
+async function collectCssFiles(directory) {
+  const entries = await readdir(directory, { withFileTypes: true });
+  const paths = [];
+
+  for (const entry of entries) {
+    const path = join(directory, entry.name);
+
+    if (entry.isDirectory()) {
+      paths.push(...(await collectCssFiles(path)));
+      continue;
+    }
+
+    if (entry.isFile() && entry.name.endsWith(".css")) {
+      paths.push(path);
+    }
+  }
+
+  return paths;
+}
 
 const themeSource = await readFile(themePath, "utf8");
 const definedTokens = new Set(
   [...themeSource.matchAll(/(--[a-z0-9-]+)\s*:/gi)].map((match) => match[1]),
 );
 
-const entries = await readdir(stylesDirectory, { withFileTypes: true });
-const componentStylePaths = entries
-  .filter((entry) => entry.isFile() && entry.name.endsWith(".css") && entry.name !== "theme.css")
-  .map((entry) => join(stylesDirectory, entry.name));
-
+const componentStylePaths = (await collectCssFiles(sourceDirectory)).filter(
+  (path) => path !== themePath,
+);
 const errors = [];
 
 for (const path of componentStylePaths) {
