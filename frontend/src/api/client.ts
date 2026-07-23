@@ -91,8 +91,15 @@ export function fetchCoreBootstrap(): Promise<CoreBootstrap> {
   return apiRequest<CoreBootstrap>("/api/v1/core/bootstrap");
 }
 
-export function fetchCurrentUser(): Promise<ShellUser> {
-  return apiRequest<ShellUser>("/api/v1/auth/me");
+export async function fetchSession(): Promise<ShellUser | null> {
+  try {
+    return await apiRequest<ShellUser>("/api/v1/auth/me");
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      return null;
+    }
+    throw error;
+  }
 }
 
 export async function login(credentials: LoginCredentials): Promise<ShellUser> {
@@ -110,7 +117,7 @@ export async function logout(): Promise<void> {
     await apiRequest<void>("/api/v1/auth/csrf");
   }
 
-  return apiRequest<void>("/api/v1/auth/logout", {
+  await apiRequest<void>("/api/v1/auth/logout", {
     method: "POST",
     includeCsrf: true,
   });
