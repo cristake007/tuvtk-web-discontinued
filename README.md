@@ -44,15 +44,15 @@ The Django container is not published on a host port. Use the React development 
 
 `compose.override.yaml` is the only development override. Docker Compose loads it automatically. It replaces Gunicorn with Django `runserver` and starts Vite. Python changes use Django auto-reload and React changes use Vite Fast Refresh.
 
-## Requirements
+## Initial setup
+
+Requirements:
 
 - Linux or WSL
 - Docker Engine
 - Docker Compose v2
 - Git
 - Bash
-
-## Initial setup
 
 ```bash
 git clone git@github.com:cristake007/tuvtk-web.git
@@ -99,7 +99,8 @@ Normal Python, TypeScript, React, and CSS edits do not require a container resta
 ├── dev                          Development command harness
 ├── backend/
 │   ├── apps/
-│   │   └── core/                Shell configuration, navigation, and auth API
+│   │   ├── accounts/            Session authentication API and account contracts
+│   │   └── core/                Shell configuration and permission-aware navigation
 │   ├── config/
 │   │   ├── api.py               Main versioned Django Ninja API
 │   │   ├── settings.py
@@ -109,9 +110,9 @@ Normal Python, TypeScript, React, and CSS edits do not require a container resta
 │   └── requirements.txt
 ├── frontend/
 │   ├── src/
-│   │   ├── api/                 Typed API client and contracts
+│   │   ├── api/                 Shared HTTP transport, core API calls, and contracts
 │   │   ├── app/                 React Router configuration
-│   │   ├── auth/                Authentication boundary
+│   │   ├── features/auth/       Session API, query keys, and authentication boundary
 │   │   ├── layout/              Header, sidebar, and application shell
 │   │   ├── pages/               Login and route-level pages
 │   │   └── styles/
@@ -120,18 +121,44 @@ Normal Python, TypeScript, React, and CSS edits do not require a container resta
 └── .env.example
 ```
 
-## Authentication
+## Authentication contract
 
-React uses Django's built-in user, group, permission, password, session, and CSRF systems.
+React uses Django's built-in users, groups, permissions, password hashing, server-side sessions, and CSRF protection.
 
 ```text
 GET  /api/v1/auth/csrf
+GET  /api/v1/auth/session
 POST /api/v1/auth/login
-GET  /api/v1/auth/me
 POST /api/v1/auth/logout
 ```
 
-The browser receives Django's session cookie after login. The frontend API client includes same-origin credentials and sends the CSRF header for state-changing requests. Do not introduce a second user store or JWT authentication without a concrete external-client requirement.
+`GET /api/v1/auth/session` always returns HTTP `200`. An anonymous browser is normal application state, not an API exception:
+
+```json
+{
+  "authenticated": false,
+  "user": null
+}
+```
+
+An authenticated response contains the current account:
+
+```json
+{
+  "authenticated": true,
+  "user": {
+    "id": 1,
+    "username": "admin",
+    "display_name": "admin",
+    "email": "",
+    "is_staff": true
+  }
+}
+```
+
+`POST /login` returns `401` only for invalid credentials. `POST /logout` is CSRF-protected and idempotent: it returns `204` even if the browser session has already expired. Protected business endpoints continue to return `401` when no valid session exists.
+
+The browser stores only Django's session identifier. Frontend requests include same-origin credentials and send `X-CSRFToken` for unsafe methods. Do not add JWT, a second user table, or frontend-only authorization without a concrete external-client requirement.
 
 ## Core application shell
 
@@ -153,18 +180,48 @@ http://localhost:5173/admin/
 
 The API is mounted under `/api/v1/`.
 
-Each domain app owns its router, schemas, and services:
+Each domain app owns its router, schemas, services, and tests:
 
 ```text
 backend/apps/companies/api.py
 backend/apps/companies/schemas.py
 backend/apps/companies/services.py
+backend/apps/companies/tests.py
 ```
 
 - `api.py` handles HTTP input, authentication, permissions, status codes, and response mapping.
 - `schemas.py` defines request and response contracts.
 - `services.py` contains business workflows and transactions.
 - `models.py` owns persistence and database constraints.
+- `tests.py` verifies success, authentication, permission, CSRF, validation, and important error behavior.
+
+Frontend transport and feature API code are separated:
+
+- `frontend/src/api/http.ts` owns fetch, JSON handling, credentials, errors, and CSRF headers.
+- `frontend/src/api/core.ts` owns core/system API calls.
+- `frontend/src/features/auth/api.ts` owns authentication requests.
+- TanStack Query owns server-state caching; components do not call `fetch` directly.
+
+## Security settings
+
+Development defaults use HTTP-compatible cookies. Production must use HTTPS and set at least:
+
+```env
+DJANGO_DEBUG=false
+DJANGO_ALLOWED_HOSTS=app.example.com
+DJANGO_CSRF_TRUSTED_ORIGINS=https://app.example.com
+DJANGO_SESSION_COOKIE_SECURE=true
+DJANGO_CSRF_COOKIE_SECURE=true
+DJANGO_SECURE_SSL_REDIRECT=true
+DJANGO_TRUST_X_FORWARDED_PROTO=true
+DJANGO_SECURE_HSTS_SECONDS=31536000
+DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS=true
+DJANGO_SECURE_HSTS_PRELOAD=true
+```
+
+Only enable `DJANGO_TRUST_X_FORWARDED_PROTO` when the trusted reverse proxy removes client-supplied forwarding headers and sets `X-Forwarded-Proto` itself.
+
+The Vite development server is not a production web server. A production deployment must serve the compiled React output behind the same HTTPS origin that proxies `/api/`, `/admin/`, and `/media/` to Django.
 
 ## Development commands
 
