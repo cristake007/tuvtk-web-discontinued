@@ -12,6 +12,11 @@ export type ShellUser = {
   is_staff: boolean;
 };
 
+export type AuthenticationSession = {
+  authenticated: boolean;
+  user: ShellUser | null;
+};
+
 export type LoginCredentials = {
   username: string;
   password: string;
