@@ -1,7 +1,80 @@
+import json
+
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import Client, TestCase
 
 from .models import ApplicationConfiguration, NavigationItem
+
+
+class SessionAuthenticationApiTests(TestCase):
+    def setUp(self):
+        self.user = get_user_model().objects.create_user(
+            username="frontend-user",
+            email="frontend@example.com",
+            password="test-password-123",
+        )
+        self.client = Client(enforce_csrf_checks=True)
+
+    def csrf_token(self) -> str:
+        response = self.client.get("/api/v1/auth/csrf")
+
+        self.assertEqual(response.status_code, 204)
+        self.assertIn("csrftoken", self.client.cookies)
+        return self.client.cookies["csrftoken"].value
+
+    def login(self, password: str = "test-password-123"):
+        token = self.csrf_token()
+        return self.client.post(
+            "/api/v1/auth/login",
+            data=json.dumps(
+                {
+                    "username": "frontend-user",
+                    "password": password,
+                }
+            ),
+            content_type="application/json",
+            HTTP_X_CSRFTOKEN=token,
+        )
+
+    def test_current_user_requires_authentication(self):
+        response = self.client.get("/api/v1/auth/me")
+
+        self.assertEqual(response.status_code, 401)
+
+    def test_login_rejects_invalid_credentials(self):
+        response = self.login(password="incorrect-password")
+
+        self.assertEqual(response.status_code, 401)
+        self.assertEqual(
+            response.json(),
+            {"detail": "Invalid username or password."},
+        )
+
+    def test_login_creates_a_session(self):
+        response = self.login()
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["username"], "frontend-user")
+
+        current_user_response = self.client.get("/api/v1/auth/me")
+        self.assertEqual(current_user_response.status_code, 200)
+        self.assertEqual(
+            current_user_response.json()["email"],
+            "frontend@example.com",
+        )
+
+    def test_logout_ends_the_session(self):
+        login_response = self.login()
+        self.assertEqual(login_response.status_code, 200)
+
+        rotated_token = self.client.cookies["csrftoken"].value
+        logout_response = self.client.post(
+            "/api/v1/auth/logout",
+            HTTP_X_CSRFTOKEN=rotated_token,
+        )
+
+        self.assertEqual(logout_response.status_code, 204)
+        self.assertEqual(self.client.get("/api/v1/auth/me").status_code, 401)
 
 
 class CoreBootstrapApiTests(TestCase):
@@ -30,16 +103,26 @@ class CoreBootstrapApiTests(TestCase):
             requires_staff=True,
         )
 
-    def test_bootstrap_is_available_without_authentication(self):
+    def test_bootstrap_requires_authentication(self):
+        response = self.client.get("/api/v1/core/bootstrap")
+
+        self.assertEqual(response.status_code, 401)
+
+    def test_regular_user_receives_permitted_navigation(self):
+        user = get_user_model().objects.create_user(
+            username="regular-user",
+            password="test-password-123",
+        )
+        self.client.force_login(user)
+
         response = self.client.get("/api/v1/core/bootstrap")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json()["configuration"]["site_name"], "TUVTK")
         self.assertEqual(
             [item["key"] for item in response.json()["navigation"]],
             ["dashboard"],
         )
-        self.assertIsNone(response.json()["user"])
+        self.assertEqual(response.json()["user"]["username"], "regular-user")
 
     def test_staff_user_receives_staff_navigation(self):
         user = get_user_model().objects.create_user(
@@ -56,4 +139,3 @@ class CoreBootstrapApiTests(TestCase):
             [item["key"] for item in response.json()["navigation"]],
             ["dashboard", "settings"],
         )
-        self.assertEqual(response.json()["user"]["username"], "staff-user")
