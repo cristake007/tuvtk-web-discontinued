@@ -18,8 +18,8 @@ services:
         source: ./backend
         target: /app
 
-    ports:
-      - "${BACKEND_PORT:-8000}:8000"
+    expose:
+      - "8000"
 
     depends_on:
       db_core:
@@ -99,6 +99,5 @@ services:
 volumes:
   core_postgres_data:
     name: ${CORE_DB_VOLUME_NAME:-tuvtk_core_postgres_data}
-
   registry_postgres_data:
     name: ${REGISTRY_DB_VOLUME_NAME:-tuvtk_registry_postgres_data}
