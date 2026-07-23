@@ -1,14 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { ApiError, fetchCurrentUser } from "../api/client";
+import { fetchSession } from "../api/client";
 import { AppShell } from "../layout/AppShell";
 import { LoginPage } from "../pages/LoginPage";
-
 
 export function AuthenticationGate() {
   const sessionQuery = useQuery({
     queryKey: ["auth-session"],
-    queryFn: fetchCurrentUser,
+    queryFn: fetchSession,
     retry: false,
     staleTime: 60_000,
   });
@@ -22,10 +21,6 @@ export function AuthenticationGate() {
     );
   }
 
-  if (sessionQuery.error instanceof ApiError && sessionQuery.error.status === 401) {
-    return <LoginPage />;
-  }
-
   if (sessionQuery.isError) {
     return (
       <div className="auth-state auth-state--error" role="alert">
@@ -33,6 +28,10 @@ export function AuthenticationGate() {
         <span>Check the Django container and reload the page.</span>
       </div>
     );
+  }
+
+  if (sessionQuery.data === null) {
+    return <LoginPage />;
   }
 
   return <AppShell />;
