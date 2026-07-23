@@ -1,0 +1,46 @@
+services:
+  backend:
+    command:
+      - python
+      - manage.py
+      - runserver
+      - 0.0.0.0:8000
+
+    environment:
+      DJANGO_DEBUG: "true"
+
+  frontend:
+    image: node:24-bookworm-slim
+
+    container_name: ${FRONTEND_CONTAINER_NAME:-tuvtk_frontend}
+
+    working_dir: /app
+
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+
+    volumes:
+      - type: bind
+        source: ./frontend
+        target: /app
+      - type: volume
+        source: frontend_node_modules
+        target: /app/node_modules
+
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+
+    depends_on:
+      backend:
+        condition: service_started
+
+    command:
+      - /bin/sh
+      - -c
+      - npm install && exec npm run dev -- --host 0.0.0.0
+
+    restart: unless-stopped
+
+volumes:
+  frontend_node_modules:
+    name: ${FRONTEND_NODE_MODULES_VOLUME_NAME:-tuvtk_frontend_node_modules}
