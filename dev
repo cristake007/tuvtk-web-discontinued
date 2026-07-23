@@ -25,15 +25,22 @@ compose() {
 }
 
 backend_running() {
-    compose ps --status running --services 2>/dev/null |
-        grep -qx "backend"
+    compose ps --status running --services 2>/dev/null | grep -qx "backend"
 }
 
 backend() {
     if backend_running; then
-        compose exec backend "$@"
+        if [[ -t 0 && -t 1 ]]; then
+            compose exec backend "$@"
+        else
+            compose exec -T backend "$@"
+        fi
     else
-        compose run --rm --no-deps backend "$@"
+        if [[ -t 0 && -t 1 ]]; then
+            compose run --rm --no-deps backend "$@"
+        else
+            compose run --rm --no-deps -T backend "$@"
+        fi
     fi
 }
 
@@ -91,7 +98,7 @@ Containers:
 
 Django:
   django <arguments>         Run any manage.py command
-  app <name>                 Create a Django application in backend/
+  app <name>                 Create a Django app in backend/apps/
   migrations [app]           Create migration files
   migrate                    Migrate the core/default database
   migrate-registry           Migrate the registry database
@@ -112,7 +119,7 @@ Database:
 Destructive:
   wipe                       Remove all containers, volumes and local images
 
-The wipe commands never delete backend/, Dockerfile, compose.yaml, dev or .env.
+The destructive commands never delete backend/, Dockerfile, compose.yaml, dev or .env.
 HELP
 }
 
@@ -149,22 +156,9 @@ case "$command" in
         ;;
 
     backend-shell)
-        backend() {
-        if backend_running; then
-            if [[ -t 0 && -t 1 ]]; then
-                compose exec backend "$@"
-            else
-                compose exec -T backend "$@"
-            fi
-        else
-            if [[ -t 0 && -t 1 ]]; then
-                compose run --rm --no-deps backend "$@"
-            else
-                compose run --rm --no-deps -T backend "$@"
-            fi
-        fi
-        }
+        backend sh
         ;;
+
     django)
         manage "$@"
         ;;
@@ -280,7 +274,7 @@ case "$command" in
             "${REGISTRY_DB_VOLUME_NAME:-tuvtk_registry_postgres_data}"
 
         compose up -d backend
-        echo "Registry database reset. Run: ./dev migrate-registry"
+        echo "Registry database reset. Run registry migrations only after a database router is configured."
         ;;
 
     reset-db)
@@ -298,7 +292,7 @@ case "$command" in
             2>/dev/null || true
 
         compose up -d --build
-        echo "Both databases reset. Run: ./dev migrate-all"
+        echo "Both databases reset. Run: ./dev migrate"
         ;;
 
     wipe)
