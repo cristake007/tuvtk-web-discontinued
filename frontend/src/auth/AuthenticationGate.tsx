@@ -1,13 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { fetchSession } from "../api/client";
+import { fetchAuthenticationSession } from "../features/auth/api";
+import { authQueryKeys } from "../features/auth/queryKeys";
 import { AppShell } from "../layout/AppShell";
 import { LoginPage } from "../pages/LoginPage";
 
 export function AuthenticationGate() {
   const sessionQuery = useQuery({
-    queryKey: ["auth-session"],
-    queryFn: fetchSession,
+    queryKey: authQueryKeys.session,
+    queryFn: fetchAuthenticationSession,
     retry: false,
     staleTime: 60_000,
   });
@@ -30,7 +31,7 @@ export function AuthenticationGate() {
     );
   }
 
-  if (sessionQuery.data === null) {
+  if (!sessionQuery.data.authenticated || !sessionQuery.data.user) {
     return <LoginPage />;
   }
 
