@@ -63,4 +63,4 @@ services:
       - ./scripts/start-dev.sh
 
     init: true
-    restart: unless-stopped
+    restart: "no"
