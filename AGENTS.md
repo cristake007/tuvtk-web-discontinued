@@ -10,6 +10,7 @@ This repository contains a Dockerized React frontend and Django backend with a v
 - Root `compose.override.yaml` is the only development override; it starts Django `runserver` and the Vite frontend.
 - `backend/` is bind-mounted into the Django container.
 - `frontend/` is bind-mounted into the Node container.
+- `frontend/node_modules/` is host-visible, ignored by Git, and populated by the Node container so Remote SSH editors can resolve frontend types.
 - React owns the visible application, routing, login page, header, sidebar, and feature pages.
 - Django owns authentication, permissions, data access, business logic, administration, and the API.
 - Django is internal to the Compose network on port 8000 and is reached through Vite's `/api`, `/admin`, and `/media` proxies.
@@ -28,6 +29,7 @@ backend/apps/accounts/          Session authentication API and account contracts
 backend/apps/core/              Shell configuration and permission-aware navigation
 backend/apps/<domain>/          Other backend domain applications
 backend/tests/                  Project-level backend integration tests
+frontend/scripts/               Dependency synchronization and frontend startup
 frontend/src/api/               Shared HTTP transport, core API calls, and contracts
 frontend/src/features/auth/     Authentication API, query keys, and gate
 frontend/src/layout/            Shared React application shell
@@ -96,7 +98,7 @@ Endpoint functions must remain thin. Do not put substantial ORM queries or workf
 
 - React and TypeScript own all user-facing pages.
 - Use React Router for routes and TanStack Query for server state.
-- `frontend/src/api/http.ts` is the only shared fetch/JSON/error/credentials/CSRF transport.
+- `frontend/src/api/http.ts` is the only shared fetch/empty-body/JSON/error/credentials/CSRF transport.
 - Domain API calls belong to focused modules such as `frontend/src/api/core.ts` or `frontend/src/features/<feature>/api.ts`.
 - Components must not call `fetch` directly or duplicate CSRF handling.
 - Centralize TanStack Query keys inside the owning feature.
@@ -105,6 +107,27 @@ Endpoint functions must remain thin. Do not put substantial ORM queries or workf
 - Treat Django responses and permissions as authoritative.
 - Prefer focused feature folders over a large global component directory.
 - Do not introduce a second frontend framework.
+
+## Frontend dependency rules
+
+- `frontend/package-lock.json` is required and must be committed.
+- Direct dependencies remain pinned to exact versions.
+- Do not use `--no-package-lock`.
+- Do not edit `package-lock.json` manually.
+- Do not commit `frontend/node_modules/`.
+- The frontend startup script generates the initial lockfile only when it is missing, then uses `npm ci` whenever the installed dependency hash differs from the committed lockfile.
+- After changing dependencies, update both `package.json` and `package-lock.json`, restart the frontend, and run validation.
+- The Node container runs with the host UID/GID so generated lockfiles and `node_modules` remain owned by the developer.
+
+Preferred dependency workflow:
+
+```bash
+./dev npm install <package> --save-exact
+./dev frontend-lock
+./dev restart frontend
+./dev validate
+git add frontend/package.json frontend/package-lock.json
+```
 
 ## Development commands
 
@@ -117,6 +140,8 @@ Prefer the root harness:
 ./dev logs frontend
 ./dev check
 ./dev test
+./dev frontend-sync
+./dev frontend-lock
 ./dev frontend-typecheck
 ./dev frontend-build
 ./dev validate
@@ -131,7 +156,7 @@ Useful shells and passthrough commands:
 ./dev npm <arguments>
 ```
 
-`./dev up` uses `compose.yaml` plus the automatically loaded `compose.override.yaml`. Normal Python and frontend source edits reload without a container restart.
+`./dev up` uses `compose.yaml` plus the automatically loaded `compose.override.yaml`. Normal Python and frontend source edits reload without a container restart. Restart the frontend after dependency or lockfile changes.
 
 Use direct `docker compose` commands only when diagnosing Docker or improving the harness.
 
@@ -150,6 +175,7 @@ The following commands are destructive and require the user's explicit request:
 
 - Production uses one HTTPS origin for React, `/api/`, `/admin/`, and `/media/`.
 - The Vite development server is never a production web server.
+- Production frontend images and CI must install from the committed lockfile with `npm ci`.
 - Production enables secure session and CSRF cookies, HTTPS redirection, and appropriate HSTS only after HTTPS is verified.
 - Only trust `X-Forwarded-Proto` when the trusted reverse proxy strips client-supplied forwarding headers and sets it itself.
 - Keep `SESSION_COOKIE_HTTPONLY` enabled.
