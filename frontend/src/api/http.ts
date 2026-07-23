@@ -34,6 +34,33 @@ function readErrorDetail(body: unknown): string | undefined {
   return typeof detail === "string" ? detail : undefined;
 }
 
+async function readResponseBody(response: Response): Promise<unknown> {
+  if (response.status === 204 || response.status === 205) {
+    return null;
+  }
+
+  const contentLength = response.headers.get("content-length");
+  if (contentLength === "0") {
+    return null;
+  }
+
+  const responseText = await response.text();
+  if (!responseText) {
+    return null;
+  }
+
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("application/json")) {
+    return responseText;
+  }
+
+  try {
+    return JSON.parse(responseText) as unknown;
+  } catch {
+    throw new ApiError("The server returned invalid JSON.", response.status);
+  }
+}
+
 export async function apiRequest<T>(
   path: string,
   options: ApiRequestOptions = {},
@@ -61,20 +88,13 @@ export async function apiRequest<T>(
     headers,
   });
 
-  const contentType = response.headers.get("content-type") ?? "";
-  const body: unknown = contentType.includes("application/json")
-    ? await response.json()
-    : null;
+  const body = await readResponseBody(response);
 
   if (!response.ok) {
     throw new ApiError(
       readErrorDetail(body) ?? `API request failed: ${response.status}`,
       response.status,
     );
-  }
-
-  if (response.status === 204) {
-    return undefined as T;
   }
 
   return body as T;
