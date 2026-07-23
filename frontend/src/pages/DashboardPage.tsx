@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Database, Search, ShieldCheck } from "lucide-react";
 
-import { fetchHealth } from "../api/client";
+import { fetchHealth } from "../api/core";
 
 export function DashboardPage() {
   const healthQuery = useQuery({
