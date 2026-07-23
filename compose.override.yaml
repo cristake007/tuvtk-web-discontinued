@@ -4,7 +4,7 @@ services:
       - python
       - manage.py
       - runserver
-      #- 0.0.0.0:8000
+      - 0.0.0.0:8000
 
     environment:
       DJANGO_DEBUG: "true"
@@ -37,7 +37,7 @@ services:
     command:
       - /bin/sh
       - -c
-      - npm install --no-package-lock && exec npm run dev -- --host 0.0.0.0
+      - npm install --include=dev --no-package-lock && exec npm run dev -- --host 0.0.0.0
 
     restart: unless-stopped
 
