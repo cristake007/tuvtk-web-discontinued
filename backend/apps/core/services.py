@@ -1,3 +1,4 @@
+from django.contrib.auth.models import AbstractBaseUser
 from django.http import HttpRequest
 
 from .models import ApplicationConfiguration, NavigationItem
@@ -8,6 +9,18 @@ DEFAULT_CONFIGURATION = {
     "organization_name": "TÜV Thüringen Karpat",
     "sidebar_title": "Workspace",
 }
+
+
+def serialize_shell_user(user: AbstractBaseUser) -> dict[str, object]:
+    display_name = user.get_full_name().strip() or user.get_username()
+
+    return {
+        "id": user.pk,
+        "username": user.get_username(),
+        "display_name": display_name,
+        "email": user.email,
+        "is_staff": user.is_staff,
+    }
 
 
 def get_core_bootstrap(request: HttpRequest) -> dict[str, object]:
@@ -50,20 +63,8 @@ def get_core_bootstrap(request: HttpRequest) -> dict[str, object]:
             }
         )
 
-    user_payload = None
-
-    if user.is_authenticated:
-        display_name = user.get_full_name().strip() or user.get_username()
-        user_payload = {
-            "id": user.pk,
-            "username": user.get_username(),
-            "display_name": display_name,
-            "email": user.email,
-            "is_staff": user.is_staff,
-        }
-
     return {
         "configuration": configuration_payload,
-        "user": user_payload,
+        "user": serialize_shell_user(user),
         "navigation": navigation_payload,
     }
