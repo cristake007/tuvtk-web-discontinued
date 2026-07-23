@@ -26,5 +26,14 @@ class NavigationItemSchema(Schema):
 
 class CoreBootstrapSchema(Schema):
     configuration: ShellConfigurationSchema
-    user: ShellUserSchema | None
+    user: ShellUserSchema
     navigation: list[NavigationItemSchema]
+
+
+class LoginRequestSchema(Schema):
+    username: str
+    password: str
+
+
+class ErrorSchema(Schema):
+    detail: str
