@@ -275,6 +275,7 @@ def get_holidays(
 def get_holiday_dates(*, year: int, months: list[int] | None = None) -> list[date]:
     return list(
         get_holidays(year=year, months=months)
+        .order_by("date")
         .values_list("date", flat=True)
         .distinct()
     )
