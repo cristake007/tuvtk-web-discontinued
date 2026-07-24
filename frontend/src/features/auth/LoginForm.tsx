@@ -114,18 +114,18 @@ export function LoginForm() {
   const serverError = getLoginError(loginMutation.error);
 
   return (
-    <div className="w-full max-w-md">
-      <div className="mb-9">
-        <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+    <div className="w-full max-w-sm">
+      <div className="mb-7">
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Autentificare
         </h1>
-        <p className="mt-3 text-sm leading-6 text-muted-foreground">
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
           Introdu datele contului tău pentru a continua.
         </p>
       </div>
 
       <form aria-busy={loginMutation.isPending} noValidate onSubmit={handleSubmit}>
-        <FieldGroup className="gap-5">
+        <FieldGroup className="gap-4">
           <Field data-invalid={Boolean(fieldErrors.username)}>
             <FieldLabel htmlFor="username">Nume de utilizator</FieldLabel>
             <Input
@@ -134,7 +134,7 @@ export function LoginForm() {
               autoCapitalize="none"
               autoComplete="username"
               autoFocus
-              className="h-12 rounded-sm"
+              className="h-11 rounded-sm"
               disabled={loginMutation.isPending}
               id="username"
               maxLength={150}
@@ -156,7 +156,7 @@ export function LoginForm() {
                 aria-describedby={fieldErrors.password ? "password-error" : undefined}
                 aria-invalid={Boolean(fieldErrors.password)}
                 autoComplete="current-password"
-                className="h-12 rounded-sm pr-12"
+                className="h-11 rounded-sm pr-11"
                 disabled={loginMutation.isPending}
                 id="password"
                 name="password"
@@ -169,7 +169,7 @@ export function LoginForm() {
               <button
                 aria-label={passwordVisible ? "Ascunde parola" : "Afișează parola"}
                 aria-pressed={passwordVisible}
-                className="absolute inset-y-0 right-0 grid w-12 cursor-pointer place-items-center text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                className="absolute inset-y-0 right-0 grid w-11 cursor-pointer place-items-center text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                 disabled={loginMutation.isPending}
                 onClick={() => setPasswordVisible((current) => !current)}
                 type="button"
@@ -185,20 +185,20 @@ export function LoginForm() {
           </Field>
 
           {serverError ? (
-            <Alert aria-live="polite" variant="destructive">
-              <AlertDescription>{serverError}</AlertDescription>
+            <Alert aria-live="polite" className="py-3" variant="destructive">
+              <AlertDescription className="text-sm">{serverError}</AlertDescription>
             </Alert>
           ) : null}
 
           <Button
-            className="h-12 w-full cursor-pointer rounded-sm"
+            className="h-11 w-full cursor-pointer rounded-sm font-medium"
             disabled={loginMutation.isPending}
             type="submit"
           >
             {loginMutation.isPending ? (
               <Spinner />
             ) : (
-              <LockKeyhole aria-hidden="true" />
+              <LockKeyhole aria-hidden="true" className="size-4" />
             )}
             {loginMutation.isPending ? "Se autentifică…" : "Autentificare"}
           </Button>
