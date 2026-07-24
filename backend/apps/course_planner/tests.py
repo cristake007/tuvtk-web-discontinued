@@ -1,11 +1,13 @@
 import io
+import tempfile
 from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from openpyxl import load_workbook
 
+from .models import CoursePlanGeneration
 from .scheduler import CourseScheduler
 
 
@@ -28,11 +30,19 @@ class CourseSchedulerTests(TestCase):
 
 class CoursePlannerApiTests(TestCase):
     def setUp(self):
+        self.media_directory = tempfile.TemporaryDirectory()
+        self.media_override = override_settings(MEDIA_ROOT=self.media_directory.name)
+        self.media_override.enable()
         self.user = get_user_model().objects.create_user(
             username="planner-user",
             password="test-password-123",
         )
         self.client.force_login(self.user)
+
+    def tearDown(self):
+        self.media_override.disable()
+        self.media_directory.cleanup()
+        super().tearDown()
 
     def course_file(self, content: bytes | None = None) -> SimpleUploadedFile:
         return SimpleUploadedFile(
@@ -64,7 +74,7 @@ class CoursePlannerApiTests(TestCase):
 
         self.assertEqual(response.status_code, 401)
 
-    def test_generate_schedule_from_csv(self):
+    def test_generate_schedule_from_csv_and_persist_history(self):
         response = self.client.post(
             "/api/v1/course-planner/generate",
             {
@@ -81,6 +91,54 @@ class CoursePlannerApiTests(TestCase):
         self.assertEqual(payload["course_count"], 1)
         self.assertEqual(len(payload["schedule"]), 2)
         self.assertEqual(payload["schedule"][0]["title"], "Auditor ISO 9001")
+        self.assertTrue(payload["generation"]["files"]["excel"]["available"])
+        self.assertFalse(payload["generation"]["files"]["word"]["available"])
+        self.assertFalse(payload["generation"]["files"]["xml"]["available"])
+
+        generation = CoursePlanGeneration.objects.get()
+        self.assertEqual(generation.created_by, self.user)
+        self.assertEqual(generation.source_filename, "cursuri.csv")
+        self.assertEqual(generation.months, [1, 2])
+        self.assertEqual(len(generation.schedule), 2)
+        self.assertTrue(generation.excel_file.storage.exists(generation.excel_file.name))
+
+    def test_history_lists_generation_and_downloads_saved_excel(self):
+        generate_response = self.generate_request(self.course_file())
+        generation_id = generate_response.json()["generation"]["id"]
+
+        history_response = self.client.get("/api/v1/course-planner/history")
+
+        self.assertEqual(history_response.status_code, 200)
+        history = history_response.json()
+        self.assertEqual(history["count"], 1)
+        self.assertEqual(history["results"][0]["id"], generation_id)
+        self.assertEqual(history["results"][0]["created_by"], "planner-user")
+
+        download_response = self.client.get(
+            f"/api/v1/course-planner/history/{generation_id}/files/excel"
+        )
+        self.assertEqual(download_response.status_code, 200)
+        self.assertTrue(
+            download_response["Content-Type"].startswith(
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            )
+        )
+        workbook = load_workbook(
+            io.BytesIO(b"".join(download_response.streaming_content)),
+            read_only=True,
+        )
+        self.assertEqual(workbook["Schedule"]["A2"].value, "Auditor ISO 9001")
+        workbook.close()
+
+    def test_unavailable_history_artifact_returns_not_found(self):
+        generate_response = self.generate_request(self.course_file())
+        generation_id = generate_response.json()["generation"]["id"]
+
+        response = self.client.get(
+            f"/api/v1/course-planner/history/{generation_id}/files/word"
+        )
+
+        self.assertEqual(response.status_code, 404)
 
     def test_generate_csv_with_excel_separator_directive(self):
         response = self.generate_request(
