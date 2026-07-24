@@ -35,27 +35,29 @@ type AppSidebarProps = {
   navigation: NavigationNode[];
 };
 
-const tooltipClassName =
-  "bg-primary text-primary-foreground [&>svg]:bg-primary [&>svg]:fill-primary";
+const sidebarTooltip = {
+  className: "bg-primary text-primary-foreground",
+  arrowClassName: "bg-primary fill-primary",
+  side: "right" as const,
+  sideOffset: 8,
+};
 
 const navigationLinkClassName = [
-  "relative h-10! cursor-pointer rounded-none! px-4! text-primary!",
+  "relative h-10 cursor-pointer rounded-none px-4 text-primary",
   "transition-[padding,color,background-color] duration-200 ease-out",
   "before:absolute before:inset-y-0 before:left-0 before:w-[3px]",
   "before:origin-center before:scale-y-0 before:bg-brand-red",
   "before:transition-transform before:duration-200 before:ease-out",
-  "hover:bg-primary/5! hover:pl-5! hover:text-brand-red! hover:before:scale-y-100",
-  "data-active:bg-primary/5! data-active:pl-5! data-active:font-semibold",
-  "data-active:text-brand-red! data-active:before:scale-y-100",
-  "group-data-[collapsible=icon]:mx-auto! group-data-[collapsible=icon]:justify-center!",
-  "group-data-[collapsible=icon]:px-0! group-data-[collapsible=icon]:before:hidden",
-  "group-data-[collapsible=icon]:hover:pl-0! group-data-[collapsible=icon]:data-active:pl-0!",
+  "hover:bg-primary/5 hover:pl-5 hover:text-brand-red hover:before:scale-y-100",
+  "data-active:bg-primary/5 data-active:pl-5 data-active:font-semibold",
+  "data-active:text-brand-red data-active:before:scale-y-100",
+  "group-data-[collapsible=icon]:mx-auto! group-data-[collapsible=icon]:before:hidden",
   "[&_svg]:text-current",
 ].join(" ");
 
 const navigationSubLinkClassName = [
   navigationLinkClassName,
-  "pl-8! hover:pl-9! data-active:pl-9!",
+  "pl-8 hover:pl-9 data-active:pl-9",
 ].join(" ");
 
 function isNodeActive(node: NavigationNode, pathname: string): boolean {
@@ -93,10 +95,8 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
         </span>
       </TooltipTrigger>
       <TooltipContent
-        className={tooltipClassName}
+        {...sidebarTooltip}
         hidden={state !== "collapsed" || isMobile}
-        side="right"
-        sideOffset={8}
       >
         {configuration.site_name}
       </TooltipContent>
@@ -106,10 +106,9 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
 
 function NavigationEntry({ item }: { item: NavigationNode }) {
   const location = useLocation();
-  const { isMobile, setOpenMobile, state } = useSidebar();
+  const { setOpenMobile } = useSidebar();
   const Icon = getNavigationIcon(item.icon);
   const active = isNodeActive(item, location.pathname);
-  const collapsed = state === "collapsed" && !isMobile;
 
   return (
     <SidebarMenuItem className="w-full">
@@ -123,19 +122,13 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
             to={item.path}
           />
         }
-        tooltip={
-          collapsed
-            ? {
-                children: item.label,
-                className: tooltipClassName,
-                side: "right",
-                sideOffset: 8,
-              }
-            : undefined
-        }
+        tooltip={{
+          children: item.label,
+          ...sidebarTooltip,
+        }}
       >
         <Icon aria-hidden="true" />
-        <span>{item.label}</span>
+        <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
       </SidebarMenuButton>
 
       {item.children.length > 0 ? (
@@ -171,7 +164,7 @@ export function AppSidebar({ configuration, navigation }: AppSidebarProps) {
 
       <SidebarContent>
         <SidebarGroup className="p-0">
-          <SidebarGroupLabel className="px-4 text-primary/65">
+          <SidebarGroupLabel className="px-4 text-primary/65 group-data-[collapsible=icon]:hidden">
             Workspace
           </SidebarGroupLabel>
           <SidebarGroupContent>
