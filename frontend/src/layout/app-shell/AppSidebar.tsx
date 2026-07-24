@@ -116,7 +116,7 @@ function BrandSidebarRail() {
   return (
     <button
       aria-label={expanded ? "Restrânge navigația" : "Extinde navigația"}
-      className="group/rail absolute inset-y-0 z-40 hidden w-7 cursor-pointer items-center justify-center group-data-[side=left]:-right-3.5 group-data-[side=right]:-left-3.5 sm:flex"
+      className="group/rail absolute inset-y-0 z-40 hidden w-7 cursor-pointer items-center justify-center group-data-[side=left]:-right-3.5 group-data-[side=right]:-left-3.5 md:flex"
       onClick={toggleSidebar}
       title={expanded ? "Restrânge navigația" : "Extinde navigația"}
       type="button"
