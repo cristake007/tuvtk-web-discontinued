@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { AppShell } from "../../layout/AppShell";
-import { LoginPage } from "../../pages/LoginPage";
+import { ApplicationState } from "@/components/ApplicationState";
+import { AppShell } from "@/layout/AppShell";
+import { LoginPage } from "@/pages/LoginPage";
+
 import { fetchAuthenticationSession } from "./api";
 import { authQueryKeys } from "./queryKeys";
 
@@ -15,19 +17,22 @@ export function AuthenticationGate() {
 
   if (sessionQuery.isPending) {
     return (
-      <div className="auth-state" role="status">
-        <div className="auth-state__spinner" />
-        <span>Checking your session…</span>
-      </div>
+      <ApplicationState
+        description="Verifying your Django session before loading the workspace."
+        loading
+        title="Checking your session"
+      />
     );
   }
 
   if (sessionQuery.isError) {
     return (
-      <div className="auth-state auth-state--error" role="alert">
-        <strong>The application server could not be reached.</strong>
-        <span>Check the Django container and reload the page.</span>
-      </div>
+      <ApplicationState
+        actionLabel="Try again"
+        description="The application server could not be reached. Check the Django container and retry."
+        onAction={() => void sessionQuery.refetch()}
+        title="The server is unavailable"
+      />
     );
   }
 
