@@ -5,6 +5,10 @@ import { Quote } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { LoginForm } from "@/features/auth/LoginForm";
 import {
+  fallbackLoginQuotes,
+  fetchRomanianLoginQuotes,
+} from "@/features/auth/loginQuotes";
+import {
   fetchPublicBranding,
   publicBrandingQueryKey,
 } from "@/features/branding/api";
@@ -17,47 +21,56 @@ const fallbackBranding: PublicBranding = {
   logo_url: null,
 };
 
-const workPrinciples = [
-  "Calitatea începe cu atenția acordată fiecărui detaliu.",
-  "Încrederea se construiește prin consecvență, claritate și responsabilitate.",
-  "Procesele bine gândite transformă munca de zi cu zi în rezultate predictibile.",
-  "Îmbunătățirea continuă înseamnă pași mici, făcuți corect și constant.",
-];
-
 function RotatingQuote() {
+  const quotesQuery = useQuery({
+    queryKey: ["login-quotes", "ro-wikiquote"],
+    queryFn: ({ signal }) => fetchRomanianLoginQuotes(signal),
+    retry: 1,
+    staleTime: 30 * 60_000,
+    refetchOnWindowFocus: false,
+  });
+  const quotes = quotesQuery.data?.length
+    ? quotesQuery.data
+    : fallbackLoginQuotes;
   const [quoteIndex, setQuoteIndex] = useState(
-    () => Math.floor(Math.random() * workPrinciples.length),
+    () => Math.floor(Math.random() * quotes.length),
   );
 
   useEffect(() => {
+    setQuoteIndex((current) => current % quotes.length);
+  }, [quotes.length]);
+
+  useEffect(() => {
     const interval = window.setInterval(() => {
-      setQuoteIndex((current) => (current + 1) % workPrinciples.length);
-    }, 8_000);
+      setQuoteIndex((current) => (current + 1) % quotes.length);
+    }, 12_000);
 
     return () => window.clearInterval(interval);
-  }, []);
+  }, [quotes.length]);
+
+  const quote = quotes[quoteIndex] ?? fallbackLoginQuotes[0];
 
   return (
-    <div className="max-w-md">
-      <Quote aria-hidden="true" className="size-7 text-brand-red" strokeWidth={1.75} />
+    <div className="mx-auto flex max-w-lg flex-col items-center text-center">
+      <Quote
+        aria-hidden="true"
+        className="size-7 text-brand-red"
+        strokeWidth={1.75}
+      />
       <blockquote
         className="mt-5 text-xl leading-8 font-medium tracking-tight text-foreground"
-        key={quoteIndex}
+        key={quote.text}
       >
-        {workPrinciples[quoteIndex]}
+        {quote.text}
       </blockquote>
-      <div aria-hidden="true" className="mt-7 flex gap-2">
-        {workPrinciples.map((principle, index) => (
-          <span
-            className={
-              index === quoteIndex
-                ? "h-1 w-8 bg-primary transition-all"
-                : "h-1 w-3 bg-border transition-all"
-            }
-            key={principle}
-          />
-        ))}
-      </div>
+      <a
+        className="mt-5 text-xs font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
+        href={quote.sourceUrl}
+        rel="noreferrer"
+        target="_blank"
+      >
+        {quote.attribution}
+      </a>
     </div>
   );
 }
@@ -75,41 +88,46 @@ export function LoginPage() {
   return (
     <main className="min-h-svh bg-background">
       <div className="grid min-h-svh w-full lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
-        <section className="flex min-h-[44svh] items-center justify-center px-6 py-12 sm:px-10 lg:min-h-svh lg:px-14 xl:px-20">
-          <div className="w-full max-w-lg">
-            <PublicBrandMark branding={branding} />
-            <div className="mt-7">
-              <p className="text-xl font-semibold tracking-tight text-foreground">
-                {branding.organization_name}
-              </p>
-              <p className="mt-1 text-sm font-medium text-primary">
-                {branding.site_name}
-              </p>
-            </div>
+        <section className="flex min-h-[48svh] items-center justify-center px-6 py-12 sm:px-10 lg:min-h-svh lg:px-14 xl:px-20">
+          <div className="w-full max-w-xl text-center">
+            <PublicBrandMark branding={branding} className="mx-auto" />
+            <p className="mt-8 text-2xl font-semibold tracking-tight text-foreground">
+              {branding.organization_name}
+            </p>
 
-            <div className="mt-14 lg:mt-20">
+            <div className="mt-16 lg:mt-24">
               <RotatingQuote />
             </div>
           </div>
         </section>
 
         <div className="px-6 lg:hidden">
-          <Separator className="bg-primary/15" />
+          <Separator
+            className="bg-transparent"
+            style={{
+              background:
+                "linear-gradient(to right, transparent 0%, rgb(22 65 148 / 0.45) 20%, #164194 50%, rgb(22 65 148 / 0.45) 80%, transparent 100%)",
+            }}
+          />
         </div>
 
         <div className="relative hidden items-center justify-center px-8 lg:flex">
-          <div className="relative h-[58vh] min-h-96 max-h-[36rem]">
-            <span className="absolute top-0 left-1/2 size-2 -translate-x-1/2 -translate-y-1/2 rotate-45 border border-brand-red bg-background" />
+          <div className="h-[58vh] min-h-96 max-h-[36rem] w-[3px]">
             <Separator
-              className="h-full bg-primary/20"
+              className="h-full w-[3px] bg-transparent"
               orientation="vertical"
+              style={{
+                background:
+                  "linear-gradient(to bottom, transparent 0%, rgb(22 65 148 / 0.38) 14%, #164194 32%, #164194 68%, rgb(22 65 148 / 0.38) 86%, transparent 100%)",
+                clipPath:
+                  "polygon(50% 0%, 100% 16%, 100% 84%, 50% 100%, 0% 84%, 0% 16%)",
+              }}
             />
-            <span className="absolute bottom-0 left-1/2 size-2 -translate-x-1/2 translate-y-1/2 rotate-45 border border-brand-red bg-background" />
           </div>
         </div>
 
-        <section className="flex min-h-[56svh] items-center justify-center px-6 py-12 sm:px-10 lg:min-h-svh lg:px-14 xl:px-20">
-          <LoginForm siteName={branding.site_name} />
+        <section className="flex min-h-[52svh] items-center justify-center px-6 py-12 sm:px-10 lg:min-h-svh lg:px-14 xl:px-20">
+          <LoginForm />
         </section>
       </div>
     </main>
