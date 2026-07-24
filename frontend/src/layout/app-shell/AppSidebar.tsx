@@ -46,6 +46,7 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
+        className="cursor-pointer"
         isActive={active}
         render={
           <NavLink
@@ -66,6 +67,7 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
           {item.children.map((child) => (
             <SidebarMenuSubItem key={child.key}>
               <SidebarMenuSubButton
+                className="cursor-pointer"
                 isActive={isNavigationPathActive(location.pathname, child.path)}
                 render={
                   <NavLink
@@ -90,7 +92,7 @@ export function AppSidebar({ configuration, navigation }: AppSidebarProps) {
       <SidebarHeader className="border-b border-sidebar-border p-2">
         <NavLink
           aria-label={`${configuration.site_name} dashboard`}
-          className="flex min-h-12 items-center gap-3 rounded-md px-2 outline-none transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+          className="flex min-h-12 cursor-pointer items-center gap-3 rounded-md px-2 outline-none transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
           to="/"
         >
           <span className="grid size-8 shrink-0 place-items-center rounded-md bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">
