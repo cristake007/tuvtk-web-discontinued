@@ -79,8 +79,19 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
     previousState.current = state;
 
     if (state === "collapsed") {
-      setLogoExpanded(false);
-      return undefined;
+      let secondFrame = 0;
+      const firstFrame = window.requestAnimationFrame(() => {
+        secondFrame = window.requestAnimationFrame(() => {
+          setLogoExpanded(false);
+        });
+      });
+
+      return () => {
+        window.cancelAnimationFrame(firstFrame);
+        if (secondFrame) {
+          window.cancelAnimationFrame(secondFrame);
+        }
+      };
     }
 
     setLogoExpanded(false);
