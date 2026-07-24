@@ -23,7 +23,7 @@ const fallbackBranding: PublicBranding = {
 
 function RotatingQuote() {
   const quotesQuery = useQuery({
-    queryKey: ["login-quotes", "ro-wikiquote"],
+    queryKey: ["login-quotes", "ro-wikiquote", "professional-authors"],
     queryFn: ({ signal }) => fetchRomanianLoginQuotes(signal),
     retry: 1,
     staleTime: 30 * 60_000,
@@ -58,19 +58,14 @@ function RotatingQuote() {
         strokeWidth={1.75}
       />
       <blockquote
-        className="mt-5 text-xl leading-8 font-medium tracking-tight text-foreground"
+        className="mt-5 text-base leading-7 font-medium tracking-tight text-foreground"
         key={quote.text}
       >
-        {quote.text}
+        „{quote.text}”
       </blockquote>
-      <a
-        className="mt-5 text-xs font-medium text-muted-foreground underline-offset-4 transition-colors hover:text-primary hover:underline"
-        href={quote.sourceUrl}
-        rel="noreferrer"
-        target="_blank"
-      >
+      <cite className="mt-4 text-sm font-medium not-italic text-primary/75">
         {quote.attribution}
-      </a>
+      </cite>
     </div>
   );
 }
