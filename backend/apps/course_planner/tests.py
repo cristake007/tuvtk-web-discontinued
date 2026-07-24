@@ -53,9 +53,9 @@ class CoursePlannerApiTests(TestCase):
             {
                 "input_file": self.course_file(),
                 "year": 2027,
-                "months": [1],
+                "months": "1",
                 "randomness": 5,
-                "holidays": [],
+                "holidays": "",
             },
         )
 
@@ -67,9 +67,9 @@ class CoursePlannerApiTests(TestCase):
             {
                 "input_file": self.course_file(),
                 "year": 2027,
-                "months": [1, 2],
+                "months": "1,2",
                 "randomness": 5,
-                "holidays": ["01.01.2027"],
+                "holidays": "01.01.2027",
             },
         )
 
@@ -85,9 +85,9 @@ class CoursePlannerApiTests(TestCase):
             {
                 "input_file": self.course_file(b"Nume;Durata\nCurs;2\n"),
                 "year": 2027,
-                "months": [1],
+                "months": "1",
                 "randomness": 5,
-                "holidays": [],
+                "holidays": "",
             },
         )
 
