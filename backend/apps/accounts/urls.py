@@ -2,7 +2,6 @@ from django.urls import path
 
 from .views import CsrfCookieView, LoginView, LogoutView, SessionView
 
-
 app_name = "accounts-api"
 
 urlpatterns = [
