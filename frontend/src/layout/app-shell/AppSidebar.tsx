@@ -39,15 +39,15 @@ const sidebarTooltip = {
 };
 
 const navigationLinkClassName = [
-  "relative h-10 cursor-pointer rounded-none px-4 text-primary",
-  "transition-[padding,color,background-color] duration-200 ease-out",
+  "relative mx-auto! h-10 cursor-pointer rounded-none px-4 text-primary",
+  "transition-[width,height,padding,color,background-color] duration-200 ease-linear",
   "before:absolute before:inset-y-0 before:left-0 before:w-[3px]",
   "before:origin-center before:scale-y-0 before:bg-brand-red",
   "before:transition-transform before:duration-200 before:ease-out",
   "hover:bg-primary/5 hover:pl-5 hover:text-brand-red hover:before:scale-y-100",
   "data-active:bg-primary/5 data-active:pl-5 data-active:font-semibold",
   "data-active:text-brand-red data-active:before:scale-y-100",
-  "group-data-[collapsible=icon]:mx-auto! group-data-[collapsible=icon]:before:hidden",
+  "group-data-[collapsible=icon]:before:hidden",
   "[&_svg]:text-current",
 ].join(" ");
 
@@ -141,7 +141,7 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
         }}
       >
         <Icon aria-hidden="true" />
-        <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+        <span className="whitespace-nowrap">{item.label}</span>
       </SidebarMenuButton>
 
       {item.children.length > 0 ? (
@@ -177,7 +177,7 @@ export function AppSidebar({ configuration, navigation }: AppSidebarProps) {
 
       <SidebarContent>
         <SidebarGroup className="p-0">
-          <SidebarGroupLabel className="px-4 text-primary/65 group-data-[collapsible=icon]:hidden">
+          <SidebarGroupLabel className="px-4 text-primary/65">
             Workspace
           </SidebarGroupLabel>
           <SidebarGroupContent>
