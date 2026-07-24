@@ -7,7 +7,7 @@ import {
   buildNavigationTree,
   findCurrentNavigationItem,
   isNavigationPathActive,
-} from "./navigation.js";
+} from "./navigation-model.js";
 
 const items: NavigationItem[] = [
   {
