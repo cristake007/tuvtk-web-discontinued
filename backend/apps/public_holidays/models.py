@@ -44,8 +44,8 @@ class PublicHoliday(models.Model):
             ),
             models.CheckConstraint(
                 condition=(
-                    Q(source=Source.INTERNAL, is_internal=True)
-                    | Q(source=Source.NAGER, is_internal=False)
+                    Q(source="internal", is_internal=True)
+                    | Q(source="nager", is_internal=False)
                 ),
                 name="public_holiday_source_internal_consistent",
             ),
