@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 from rest_framework import serializers
@@ -34,20 +35,12 @@ class CoursePlannerSettingsSerializer(serializers.Serializer):
         return normalized
 
 
-class GenerateScheduleSerializer(CoursePlannerSettingsSerializer):
+class GenerateScheduleSerializer(serializers.Serializer):
     input_file = serializers.FileField()
-    months = serializers.ListField(
-        child=serializers.IntegerField(min_value=1, max_value=12),
-        allow_empty=False,
-        max_length=12,
-    )
-    holidays = serializers.ListField(
-        child=serializers.CharField(max_length=10),
-        allow_empty=True,
-        default=list,
-        max_length=366,
-        required=False,
-    )
+    year = serializers.IntegerField(min_value=2024, max_value=2100)
+    months = serializers.CharField(max_length=64)
+    randomness = serializers.IntegerField(min_value=1, max_value=10)
+    holidays = serializers.CharField(allow_blank=True, default="", required=False)
 
     def validate_input_file(self, value):
         extension = Path(value.name).suffix.casefold()
@@ -61,6 +54,26 @@ class GenerateScheduleSerializer(CoursePlannerSettingsSerializer):
         if value.size > MAX_UPLOAD_BYTES:
             raise serializers.ValidationError("Fișierul trebuie să aibă cel mult 20 MB.")
         return value
+
+    def validate_months(self, value):
+        try:
+            months = [int(item.strip()) for item in value.split(",") if item.strip()]
+        except ValueError as exc:
+            raise serializers.ValidationError("Lunile selectate nu sunt valide.") from exc
+        months = list(dict.fromkeys(months))
+        if not months:
+            raise serializers.ValidationError("Selectează cel puțin o lună.")
+        if len(months) > 12 or any(month < 1 or month > 12 for month in months):
+            raise serializers.ValidationError("Lunile trebuie să fie între 1 și 12.")
+        return months
+
+    def validate_holidays(self, value):
+        raw_values = [item.strip() for item in re.split(r"[\n,;]+", value) if item.strip()]
+        try:
+            normalized, _ = parse_holidays(raw_values)
+        except ValueError as exc:
+            raise serializers.ValidationError(str(exc)) from exc
+        return normalized
 
 
 class ScheduledCourseSerializer(serializers.Serializer):
