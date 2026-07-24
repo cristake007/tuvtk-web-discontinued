@@ -9,12 +9,16 @@ SVG_NAMESPACE = "http://www.w3.org/2000/svg"
 XLINK_NAMESPACE = "http://www.w3.org/1999/xlink"
 
 DANGEROUS_ELEMENTS = {
+    "animate",
+    "animatemotion",
+    "animatetransform",
     "audio",
     "embed",
     "foreignobject",
     "iframe",
     "object",
     "script",
+    "set",
     "video",
 }
 DANGEROUS_CSS_TOKENS = (
