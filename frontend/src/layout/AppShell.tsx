@@ -92,9 +92,9 @@ export function AppShell() {
           />
 
           <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-white">
-            <div className="mx-auto flex w-full max-w-screen-2xl flex-1 flex-col p-4 sm:p-6 lg:p-8">
+            <div className="flex w-full flex-1 flex-col">
               {logoutMutation.isError ? (
-                <Alert className="mb-4 border-warning/40 bg-warning/10">
+                <Alert className="m-4 mb-0 border-warning/40 bg-warning/10 sm:m-6 sm:mb-0 lg:m-8 lg:mb-0">
                   <AlertTriangle aria-hidden="true" />
                   <AlertTitle>Sign out failed</AlertTitle>
                   <AlertDescription>
