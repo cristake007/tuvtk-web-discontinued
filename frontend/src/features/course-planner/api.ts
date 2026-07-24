@@ -1,6 +1,8 @@
 import { apiDownload, apiRequest, ensureCsrfCookie } from "@/api/http";
 
 import type {
+  CoursePlanFileType,
+  CoursePlanHistoryResponse,
   CoursePlannerInput,
   CoursePlannerSettings,
   GenerateScheduleResponse,
@@ -9,7 +11,14 @@ import type {
 
 const coursePlannerPath = "/api/v1/course-planner";
 
+const fileAcceptTypes: Record<CoursePlanFileType, string> = {
+  excel: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  word: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  xml: "application/xml",
+};
+
 export const coursePlannerQueryKey = ["course-planner", "settings"] as const;
+export const coursePlannerHistoryQueryKey = ["course-planner", "history"] as const;
 
 export function fetchCoursePlannerSettings(): Promise<CoursePlannerSettings> {
   return apiRequest<CoursePlannerSettings>(`${coursePlannerPath}/settings`, {
@@ -46,6 +55,23 @@ export async function generateCourseSchedule(
   });
 }
 
+export function fetchCoursePlanHistory(page: number): Promise<CoursePlanHistoryResponse> {
+  const search = new URLSearchParams({ page: String(page), page_size: "25" });
+  return apiRequest<CoursePlanHistoryResponse>(`${coursePlannerPath}/history?${search}`, {
+    cache: "no-store",
+  });
+}
+
+export function downloadCoursePlanFile(input: {
+  generationId: string;
+  fileType: CoursePlanFileType;
+}): Promise<Blob> {
+  return apiDownload(
+    `${coursePlannerPath}/history/${input.generationId}/files/${input.fileType}`,
+    { accept: fileAcceptTypes[input.fileType] },
+  );
+}
+
 export async function exportCourseSchedule(input: {
   year: number;
   holidays: string[];
@@ -56,5 +82,6 @@ export async function exportCourseSchedule(input: {
     method: "POST",
     body: JSON.stringify(input),
     includeCsrf: true,
+    accept: fileAcceptTypes.excel,
   });
 }
