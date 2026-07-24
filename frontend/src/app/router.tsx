@@ -10,6 +10,11 @@ const DashboardPage = lazy(async () => {
   return { default: module.DashboardPage };
 });
 
+const SettingsPage = lazy(async () => {
+  const module = await import("../pages/SettingsPage");
+  return { default: module.SettingsPage };
+});
+
 function DashboardRoute() {
   return (
     <Suspense
@@ -22,6 +27,22 @@ function DashboardRoute() {
       }
     >
       <DashboardPage />
+    </Suspense>
+  );
+}
+
+function SettingsRoute() {
+  return (
+    <Suspense
+      fallback={
+        <ApplicationState
+          description="Loading application branding and configuration."
+          loading
+          title="Loading settings"
+        />
+      }
+    >
+      <SettingsPage />
     </Suspense>
   );
 }
@@ -55,12 +76,7 @@ export const router = createBrowserRouter([
       },
       {
         path: "settings",
-        element: (
-          <ModulePlaceholderPage
-            title="Settings"
-            description="Application configuration and database-backed navigation will be managed here."
-          />
-        ),
+        element: <SettingsRoute />,
       },
       {
         path: "*",

@@ -1,3 +1,4 @@
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import type { ShellConfiguration } from "@/api/types";
@@ -7,7 +8,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -18,11 +18,6 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 import {
   getNavigationIcon,
@@ -43,15 +38,15 @@ const sidebarTooltip = {
 };
 
 const navigationLinkClassName = [
-  "relative h-10 cursor-pointer rounded-none px-4 text-primary",
-  "transition-[padding,color,background-color] duration-200 ease-out",
+  "relative mx-auto! h-10 cursor-pointer rounded-none px-4 text-primary",
+  "transition-[width,height,padding,color,background-color] duration-200 ease-linear",
   "before:absolute before:inset-y-0 before:left-0 before:w-[3px]",
   "before:origin-center before:scale-y-0 before:bg-brand-red",
   "before:transition-transform before:duration-200 before:ease-out",
   "hover:bg-primary/5 hover:pl-5 hover:text-brand-red hover:before:scale-y-100",
   "data-active:bg-primary/5 data-active:pl-5 data-active:font-semibold",
   "data-active:text-brand-red data-active:before:scale-y-100",
-  "group-data-[collapsible=icon]:mx-auto! group-data-[collapsible=icon]:before:hidden",
+  "group-data-[collapsible=icon]:before:hidden",
   "[&_svg]:text-current",
 ].join(" ");
 
@@ -68,39 +63,70 @@ function isNodeActive(node: NavigationNode, pathname: string): boolean {
 }
 
 function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) {
-  const { isMobile, setOpenMobile, state } = useSidebar();
+  const { setOpenMobile, state } = useSidebar();
+  const [logoFailed, setLogoFailed] = useState(false);
+  const [logoExpanded, setLogoExpanded] = useState(state !== "collapsed");
+  const previousState = useRef(state);
+
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [configuration.logo_url]);
+
+  useLayoutEffect(() => {
+    if (previousState.current === state) {
+      return undefined;
+    }
+
+    previousState.current = state;
+
+    if (state === "collapsed") {
+      setLogoExpanded(false);
+      return undefined;
+    }
+
+    setLogoExpanded(false);
+
+    let secondFrame = 0;
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        setLogoExpanded(true);
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      if (secondFrame) {
+        window.cancelAnimationFrame(secondFrame);
+      }
+    };
+  }, [state]);
+
+  const showConfiguredLogo = Boolean(configuration.logo_url) && !logoFailed;
 
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <NavLink
-            aria-label={`${configuration.site_name} dashboard`}
-            className="flex h-full cursor-pointer items-center gap-3 px-2 outline-none transition-colors hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
-            onClick={() => setOpenMobile(false)}
-            to="/"
-          />
-        }
-      >
-        <span className="grid size-8 shrink-0 place-items-center bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">
-          T
+    <NavLink
+      aria-label={`${configuration.site_name} dashboard`}
+      className="relative flex h-full w-full cursor-pointer items-center justify-center overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+      onClick={() => setOpenMobile(false)}
+      to="/"
+    >
+      {showConfiguredLogo ? (
+        <img
+          alt={`${configuration.organization_name} logo`}
+          className={[
+            "absolute h-16 w-52 max-w-none object-contain transform-gpu",
+            "transition-transform duration-200 ease-linear motion-reduce:transition-none",
+            logoExpanded ? "scale-[1.55]" : "scale-[0.34]",
+          ].join(" ")}
+          onError={() => setLogoFailed(true)}
+          src={configuration.logo_url ?? undefined}
+        />
+      ) : (
+        <span className="text-[11px] font-bold tracking-normal text-primary">
+          TUVTK
         </span>
-        <span className="min-w-0 leading-tight group-data-[collapsible=icon]:hidden">
-          <span className="block truncate text-sm font-semibold text-primary">
-            {configuration.site_name}
-          </span>
-          <span className="block truncate text-xs text-primary/65">
-            {configuration.sidebar_title}
-          </span>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent
-        {...sidebarTooltip}
-        hidden={state !== "collapsed" || isMobile}
-      >
-        {configuration.site_name}
-      </TooltipContent>
-    </Tooltip>
+      )}
+    </NavLink>
   );
 }
 
@@ -128,7 +154,7 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
         }}
       >
         <Icon aria-hidden="true" />
-        <span className="group-data-[collapsible=icon]:hidden">{item.label}</span>
+        <span className="whitespace-nowrap">{item.label}</span>
       </SidebarMenuButton>
 
       {item.children.length > 0 ? (
@@ -158,15 +184,12 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
 export function AppSidebar({ configuration, navigation }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" variant="sidebar">
-      <SidebarHeader className="h-16 border-b border-sidebar-border p-2">
+      <SidebarHeader className="h-16 border-b border-sidebar-border p-0">
         <SidebarBrand configuration={configuration} />
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup className="p-0">
-          <SidebarGroupLabel className="px-4 text-primary/65 group-data-[collapsible=icon]:hidden">
-            Workspace
-          </SidebarGroupLabel>
+        <SidebarGroup className="p-0 pt-3">
           <SidebarGroupContent>
             <SidebarMenu aria-label="Primary navigation" className="gap-0">
               {navigation.map((item) => (

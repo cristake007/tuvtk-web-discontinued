@@ -70,7 +70,10 @@ export async function apiRequest<T>(
 
   headers.set("Accept", "application/json");
 
-  if (requestOptions.body && !headers.has("Content-Type")) {
+  const bodyIsFormData =
+    typeof FormData !== "undefined" && requestOptions.body instanceof FormData;
+
+  if (requestOptions.body && !bodyIsFormData && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
