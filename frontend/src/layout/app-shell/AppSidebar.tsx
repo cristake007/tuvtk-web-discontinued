@@ -207,8 +207,8 @@ function BrandSidebarRail() {
         aria-hidden="true"
         className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-sidebar-border/70 transition-[background-color,box-shadow] duration-200 group-hover/rail:bg-primary group-hover/rail:shadow-[0_0_3px_rgb(22_65_148_/_0.18)]"
       />
-      <span className="relative z-10 grid size-7 aspect-square shrink-0 place-items-center overflow-hidden rounded-full border border-sidebar-border bg-white p-0 text-sidebar-foreground/70 shadow-sm transition-[border-color,color,transform,box-shadow] duration-200 group-hover/rail:scale-105 group-hover/rail:border-primary group-hover/rail:text-primary group-hover/rail:shadow-primary/15">
-        <RailIcon aria-hidden="true" className="size-3.5" />
+      <span className="relative z-10 grid size-6 aspect-square shrink-0 place-items-center overflow-hidden rounded-full border border-sidebar-border bg-white p-0 text-sidebar-foreground/70 shadow-sm transition-[border-color,color,transform,box-shadow] duration-200 group-hover/rail:scale-105 group-hover/rail:border-primary group-hover/rail:text-primary group-hover/rail:shadow-primary/15">
+        <RailIcon aria-hidden="true" className="size-3" />
       </span>
     </button>
   );
