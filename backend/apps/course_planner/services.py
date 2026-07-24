@@ -1,9 +1,13 @@
 import random
 from datetime import date, datetime
+from pathlib import Path
 from typing import Any, Sequence
 
-from .files import CourseInput
-from .models import CoursePlannerSettings
+from django.core.files.base import ContentFile
+from django.db import transaction
+
+from .files import CourseInput, create_excel_export
+from .models import CoursePlanGeneration, CoursePlannerSettings
 from .scheduler import CourseScheduler
 
 MONTH_NAMES_RO = {
@@ -90,6 +94,43 @@ def serialize_settings(settings: CoursePlannerSettings) -> dict[str, Any]:
         "randomness": settings.randomness,
         "holidays": settings.holidays,
     }
+
+
+def create_course_plan_generation(
+    *,
+    created_by,
+    source_filename: str,
+    year: int,
+    months: Sequence[int],
+    randomness: int,
+    holidays: list[str],
+    course_count: int,
+    schedule: list[dict[str, Any]],
+) -> CoursePlanGeneration:
+    excel_data = create_excel_export(schedule, holidays)
+    generation = CoursePlanGeneration(
+        created_by=created_by,
+        source_filename=Path(source_filename).name[:255],
+        year=year,
+        months=list(months),
+        randomness=randomness,
+        holidays=holidays,
+        course_count=course_count,
+        schedule=schedule,
+    )
+    filename = f"planificare_cursuri_{year}.xlsx"
+    generation.excel_file.save(filename, ContentFile(excel_data), save=False)
+
+    try:
+        with transaction.atomic():
+            generation.full_clean()
+            generation.save()
+    except Exception:
+        if generation.excel_file.name:
+            generation.excel_file.storage.delete(generation.excel_file.name)
+        raise
+
+    return generation
 
 
 def generate_schedule(
