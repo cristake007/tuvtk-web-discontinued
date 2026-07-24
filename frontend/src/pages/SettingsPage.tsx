@@ -1,5 +1,10 @@
 import { useEffect, useRef, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  type QueryClient,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { ImageUp, Trash2 } from "lucide-react";
 
 import {
@@ -24,7 +29,7 @@ import {
 const MAX_LOGO_BYTES = 256 * 1024;
 
 function updateCachedConfiguration(
-  queryClient: ReturnType<typeof useQueryClient>,
+  queryClient: QueryClient,
   configuration: ShellConfiguration,
 ) {
   queryClient.setQueryData<CoreBootstrap>(coreBootstrapQueryKey, (current) =>
@@ -135,6 +140,12 @@ export function SettingsPage() {
     formatMutationError(removeMutation.error);
   const isSaving = uploadMutation.isPending || removeMutation.isPending;
 
+  function clearFileInput() {
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  }
+
   function selectLogo(file: File | undefined) {
     uploadMutation.reset();
     removeMutation.reset();
@@ -149,18 +160,26 @@ export function SettingsPage() {
       file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg");
 
     if (!isSvg) {
+      clearFileInput();
       setSelectedFile(null);
       setSelectionError("Select an SVG file.");
       return;
     }
 
     if (file.size > MAX_LOGO_BYTES) {
+      clearFileInput();
       setSelectedFile(null);
       setSelectionError("The SVG file must be 256 KB or smaller.");
       return;
     }
 
     setSelectedFile(file);
+  }
+
+  function removeConfiguredLogo() {
+    uploadMutation.reset();
+    setSelectionError(null);
+    removeMutation.mutate();
   }
 
   return (
@@ -255,7 +274,7 @@ export function SettingsPage() {
             </Button>
             <Button
               disabled={!configuredLogoUrl || isSaving}
-              onClick={() => removeMutation.mutate()}
+              onClick={removeConfiguredLogo}
               type="button"
               variant="destructive"
             >
