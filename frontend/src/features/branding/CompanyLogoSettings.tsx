@@ -1,15 +1,19 @@
+import { useEffect } from "react";
 import { ImageUp, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 
 import { ApplicationState } from "@/components/ApplicationState";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { FileUploadField } from "@/components/FileUploadField";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
 
 import { useCompanyLogoSettings } from "./useCompanyLogoSettings";
 
@@ -18,7 +22,6 @@ export function CompanyLogoSettings() {
     bootstrapQuery,
     configuredLogoUrl,
     displayedLogoUrl,
-    fileInputRef,
     isSaving,
     mutationError,
     removeConfiguredLogo,
@@ -32,12 +35,40 @@ export function CompanyLogoSettings() {
     uploadSuccess,
   } = useCompanyLogoSettings();
 
+  useEffect(() => {
+    if (selectionError) {
+      toast.warning("Fișierul selectat nu este valid", {
+        description: selectionError,
+      });
+    }
+  }, [selectionError]);
+
+  useEffect(() => {
+    if (mutationError) {
+      toast.error("Sigla nu a putut fi actualizată", {
+        description: mutationError,
+      });
+    }
+  }, [mutationError]);
+
+  useEffect(() => {
+    if (uploadSuccess) {
+      toast.success("Sigla companiei a fost actualizată.");
+    }
+  }, [uploadSuccess]);
+
+  useEffect(() => {
+    if (removeSuccess) {
+      toast.success("Sigla companiei a fost eliminată.");
+    }
+  }, [removeSuccess]);
+
   if (bootstrapQuery.isPending) {
     return (
       <ApplicationState
-        description="Loading the current application configuration."
+        description="Se încarcă configurația vizuală a aplicației."
         loading
-        title="Loading settings"
+        title="Se încarcă setările"
       />
     );
   }
@@ -45,10 +76,10 @@ export function CompanyLogoSettings() {
   if (bootstrapQuery.isError || !bootstrapQuery.data) {
     return (
       <ApplicationState
-        actionLabel="Try again"
-        description="The application settings could not be loaded."
+        actionLabel="Încearcă din nou"
+        description="Setările aplicației nu au putut fi încărcate."
         onAction={() => void bootstrapQuery.refetch()}
-        title="Settings are unavailable"
+        title="Setările nu sunt disponibile"
       />
     );
   }
@@ -56,99 +87,75 @@ export function CompanyLogoSettings() {
   if (!bootstrapQuery.data.user.is_staff) {
     return (
       <ApplicationState
-        description="Administrator access is required to change application branding."
-        title="Access denied"
+        description="Este necesar acces de administrator pentru modificarea identității vizuale."
+        title="Acces restricționat"
       />
     );
   }
 
   return (
-    <Card className="max-w-3xl">
-      <CardHeader>
-        <CardTitle>Company logo</CardTitle>
+    <Card className="max-w-4xl shadow-sm">
+      <CardHeader className="border-b">
+        <CardTitle>Sigla companiei</CardTitle>
         <CardDescription>
-          Upload a UTF-8 SVG file. Scripts, external resources, event handlers,
-          and unsafe CSS are rejected by the backend.
+          Sigla este afișată în antetul meniului lateral pentru utilizatorii autentificați.
         </CardDescription>
       </CardHeader>
-      <CardContent className="flex flex-col gap-5">
-        <div className="flex min-h-28 items-center justify-center border border-dashed border-border bg-muted/30 p-5">
-          {displayedLogoUrl ? (
-            <img
-              alt={`${bootstrapQuery.data.configuration.organization_name} logo preview`}
-              className="max-h-20 max-w-full object-contain"
-              src={displayedLogoUrl}
-            />
-          ) : (
-            <div className="text-center text-sm text-muted-foreground">
-              No company logo is configured.
-            </div>
-          )}
-        </div>
 
-        <div className="grid gap-2">
-          <label className="text-sm font-medium" htmlFor="company-logo">
-            SVG file
-          </label>
-          <input
-            accept=".svg,image/svg+xml"
-            className="block w-full cursor-pointer rounded-lg border border-input bg-background px-3 py-2 text-sm file:mr-3 file:cursor-pointer file:border-0 file:bg-secondary file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-secondary-foreground focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={isSaving}
-            id="company-logo"
-            onChange={(event) => selectLogo(event.currentTarget.files?.[0])}
-            ref={fileInputRef}
-            type="file"
-          />
-          <p className="text-xs text-muted-foreground">
-            Maximum size: 256 KB. Only one SVG logo is stored.
+      <CardContent className="grid gap-6 pt-1 lg:grid-cols-[minmax(0,1fr)_18rem]">
+        <FileUploadField
+          accept=".svg,image/svg+xml"
+          description="Este acceptat un singur fișier SVG UTF-8, cu dimensiunea maximă de 256 KB."
+          disabled={isSaving}
+          emptyDescription="Trage aici fișierul SVG sau apasă pentru a-l selecta."
+          emptyTitle="Selectează sigla companiei"
+          file={selectedFile}
+          icon={ImageUp}
+          id="company-logo"
+          label="Fișier SVG"
+          onFileChange={selectLogo}
+        />
+
+        <div className="grid content-start gap-2">
+          <p className="text-sm font-medium">Previzualizare</p>
+          <div className="flex min-h-44 items-center justify-center rounded-xl border bg-muted/20 p-5">
+            {displayedLogoUrl ? (
+              <img
+                alt={`Previzualizare siglă ${bootstrapQuery.data.configuration.organization_name}`}
+                className="max-h-24 max-w-full object-contain"
+                src={displayedLogoUrl}
+              />
+            ) : (
+              <div className="text-center text-sm text-muted-foreground">
+                Nu este configurată nicio siglă.
+              </div>
+            )}
+          </div>
+          <p className="text-xs leading-5 text-muted-foreground">
+            Scripturile, resursele externe și stilurile nesigure sunt respinse la încărcare.
           </p>
         </div>
-
-        {selectionError || mutationError ? (
-          <Alert variant="destructive">
-            <AlertTitle>Logo update failed</AlertTitle>
-            <AlertDescription>{selectionError ?? mutationError}</AlertDescription>
-          </Alert>
-        ) : null}
-
-        {uploadSuccess ? (
-          <Alert>
-            <AlertTitle>Logo updated</AlertTitle>
-            <AlertDescription>
-              The new company logo is now displayed in the sidebar.
-            </AlertDescription>
-          </Alert>
-        ) : null}
-
-        {removeSuccess ? (
-          <Alert>
-            <AlertTitle>Logo removed</AlertTitle>
-            <AlertDescription>
-              The sidebar now uses the default branding fallback.
-            </AlertDescription>
-          </Alert>
-        ) : null}
-
-        <div className="flex flex-wrap gap-2">
-          <Button
-            disabled={!selectedFile || isSaving}
-            onClick={uploadSelectedLogo}
-            type="button"
-          >
-            <ImageUp aria-hidden="true" />
-            {uploadPending ? "Uploading..." : "Upload logo"}
-          </Button>
-          <Button
-            disabled={!configuredLogoUrl || isSaving}
-            onClick={removeConfiguredLogo}
-            type="button"
-            variant="destructive"
-          >
-            <Trash2 aria-hidden="true" />
-            {removePending ? "Removing..." : "Remove logo"}
-          </Button>
-        </div>
       </CardContent>
+
+      <CardFooter className="flex flex-wrap gap-2">
+        <Button
+          disabled={!selectedFile || isSaving}
+          onClick={uploadSelectedLogo}
+          type="button"
+        >
+          {uploadPending ? <Spinner /> : <ImageUp aria-hidden="true" />}
+          {uploadPending ? "Se încarcă…" : "Încarcă sigla"}
+        </Button>
+        <Button
+          disabled={!configuredLogoUrl || isSaving}
+          onClick={removeConfiguredLogo}
+          type="button"
+          variant="destructive"
+        >
+          {removePending ? <Spinner /> : <Trash2 aria-hidden="true" />}
+          {removePending ? "Se elimină…" : "Elimină sigla"}
+        </Button>
+      </CardFooter>
     </Card>
   );
 }
