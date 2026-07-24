@@ -17,9 +17,6 @@ services:
       - type: bind
         source: ./backend
         target: /app
-      - type: volume
-        source: backend_media_data
-        target: /app/media
 
     expose:
       - "8000"
@@ -100,8 +97,6 @@ services:
     restart: unless-stopped
 
 volumes:
-  backend_media_data:
-    name: ${BACKEND_MEDIA_VOLUME_NAME:-tuvtk_backend_media_data}
   core_postgres_data:
     name: ${CORE_DB_VOLUME_NAME:-tuvtk_core_postgres_data}
   registry_postgres_data:
