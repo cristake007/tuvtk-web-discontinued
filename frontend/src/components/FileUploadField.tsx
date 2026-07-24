@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type DragEvent } from "react";
+import { useState, type DragEvent } from "react";
 import { FileUp, X, type LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -39,14 +39,7 @@ export function FileUploadField({
   label,
   onFileChange,
 }: FileUploadFieldProps) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const [dragActive, setDragActive] = useState(false);
-
-  useEffect(() => {
-    if (!file && inputRef.current) {
-      inputRef.current.value = "";
-    }
-  }, [file]);
 
   function handleDrop(event: DragEvent<HTMLDivElement>) {
     event.preventDefault();
@@ -106,8 +99,11 @@ export function FileUploadField({
           className="sr-only"
           disabled={disabled}
           id={id}
-          onChange={(event) => onFileChange(event.currentTarget.files?.[0])}
-          ref={inputRef}
+          onChange={(event) => {
+            const selectedFile = event.currentTarget.files?.[0];
+            event.currentTarget.value = "";
+            onFileChange(selectedFile);
+          }}
           type="file"
         />
 
