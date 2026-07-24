@@ -23,7 +23,7 @@ class CourseSchedulerTests(TestCase):
 
         date_range = scheduler.format_date_range(date(2027, 2, 15), 18)
 
-        self.assertRegex(date_range, r"^\d{2}\.\d{2}-\d{2}\.\d{2}\.2027$")
+        self.assertEqual(date_range, "15.02.2027-10.03.2027")
 
 
 class CoursePlannerApiTests(TestCase):
