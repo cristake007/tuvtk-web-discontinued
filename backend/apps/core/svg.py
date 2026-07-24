@@ -1,3 +1,4 @@
+import re
 from xml.etree import ElementTree
 
 from django.core.exceptions import ValidationError
@@ -20,13 +21,13 @@ DANGEROUS_CSS_TOKENS = (
     "@import",
     "expression(",
     "javascript:",
-    "url(",
 )
 URL_ATTRIBUTES = {
     "href",
     "src",
     f"{{{XLINK_NAMESPACE}}}href",
 }
+URL_FUNCTION_PATTERN = re.compile(r"url\(([^)]*)\)", re.IGNORECASE)
 
 
 def _local_name(name: str) -> str:
@@ -37,6 +38,11 @@ def _validate_css(value: str) -> None:
     normalized = value.replace("\x00", "").lower()
     if any(token in normalized for token in DANGEROUS_CSS_TOKENS):
         raise ValidationError("The SVG contains unsafe CSS.")
+
+    for match in URL_FUNCTION_PATTERN.finditer(normalized):
+        target = match.group(1).strip().strip("\"'")
+        if not target.startswith("#"):
+            raise ValidationError("External SVG resource links are not allowed.")
 
 
 def sanitize_svg_logo(svg_bytes: bytes) -> str:
@@ -83,6 +89,12 @@ def sanitize_svg_logo(svg_bytes: bytes) -> str:
             if attribute_name in URL_ATTRIBUTES or local_attribute_name in URL_ATTRIBUTES:
                 if normalized_value and not normalized_value.startswith("#"):
                     raise ValidationError("External SVG resource links are not allowed.")
+
+            if "javascript:" in normalized_value.lower():
+                raise ValidationError("JavaScript URLs are not allowed in SVG files.")
+
+            if "url(" in normalized_value.lower():
+                _validate_css(normalized_value)
 
             if local_attribute_name == "style":
                 _validate_css(normalized_value)
