@@ -51,26 +51,26 @@ function RotatingQuote() {
   const quote = quotes[quoteIndex] ?? fallbackLoginQuotes[0];
 
   return (
-    <div className="mx-auto flex max-w-lg flex-col items-center text-center">
-      <div className="flex items-start justify-center gap-3">
+    <div className="mx-auto flex max-w-md flex-col items-center text-center">
+      <div className="flex items-start justify-center gap-2.5">
         <Quote
           aria-hidden="true"
-          className="mt-1 size-4 shrink-0 fill-brand-red text-brand-red"
+          className="mt-1 size-3.5 shrink-0 fill-brand-red text-brand-red"
           strokeWidth={1.5}
         />
         <blockquote
-          className="max-w-md text-base leading-7 font-medium tracking-tight text-foreground"
+          className="max-w-sm text-sm leading-6 font-medium tracking-tight text-foreground"
           key={quote.text}
         >
           {quote.text}
         </blockquote>
         <Quote
           aria-hidden="true"
-          className="mt-1 size-4 shrink-0 rotate-180 fill-brand-red text-brand-red"
+          className="mt-1 size-3.5 shrink-0 rotate-180 fill-brand-red text-brand-red"
           strokeWidth={1.5}
         />
       </div>
-      <cite className="mt-4 text-sm font-medium not-italic text-primary/75">
+      <cite className="mt-3 text-xs font-medium not-italic text-primary/75">
         {quote.attribution}
       </cite>
     </div>
@@ -88,22 +88,22 @@ export function LoginPage() {
   const branding = brandingQuery.data ?? fallbackBranding;
 
   return (
-    <main className="min-h-svh bg-background">
-      <div className="grid min-h-svh w-full lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
-        <section className="flex min-h-[48svh] items-center justify-center px-6 py-12 sm:px-10 lg:min-h-svh lg:px-14 xl:px-20">
-          <div className="w-full max-w-xl text-center">
-            <PublicBrandMark branding={branding} className="mx-auto" />
-            <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
+    <main className="min-h-svh bg-background px-4 sm:px-6">
+      <div className="mx-auto grid min-h-svh w-full max-w-6xl lg:grid-cols-[minmax(0,1fr)_auto_minmax(22rem,0.82fr)]">
+        <section className="flex min-h-[44svh] items-center justify-center px-4 py-10 sm:px-8 lg:min-h-svh lg:px-10 xl:px-12">
+          <div className="w-full max-w-md text-center">
+            <PublicBrandMark branding={branding} className="mx-auto" compact />
+            <p className="mt-3 text-xl font-semibold tracking-tight text-foreground">
               {branding.organization_name}
             </p>
 
-            <div className="mt-16 lg:mt-24">
+            <div className="mt-10 lg:mt-14">
               <RotatingQuote />
             </div>
           </div>
         </section>
 
-        <div className="px-6 lg:hidden">
+        <div className="mx-auto w-full max-w-xl px-4 lg:hidden">
           <Separator
             className="bg-transparent"
             style={{
@@ -113,24 +113,24 @@ export function LoginPage() {
           />
         </div>
 
-        <div className="relative hidden items-center justify-center px-8 lg:flex">
-          <div className="h-[72vh] min-h-[32rem] max-h-[46rem] w-[5px]">
+        <div className="relative hidden items-center justify-center px-5 lg:flex">
+          <div className="h-[60vh] min-h-[26rem] max-h-[38rem] w-[3px]">
             <Separator
-              className="h-full w-[5px] bg-transparent"
+              className="h-full w-[3px] bg-transparent"
               orientation="vertical"
               style={{
                 background:
-                  "linear-gradient(to bottom, transparent 0%, rgb(22 65 148 / 0.38) 12%, #164194 28%, #164194 72%, rgb(22 65 148 / 0.38) 88%, transparent 100%)",
+                  "linear-gradient(to bottom, transparent 0%, rgb(22 65 148 / 0.34) 12%, #164194 30%, #164194 70%, rgb(22 65 148 / 0.34) 88%, transparent 100%)",
                 clipPath:
                   "polygon(50% 0%, 100% 14%, 100% 86%, 50% 100%, 0% 86%, 0% 14%)",
                 filter:
-                  "drop-shadow(0 0 4px rgb(22 65 148 / 0.32)) drop-shadow(0 0 10px rgb(22 65 148 / 0.16))",
+                  "drop-shadow(0 0 3px rgb(22 65 148 / 0.24)) drop-shadow(0 0 8px rgb(22 65 148 / 0.12))",
               }}
             />
           </div>
         </div>
 
-        <section className="flex min-h-[52svh] items-center justify-center px-6 py-12 sm:px-10 lg:min-h-svh lg:px-14 xl:px-20">
+        <section className="flex min-h-[56svh] items-center justify-center px-4 py-10 sm:px-8 lg:min-h-svh lg:px-10 xl:px-12">
           <LoginForm />
         </section>
       </div>
