@@ -2,14 +2,10 @@ import { lazy, Suspense, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { ApplicationState } from "@/components/ApplicationState";
+import { AppShell } from "@/layout/AppShell";
 
 import { fetchAuthenticationSession } from "./api";
 import { authQueryKeys } from "./queryKeys";
-
-const AppShell = lazy(async () => {
-  const module = await import("@/layout/AppShell");
-  return { default: module.AppShell };
-});
 
 const LoginPage = lazy(async () => {
   const module = await import("@/pages/LoginPage");
@@ -74,12 +70,5 @@ export function AuthenticationGate() {
     );
   }
 
-  return (
-    <DeferredView
-      description="Loading your application shell and navigation."
-      title="Preparing the workspace"
-    >
-      <AppShell />
-    </DeferredView>
-  );
+  return <AppShell />;
 }
