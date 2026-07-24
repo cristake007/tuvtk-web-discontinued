@@ -22,13 +22,6 @@ const unauthenticatedSession: AuthenticationSession = {
   user: null,
 };
 
-const appContentGridStyle = {
-  backgroundColor: "var(--background)",
-  backgroundImage:
-    "repeating-linear-gradient(-45deg, var(--background), var(--background) 13px, var(--muted) 13px, var(--muted) 14px)",
-  backgroundSize: "40px 40px",
-} as const;
-
 type AppShellStyle = CSSProperties & {
   "--app-header-height": string;
 };
@@ -108,18 +101,17 @@ export function AppShell() {
         <div className="flex min-h-0 w-full flex-1">
           <AppSidebar navigation={navigation} />
 
-          <SidebarInset className="min-h-0 overflow-hidden bg-white">
+          <SidebarInset className="min-h-0 overflow-hidden bg-muted/30">
             <div
-              className="flex min-h-0 flex-1 flex-col overflow-auto"
+              className="flex min-h-0 flex-1 flex-col overflow-auto bg-muted/30 p-[5px]"
               onScroll={(event) => {
                 const compact = event.currentTarget.scrollTop > 24;
                 setHeaderCompact((current) =>
                   current === compact ? current : compact,
                 );
               }}
-              style={appContentGridStyle}
             >
-              <div className="flex w-full flex-1 flex-col">
+              <div className="flex min-h-full w-full flex-1 flex-col bg-background">
                 {logoutMutation.isError ? (
                   <Alert className="m-4 mb-0 border-warning/40 bg-warning/10 sm:m-6 sm:mb-0 lg:m-8 lg:mb-0">
                     <AlertTriangle aria-hidden="true" />
