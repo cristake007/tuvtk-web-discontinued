@@ -1,8 +1,30 @@
+import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
 
+import { ApplicationState } from "@/components/ApplicationState";
 import { AuthenticationGate } from "../features/auth/AuthenticationGate";
-import { DashboardPage } from "../pages/DashboardPage";
 import { ModulePlaceholderPage } from "../pages/ModulePlaceholderPage";
+
+const DashboardPage = lazy(async () => {
+  const module = await import("../pages/DashboardPage");
+  return { default: module.DashboardPage };
+});
+
+function DashboardRoute() {
+  return (
+    <Suspense
+      fallback={
+        <ApplicationState
+          description="Loading the current workspace overview."
+          loading
+          title="Loading dashboard"
+        />
+      }
+    >
+      <DashboardPage />
+    </Suspense>
+  );
+}
 
 export const router = createBrowserRouter([
   {
@@ -11,7 +33,7 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <DashboardPage />,
+        element: <DashboardRoute />,
       },
       {
         path: "companies",
