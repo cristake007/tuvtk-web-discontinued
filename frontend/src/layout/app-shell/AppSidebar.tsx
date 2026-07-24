@@ -76,14 +76,14 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
   return (
     <NavLink
       aria-label={`${configuration.site_name} dashboard`}
-      className="flex h-full cursor-pointer items-center gap-3 px-2 outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+      className="flex h-full w-full cursor-pointer items-center px-3 outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
       onClick={() => setOpenMobile(false)}
       to="/"
     >
       {showConfiguredLogo ? (
         <img
           alt={`${configuration.organization_name} logo`}
-          className="max-h-10 w-auto max-w-28 shrink-0 object-contain group-data-[collapsible=icon]:max-h-8 group-data-[collapsible=icon]:max-w-8"
+          className="max-h-10 w-auto max-w-40 object-contain group-data-[collapsible=icon]:max-h-8 group-data-[collapsible=icon]:max-w-8"
           onError={() => setLogoFailed(true)}
           src={configuration.logo_url ?? undefined}
         />
@@ -92,15 +92,6 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
           T
         </span>
       )}
-
-      <span className="min-w-0 leading-tight group-data-[collapsible=icon]:hidden">
-        <span className="block truncate text-sm font-semibold text-primary">
-          {configuration.site_name}
-        </span>
-        <span className="block truncate text-xs text-primary/65">
-          {configuration.sidebar_title}
-        </span>
-      </span>
     </NavLink>
   );
 }
