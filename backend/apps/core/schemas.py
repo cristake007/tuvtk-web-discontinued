@@ -7,6 +7,7 @@ class ShellConfigurationSchema(Schema):
     site_name: str
     organization_name: str
     sidebar_title: str
+    logo_url: str | None
 
 
 class NavigationItemSchema(Schema):
@@ -16,6 +17,7 @@ class NavigationItemSchema(Schema):
     icon: str
     position: int
     parent_key: str | None
+    application_key: str
 
 
 class CoreBootstrapSchema(Schema):
