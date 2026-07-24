@@ -10,6 +10,12 @@ class ShellConfigurationSerializer(serializers.Serializer):
     logo_url = serializers.CharField(allow_null=True)
 
 
+class PublicBrandingSerializer(serializers.Serializer):
+    site_name = serializers.CharField()
+    organization_name = serializers.CharField()
+    logo_url = serializers.CharField(allow_null=True)
+
+
 class NavigationItemSerializer(serializers.Serializer):
     key = serializers.CharField()
     label = serializers.CharField()
@@ -35,5 +41,6 @@ __all__ = [
     "CoreBootstrapSerializer",
     "ErrorDetailSerializer",
     "NavigationItemSerializer",
+    "PublicBrandingSerializer",
     "ShellConfigurationSerializer",
 ]
