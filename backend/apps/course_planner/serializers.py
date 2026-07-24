@@ -41,6 +41,13 @@ class GenerateScheduleSerializer(CoursePlannerSettingsSerializer):
         allow_empty=False,
         max_length=12,
     )
+    holidays = serializers.ListField(
+        child=serializers.CharField(max_length=10),
+        allow_empty=True,
+        default=list,
+        max_length=366,
+        required=False,
+    )
 
     def validate_input_file(self, value):
         extension = Path(value.name).suffix.casefold()
