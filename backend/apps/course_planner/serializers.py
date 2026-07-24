@@ -4,6 +4,7 @@ from pathlib import Path
 from rest_framework import serializers
 
 from .files import MAX_COURSES
+from .models import CoursePlanGeneration
 from .services import parse_holidays
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
@@ -86,9 +87,65 @@ class ScheduledCourseSerializer(serializers.Serializer):
     original_order = serializers.IntegerField(min_value=0, max_value=MAX_COURSES)
 
 
+class CoursePlanFileSerializer(serializers.Serializer):
+    available = serializers.BooleanField()
+    filename = serializers.CharField(allow_null=True)
+
+
+class CoursePlanFilesSerializer(serializers.Serializer):
+    excel = CoursePlanFileSerializer()
+    word = CoursePlanFileSerializer()
+    xml = CoursePlanFileSerializer()
+
+
+class CoursePlanGenerationSerializer(serializers.ModelSerializer):
+    created_by = serializers.SerializerMethodField()
+    files = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CoursePlanGeneration
+        fields = (
+            "id",
+            "source_filename",
+            "year",
+            "months",
+            "randomness",
+            "course_count",
+            "created_at",
+            "created_by",
+            "files",
+        )
+
+    def get_created_by(self, obj):
+        if obj.created_by is None:
+            return None
+        return obj.created_by.get_full_name() or obj.created_by.get_username()
+
+    def get_files(self, obj):
+        def file_payload(field):
+            return {
+                "available": bool(field),
+                "filename": Path(field.name).name if field else None,
+            }
+
+        return {
+            "excel": file_payload(obj.excel_file),
+            "word": file_payload(obj.word_file),
+            "xml": file_payload(obj.xml_file),
+        }
+
+
+class CoursePlanHistoryResponseSerializer(serializers.Serializer):
+    count = serializers.IntegerField(min_value=0)
+    next = serializers.CharField(allow_null=True)
+    previous = serializers.CharField(allow_null=True)
+    results = CoursePlanGenerationSerializer(many=True)
+
+
 class GenerateScheduleResponseSerializer(serializers.Serializer):
     schedule = ScheduledCourseSerializer(many=True)
     course_count = serializers.IntegerField(min_value=0)
+    generation = CoursePlanGenerationSerializer()
 
 
 class ExportScheduleSerializer(serializers.Serializer):
