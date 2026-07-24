@@ -11,8 +11,8 @@ from rest_framework.views import APIView
 
 from .files import CourseFileError, create_excel_export, parse_course_file
 from .serializers import (
+    CoursePlannerErrorDetailSerializer,
     CoursePlannerSettingsSerializer,
-    ErrorDetailSerializer,
     ExportScheduleSerializer,
     GenerateScheduleResponseSerializer,
     GenerateScheduleSerializer,
@@ -53,7 +53,10 @@ class CoursePlannerSettingsView(APIView):
     @extend_schema(
         operation_id="course_planner_settings_update",
         request=CoursePlannerSettingsSerializer,
-        responses={200: CoursePlannerSettingsSerializer, 400: ErrorDetailSerializer},
+        responses={
+            200: CoursePlannerSettingsSerializer,
+            400: CoursePlannerErrorDetailSerializer,
+        },
         summary="Update course planner settings",
         tags=["course-planner"],
     )
@@ -146,8 +149,11 @@ class ExportScheduleView(APIView):
         operation_id="course_planner_export",
         request=ExportScheduleSerializer,
         responses={
-            (200, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"): OpenApiTypes.BINARY,
-            400: ErrorDetailSerializer,
+            (
+                200,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            ): OpenApiTypes.BINARY,
+            400: CoursePlannerErrorDetailSerializer,
         },
         summary="Export the generated course schedule to Excel",
         tags=["course-planner"],
