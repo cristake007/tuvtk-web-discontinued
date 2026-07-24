@@ -187,16 +187,16 @@ function BrandSidebarRail() {
   return (
     <button
       aria-label={state === "collapsed" ? "Expand navigation" : "Collapse navigation"}
-      className="group/rail absolute inset-y-0 z-40 hidden w-7 cursor-pointer items-center justify-center group-data-[side=left]:-right-3.5 group-data-[side=right]:-left-3.5 sm:flex"
+      className="group/rail absolute top-16 bottom-0 z-40 hidden w-7 cursor-pointer items-center justify-center group-data-[side=left]:-right-3.5 group-data-[side=right]:-left-3.5 sm:flex"
       onClick={toggleSidebar}
       title={state === "collapsed" ? "Expand navigation" : "Collapse navigation"}
       type="button"
     >
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute inset-y-0 left-1/2 w-[2px] -translate-x-1/2 bg-primary shadow-[0_0_6px_rgb(22_65_148_/_0.22)] transition-[width,box-shadow] duration-200 group-hover/rail:w-[3px] group-hover/rail:shadow-[0_0_9px_rgb(22_65_148_/_0.35)]"
+        className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-sidebar-border/80 transition-[width,background-color,box-shadow] duration-200 group-hover/rail:w-[2px] group-hover/rail:bg-primary group-hover/rail:shadow-[0_0_5px_rgb(22_65_148_/_0.22)]"
       />
-      <span className="relative z-10 grid size-7 aspect-square shrink-0 place-items-center overflow-hidden rounded-full border-2 border-primary bg-primary p-0 text-primary-foreground shadow-md shadow-primary/25 transition-transform duration-200 group-hover/rail:scale-105">
+      <span className="relative z-10 grid size-7 aspect-square shrink-0 place-items-center overflow-hidden rounded-full border border-primary bg-primary p-0 text-primary-foreground shadow-sm transition-transform duration-200 group-hover/rail:scale-105">
         <RailIcon aria-hidden="true" className="size-3.5" />
       </span>
     </button>
