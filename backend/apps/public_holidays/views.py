@@ -134,22 +134,19 @@ class PublicHolidaySyncView(APIView):
         request=None,
         responses={
             200: SynchronizationResultSerializer,
-            502: SynchronizationResultSerializer,
+            502: PublicHolidayErrorDetailSerializer,
         },
         summary="Synchronize Romanian holidays from Nager.Date now",
         tags=["public-holidays"],
     )
     def post(self, request):
         result = synchronize_public_holidays_now()
-        response_status = (
-            status.HTTP_502_BAD_GATEWAY
-            if result.status == "failed"
-            else status.HTTP_200_OK
-        )
-        return Response(
-            SynchronizationResultSerializer(result.to_dict()).data,
-            status=response_status,
-        )
+        if result.status == "failed":
+            return Response(
+                {"detail": result.message},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+        return Response(SynchronizationResultSerializer(result.to_dict()).data)
 
 
 class InternalHolidayCreateView(APIView):
