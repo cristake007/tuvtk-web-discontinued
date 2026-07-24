@@ -115,5 +115,5 @@ class UnscheduledCoursesSerializer(serializers.Serializer):
     )
 
 
-class ErrorDetailSerializer(serializers.Serializer):
+class CoursePlannerErrorDetailSerializer(serializers.Serializer):
     detail = serializers.CharField()
