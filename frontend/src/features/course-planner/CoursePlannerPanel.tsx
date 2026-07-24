@@ -187,7 +187,7 @@ export function CoursePlannerPanel() {
   }
 
   return (
-    <div className="flex w-full min-w-0 flex-1 flex-col gap-6 p-5 sm:p-7 lg:p-9">
+    <div className="flex w-full min-w-0 flex-1 flex-col gap-6">
       <PlannerHeader />
 
       <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
