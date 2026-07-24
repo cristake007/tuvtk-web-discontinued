@@ -2,7 +2,6 @@ from django.urls import path
 
 from .views import CompanyLogoSettingsView, CompanyLogoView, CoreBootstrapView
 
-
 app_name = "core-api"
 
 urlpatterns = [
