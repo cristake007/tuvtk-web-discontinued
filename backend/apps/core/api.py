@@ -12,7 +12,7 @@ from .services import (
     get_or_create_active_configuration,
     serialize_shell_configuration,
 )
-from .svg import sanitize_svg_logo
+from .svg import MAX_SVG_LOGO_BYTES, sanitize_svg_logo
 
 
 router = Router(tags=["core"])
@@ -67,6 +67,9 @@ def upload_company_logo(
     logo: File[UploadedFile],
 ) -> dict[str, object]:
     require_staff(request)
+
+    if logo.size > MAX_SVG_LOGO_BYTES:
+        raise HttpError(400, "The SVG file must be 256 KB or smaller.")
 
     try:
         sanitized_svg = sanitize_svg_logo(logo.read())
