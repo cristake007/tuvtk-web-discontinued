@@ -4,6 +4,7 @@ import { createBrowserRouter } from "react-router-dom";
 import { ApplicationState } from "@/components/ApplicationState";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { ModulePlaceholderPage } from "@/pages/ModulePlaceholderPage";
+import { WorkspaceCardPage } from "@/pages/WorkspaceCardPage";
 
 import { AuthenticationGate } from "./AuthenticationGate";
 
@@ -17,9 +18,9 @@ function SettingsRoute() {
     <Suspense
       fallback={
         <ApplicationState
-          description="Loading application branding and configuration."
+          description="Se încarcă identitatea vizuală și configurarea aplicației."
           loading
-          title="Loading settings"
+          title="Se încarcă setările"
         />
       }
     >
@@ -39,21 +40,11 @@ export const router = createBrowserRouter([
       },
       {
         path: "companies",
-        element: (
-          <ModulePlaceholderPage
-            title="Companies"
-            description="The company directory and live registry filters will be implemented here."
-          />
-        ),
+        element: <WorkspaceCardPage ariaLabel="Conținut companii" />,
       },
       {
         path: "documents",
-        element: (
-          <ModulePlaceholderPage
-            title="Documents"
-            description="The visual document editor will be implemented as a dedicated React module here."
-          />
-        ),
+        element: <WorkspaceCardPage ariaLabel="Conținut documente" />,
       },
       {
         path: "settings",
@@ -63,8 +54,8 @@ export const router = createBrowserRouter([
         path: "*",
         element: (
           <ModulePlaceholderPage
-            title="Page not found"
-            description="The requested frontend route does not exist."
+            title="Pagina nu a fost găsită"
+            description="Ruta solicitată nu există în aplicație."
           />
         ),
       },
