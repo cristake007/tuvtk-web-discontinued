@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import type { ShellConfiguration } from "@/api/types";
@@ -66,13 +66,43 @@ function isNodeActive(node: NavigationNode, pathname: string): boolean {
 function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) {
   const { setOpenMobile, state } = useSidebar();
   const [logoFailed, setLogoFailed] = useState(false);
+  const [logoVisible, setLogoVisible] = useState(state !== "collapsed");
+  const previousState = useRef(state);
 
   useEffect(() => {
     setLogoFailed(false);
   }, [configuration.logo_url]);
 
+  useLayoutEffect(() => {
+    if (previousState.current === state) {
+      return undefined;
+    }
+
+    previousState.current = state;
+
+    if (state === "collapsed") {
+      setLogoVisible(false);
+      return undefined;
+    }
+
+    setLogoVisible(false);
+
+    let secondFrame = 0;
+    const firstFrame = window.requestAnimationFrame(() => {
+      secondFrame = window.requestAnimationFrame(() => {
+        setLogoVisible(true);
+      });
+    });
+
+    return () => {
+      window.cancelAnimationFrame(firstFrame);
+      if (secondFrame) {
+        window.cancelAnimationFrame(secondFrame);
+      }
+    };
+  }, [state]);
+
   const showConfiguredLogo = Boolean(configuration.logo_url) && !logoFailed;
-  const collapsed = state === "collapsed";
 
   return (
     <NavLink
@@ -88,9 +118,9 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
             className={[
               "absolute h-16 w-52 max-w-none object-contain transform-gpu",
               "transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none",
-              collapsed
-                ? "scale-[1.46] opacity-0"
-                : "scale-[1.55] opacity-100 delay-50",
+              logoVisible
+                ? "scale-[1.55] opacity-100"
+                : "scale-[1.46] opacity-0",
             ].join(" ")}
             onError={() => setLogoFailed(true)}
             src={configuration.logo_url ?? undefined}
@@ -100,9 +130,7 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
             className={[
               "absolute text-[10px] font-bold tracking-normal text-primary transform-gpu",
               "transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none",
-              collapsed
-                ? "scale-100 opacity-100 delay-75"
-                : "scale-90 opacity-0",
+              logoVisible ? "scale-90 opacity-0" : "scale-100 opacity-100",
             ].join(" ")}
           >
             TUVTK
