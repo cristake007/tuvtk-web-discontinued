@@ -6,6 +6,7 @@ import {
   FileSpreadsheet,
   FileText,
   ListChecks,
+  type LucideIcon,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -53,7 +54,7 @@ function ArtifactStatus({
   label,
 }: {
   available: boolean;
-  icon: typeof FileSpreadsheet;
+  icon: LucideIcon;
   label: string;
 }) {
   return (
