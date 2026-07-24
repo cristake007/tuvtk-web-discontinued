@@ -74,7 +74,7 @@ frontend/src/styles/globals.css     Tailwind imports and semantic theme tokens
 Create Django apps with:
 
 ```bash
-./dev app <name>
+./dev backend app <name>
 ```
 
 Apps belong under `backend/apps/<name>/`, use `apps.<name>`, and must be registered with their complete `AppConfig` path.
@@ -292,8 +292,8 @@ Rules:
 Dependency workflow:
 
 ```bash
-./dev npm install <package> --save-exact
-./dev frontend-lock
+./dev frontend npm install <package> --save-exact
+./dev frontend lock
 ./dev restart frontend
 ./dev validate
 git add frontend/package.json frontend/package-lock.json
@@ -301,50 +301,57 @@ git add frontend/package.json frontend/package-lock.json
 
 ## Development commands
 
-Prefer the root harness:
+Prefer the root harness and its explicit areas. Do not use ambiguous legacy top-level commands.
 
 ```bash
+# Environment
 ./dev help
 ./dev up
 ./dev down
 ./dev restart [service]
 ./dev status
-./dev logs backend
-./dev logs frontend
+./dev logs [service]
+./dev build [service]
 
-./dev check
-./dev test
-./dev migrations [app]
-./dev migrate
+# Backend (Django)
+./dev backend help
+./dev backend app <name>
+./dev backend manage <arguments>
+./dev backend migrations [app]
+./dev backend migrate [arguments]
+./dev backend check
+./dev backend django-shell
+./dev backend shell
+./dev backend admin-create
+./dev backend admin-password [username]
 
-./dev frontend-sync
-./dev frontend-lock
-./dev frontend-typecheck
-./dev frontend-build
+# Frontend (React/Vite)
+./dev frontend help
+./dev frontend sync
+./dev frontend lock
+./dev frontend typecheck
+./dev frontend build
+./dev frontend npm <arguments>
+./dev frontend shell
+
+# Tests and complete validation
+./dev test help
+./dev test backend [arguments]
 ./dev validate
-```
-
-Useful passthrough commands:
-
-```bash
-./dev backend-shell
-./dev frontend-shell
-./dev django <arguments>
-./dev npm <arguments>
 ```
 
 Normal source edits reload automatically. Restart the frontend after dependency or lockfile changes.
 
 Use direct Docker Compose commands only for diagnosis or harness work. Do not bypass the harness in normal implementation instructions.
 
-Never run `migrate-registry` or `migrate-all` until a registry-specific app and database router explicitly control registry migrations.
+Never run `./dev backend migrate-registry` or `./dev backend migrate-all` until a registry-specific app and database router explicitly control registry migrations.
 
 Destructive commands require the user's explicit request:
 
 ```bash
-./dev reset-core-db
-./dev reset-registry-db
-./dev reset-db
+./dev database reset-core
+./dev database reset-registry
+./dev database reset-all
 ./dev wipe
 ```
 
@@ -389,6 +396,15 @@ git diff origin/main -- dev
 ./dev help
 ```
 
+For namespaced commands, use the matching help page before guessing:
+
+```bash
+./dev backend help
+./dev frontend help
+./dev test help
+./dev database help
+```
+
 ### Base UI runtime context errors
 
 TypeScript and production builds can pass while a Base UI component fails at runtime because of an invalid component hierarchy.
@@ -415,15 +431,15 @@ Run the smallest checks that cover the change.
 Frontend-only source changes:
 
 ```bash
-./dev frontend-typecheck
-./dev frontend-build
+./dev frontend typecheck
+./dev frontend build
 ```
 
 Backend-only changes:
 
 ```bash
-./dev check
-./dev test
+./dev backend check
+./dev test backend
 ```
 
 Cross-stack, dependency, shell, or shared infrastructure changes:
@@ -435,9 +451,9 @@ Cross-stack, dependency, shell, or shared infrastructure changes:
 Model changes:
 
 ```bash
-./dev migrations <app>
-./dev migrate
-./dev test
+./dev backend migrations <app>
+./dev backend migrate
+./dev test backend
 ```
 
 API changes must also verify `/api/v1/openapi.json` through the frontend proxy and include tests for authentication, permissions, validation, and response contracts.
