@@ -95,10 +95,12 @@ export function PublicHolidaysIntegrationPanel() {
 
   const syncMutation = useMutation({
     mutationFn: synchronizePublicHolidays,
-    onError: (error) =>
+    onError: (error) => {
+      void queryClient.invalidateQueries({ queryKey: publicHolidayQueryKeys.root });
       toast.error("Sincronizarea Nager.Date a eșuat", {
         description: getErrorMessage(error),
-      }),
+      });
+    },
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: publicHolidayQueryKeys.root });
       if (result.status === "skipped") {
