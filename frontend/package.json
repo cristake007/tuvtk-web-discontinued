@@ -10,7 +10,6 @@
     "dev": "vite",
     "build": "npm run theme:check && tsc -b && vite build",
     "preview": "vite preview",
-    "shadcn:add-all": "shadcn add --all --yes",
     "shadcn:info": "shadcn info",
     "theme:check": "node ./scripts/check-theme-tokens.mjs",
     "typecheck": "tsc -b --pretty false"
