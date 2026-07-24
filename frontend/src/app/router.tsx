@@ -23,6 +23,11 @@ const SettingsPage = lazy(async () => {
   return { default: module.SettingsPage };
 });
 
+const IntegrationsPage = lazy(async () => {
+  const module = await import("@/pages/IntegrationsPage");
+  return { default: module.IntegrationsPage };
+});
+
 function CoursePlannerRoute() {
   return (
     <Suspense
@@ -71,6 +76,22 @@ function SettingsRoute() {
   );
 }
 
+function IntegrationsRoute() {
+  return (
+    <Suspense
+      fallback={
+        <ApplicationState
+          description="Se încarcă serviciile externe și calendarul zilelor nelucrătoare."
+          loading
+          title="Se încarcă integrările"
+        />
+      }
+    >
+      <IntegrationsPage />
+    </Suspense>
+  );
+}
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -99,6 +120,10 @@ export const router = createBrowserRouter([
       {
         path: "settings",
         element: <SettingsRoute />,
+      },
+      {
+        path: "settings/integrations",
+        element: <IntegrationsRoute />,
       },
       {
         path: "*",
