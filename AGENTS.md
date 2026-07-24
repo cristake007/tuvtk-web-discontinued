@@ -2,29 +2,37 @@
 
 ## Purpose
 
-This repository contains a Dockerized Django platform with a versioned Django Ninja API. Keep changes small, explicit, and compatible with the existing development harness.
+This repository contains a Dockerized React frontend and Django backend with a versioned Django Ninja API. Keep changes small, explicit, testable, and compatible with the root `./dev` harness.
 
 ## Architecture
 
-- Root `Dockerfile` builds the Django runtime image.
-- Root `compose.yaml` runs one Django container and two independent PostgreSQL 18 containers.
-- Host `backend/` is bind-mounted to `/app`; application source must remain on the host.
-- `db_core` stores Django system tables and normal operational application data.
-- `db_registry` is reserved for the large ONRC registry and related reference data.
-- Django database aliases are `default` for core and `registry` for ONRC data.
-- `backend/config/api.py` owns the main Django Ninja API mounted at `/api/v1/`.
+- `compose.yaml` defines Django and two independent PostgreSQL 18 services.
+- `compose.override.yaml` is the only development override; it starts Django `runserver` and Vite.
+- `backend/` and `frontend/` are bind-mounted for development reload.
+- The frontend container runs as the current host UID/GID. Do not add a root-running frontend or permission-initializer service.
+- React owns all visible application pages, routing, login, header, sidebar, and feature UI.
+- Django owns authentication, permissions, data access, business logic, administration, and the API.
+- Django is internal on port 8000 and is reached through Vite proxies for `/api`, `/admin`, `/media`, and `/static`.
+- `db_core` stores Django system tables and operational data.
+- `db_registry` stores ONRC registry and reference data.
+- Django aliases are `default` for core and `registry` for ONRC data.
 
-Do not create Django admin, auth, session, or content-type tables in the registry database. Do not introduce cross-database foreign keys. Reference registry companies from core data using stable values such as CUI.
+Do not create Django auth, admin, session, or content-type tables in the registry database. Do not create cross-database foreign keys. Reference registry companies through stable identifiers such as CUI.
 
 ## Repository layout
 
 ```text
-backend/config/          Project-wide Django configuration and API entrypoint
-backend/apps/            Local Django domain applications
-backend/tests/           Project-level integration tests
-backend/media/           Runtime uploads; not source code
-backend/staticfiles/     Collected static files; not source code
-backend/logs/            Runtime logs; not source code
+backend/config/                 Django project configuration and API entrypoint
+backend/apps/accounts/          Browser session authentication API
+backend/apps/core/              Shell configuration and navigation
+backend/apps/<domain>/          Other backend domains
+backend/tests/                  Project-level backend tests
+frontend/scripts/               Dependency synchronization and Vite startup
+frontend/src/api/               Shared HTTP transport and core API calls
+frontend/src/features/auth/     Authentication API, query keys, and gate
+frontend/src/layout/            Shared application shell
+frontend/src/pages/             Route-level pages
+frontend/src/styles/            Shared styles
 ```
 
 Create Django apps with:
@@ -33,62 +41,119 @@ Create Django apps with:
 ./dev app <name>
 ```
 
-Apps must remain under `backend/apps/<name>/`, use the Python path `apps.<name>`, and be registered with their complete `AppConfig` path.
+Apps belong under `backend/apps/<name>/`, use `apps.<name>`, and must be registered with their complete `AppConfig` path.
+
+## Authentication
+
+Use Django users, groups, permissions, password hashing, server-side sessions, and CSRF protection.
+
+```text
+GET  /api/v1/auth/csrf
+GET  /api/v1/auth/session
+POST /api/v1/auth/login
+POST /api/v1/auth/logout
+```
+
+Rules:
+
+- `GET /auth/session` always returns `200` with `{authenticated, user}`.
+- Invalid login credentials return `401`.
+- Logout is CSRF-protected, idempotent, and returns `204`.
+- Protected business routes use Django session authentication and return `401` without a valid session.
+- Unsafe requests include Django's CSRF header.
+- Permission checks belong in Django; React is not the security boundary.
+- Do not add JWT or another user store without a concrete external-client requirement.
+
+Authentication belongs to `backend/apps/accounts/`. Shell configuration and navigation belong to `backend/apps/core/`.
 
 ## API conventions
 
-The public API prefix is `/api/v1/`. Preserve explicit versioning when adding routes.
-
-`backend/config/api.py` should contain only:
-
-- the main `NinjaAPI` instance;
-- project-wide system endpoints such as health checks;
-- router registration.
-
-Domain endpoints belong to the app that owns the domain:
+The public API prefix is `/api/v1/`. Domain endpoints belong to the owning app:
 
 ```text
 backend/apps/<app>/api.py
 backend/apps/<app>/schemas.py
 backend/apps/<app>/services.py
+backend/apps/<app>/models.py
+backend/apps/<app>/tests.py
 ```
 
-Keep responsibilities separated:
+Responsibilities:
 
-- `api.py`: HTTP routes, authentication, permissions, status codes, and response mapping.
-- `schemas.py`: Pydantic/Django Ninja input and output contracts.
+- `api.py`: HTTP routes, authentication, permissions, statuses, and response mapping.
+- `schemas.py`: Django Ninja input and output contracts.
 - `services.py`: business workflows and transaction boundaries.
 - `models.py`: persistence and database constraints.
+- `tests.py`: success, authentication, permission, CSRF, validation, and important error behavior.
 
-Endpoint functions must remain thin. Do not place substantial ORM queries or workflow logic directly in route functions.
+Keep route functions thin. Do not place substantial ORM queries or workflows directly in endpoints.
 
-Use Django session authentication for browser-facing internal routes. Authenticated routes should declare `django_auth` or router-level session authentication. Public routes must explicitly declare `auth=None`; do not make a route public accidentally.
+## Frontend conventions
 
-Every new endpoint should have tests covering the relevant success response, authentication or permission behavior, validation failures, and important error status codes.
+- React and TypeScript own all user-facing pages.
+- Use React Router for routes and TanStack Query for server state.
+- `frontend/src/api/http.ts` is the shared HTTP, credentials, CSRF, empty-body, JSON, and error transport.
+- Feature API calls and query keys belong to focused feature modules.
+- Components must not call `fetch` directly or duplicate CSRF handling.
+- Keep authentication in `frontend/src/features/auth/`.
+- Keep the shared header and sidebar in `frontend/src/layout/`.
+- Treat Django responses and permissions as authoritative.
+- Prefer focused feature folders over a global component dump.
+- Do not introduce another frontend framework.
 
-Do not expose registry write operations until the registry data model, database router, and import strategy explicitly support them. Registry queries must use the `registry` database alias or an approved router.
+## Frontend dependencies and generated files
+
+- `frontend/package-lock.json` is required and committed.
+- Direct dependencies are pinned to exact versions.
+- Do not use `--no-package-lock` or edit the lockfile manually.
+- Do not commit `frontend/node_modules/` or build output.
+- Startup generates the initial lockfile only when missing, then uses `npm ci` whenever the installed dependency hash differs.
+- The frontend container runs as the host UID/GID. Do not run `sudo npm` or create root-owned files in `frontend/`.
+- Development validation sets `VITE_BUILD_OUT_DIR=/tmp/tuvtk-frontend-dist`; it must not write or clean `frontend/dist`.
+- A production build without the development override uses the conventional `frontend/dist` output.
+
+Dependency workflow:
+
+```bash
+./dev npm install <package> --save-exact
+./dev frontend-lock
+./dev restart frontend
+./dev validate
+git add frontend/package.json frontend/package-lock.json
+```
 
 ## Development commands
 
-Prefer the root harness instead of manually reproducing Docker commands:
+Prefer the root harness:
 
 ```bash
 ./dev up
 ./dev status
+./dev logs backend
+./dev logs frontend
 ./dev check
 ./dev test
-./dev migrations
-./dev migrate
-./dev shell
+./dev frontend-sync
+./dev frontend-lock
+./dev frontend-typecheck
+./dev frontend-build
+./dev validate
 ```
 
-`./dev up` rebuilds the backend image, so use it after changing `backend/requirements.txt`.
+Useful passthrough commands:
 
-Use direct `docker compose` commands only when diagnosing Docker or improving the harness itself.
+```bash
+./dev backend-shell
+./dev frontend-shell
+./dev django <arguments>
+./dev npm <arguments>
+```
 
-Never run `migrate-registry` or `migrate-all` until a registry-specific application and database router explicitly control which migrations may run there.
+Normal source edits reload automatically. Restart the frontend after dependency or lockfile changes. Use direct Docker Compose commands only for diagnosis or harness work.
 
-The following commands are destructive and must never be run without the user's explicit request:
+Never run `migrate-registry` or `migrate-all` until a registry-specific app and database router explicitly control registry migrations.
+
+Destructive commands require the user's explicit request:
 
 ```bash
 ./dev reset-core-db
@@ -97,34 +162,42 @@ The following commands are destructive and must never be run without the user's 
 ./dev wipe
 ```
 
+## Production and security
+
+- Production uses one HTTPS origin for React, `/api/`, `/admin/`, and `/media/`.
+- Vite's development server is never a production server.
+- Production frontend images and CI install from the committed lockfile with `npm ci`.
+- Enable secure session and CSRF cookies, HTTPS redirection, and HSTS only after HTTPS is verified.
+- Trust `X-Forwarded-Proto` only when the trusted proxy strips client-supplied forwarding headers and sets it itself.
+- Keep `SESSION_COOKIE_HTTPONLY` enabled.
+- Keep the CSRF cookie readable by the SPA so it can send `X-CSRFToken`.
+- Do not weaken CSRF protection to work around frontend defects.
+
 ## Implementation rules
 
-- Inspect the relevant files before changing architecture or dependencies.
-- Reuse Django, Django Ninja, Pydantic, and PostgreSQL capabilities before adding frameworks or services.
-- Keep domain logic inside the owning app, not in `config/`.
-- Keep external-data validation, imports, and service logic separate from views and API routes.
+- Inspect relevant files before changing architecture or dependencies.
+- Reuse Django, Django Ninja, React, TanStack Query, and PostgreSQL before adding frameworks or services.
+- Keep domain logic in the owning Django app, not in `config/`.
 - Use database constraints for persistent invariants.
-- Pin dependencies in `backend/requirements.txt` and add them only for a concrete requirement.
-- Do not commit `.env`, secrets, database dumps, logs, uploaded media, or collected static files.
+- Preserve host ownership of source and generated lockfiles.
 - Update `.env.example`, `README.md`, and this file when architecture or setup changes.
-- Preserve host ownership of generated files; do not create source files as root.
+- Do not commit secrets, dumps, logs, uploads, collected static files, `node_modules`, or frontend bundles.
 
-## Validation before completion
+## Validation
 
-Run the smallest relevant checks, normally:
+For cross-stack changes:
 
 ```bash
-./dev check
-./dev test
+./dev validate
 ```
 
-For model changes, also create and inspect migrations:
+For model changes:
 
 ```bash
 ./dev migrations
 ./dev migrate
 ```
 
-For API changes, verify the OpenAPI schema remains available at `/api/v1/openapi.json` and that the API tests cover authentication and response contracts.
+For API changes, verify `/api/v1/openapi.json` through the frontend proxy and ensure tests cover authentication and response contracts.
 
 Report what changed, which checks ran, and anything that could not be verified.

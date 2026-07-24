@@ -3,7 +3,9 @@ from typing import Literal
 from django.db import connections
 from django.http import HttpRequest
 from ninja import NinjaAPI, Schema
-from ninja.security import django_auth
+
+from apps.accounts.api import router as auth_router
+from apps.core.api import router as core_router
 
 
 class DatabaseHealth(Schema):
@@ -16,16 +18,6 @@ class HealthResponse(Schema):
     databases: dict[str, DatabaseHealth]
 
 
-class CurrentUserResponse(Schema):
-    id: int
-    username: str
-    email: str
-    first_name: str
-    last_name: str
-    is_staff: bool
-    is_superuser: bool
-
-
 api = NinjaAPI(
     title="TUVTK API",
     version="1.0.0",
@@ -33,6 +25,9 @@ api = NinjaAPI(
     docs_url="/docs",
     openapi_url="/openapi.json",
 )
+
+api.add_router("/auth", auth_router)
+api.add_router("/core", core_router)
 
 
 def _database_status(alias: str) -> Literal["ok", "error"]:
@@ -74,24 +69,3 @@ def health(request: HttpRequest) -> tuple[int, dict[str, object]]:
             "databases": databases,
         },
     )
-
-
-@api.get(
-    "/me",
-    response=CurrentUserResponse,
-    auth=django_auth,
-    tags=["system"],
-    summary="Return the authenticated Django user",
-)
-def current_user(request: HttpRequest) -> dict[str, object]:
-    user = request.auth
-
-    return {
-        "id": user.pk,
-        "username": user.get_username(),
-        "email": user.email,
-        "first_name": user.first_name,
-        "last_name": user.last_name,
-        "is_staff": user.is_staff,
-        "is_superuser": user.is_superuser,
-    }

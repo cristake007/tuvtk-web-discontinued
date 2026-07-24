@@ -1,0 +1,43 @@
+services:
+  backend:
+    command:
+      - python
+      - manage.py
+      - runserver
+      - 0.0.0.0:8000
+
+    environment:
+      DJANGO_DEBUG: "true"
+
+  frontend:
+    image: node:24-bookworm-slim
+
+    container_name: ${FRONTEND_CONTAINER_NAME:-tuvtk_frontend}
+
+    working_dir: /app
+
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      NPM_CONFIG_CACHE: /tmp/npm-cache
+      VITE_BUILD_OUT_DIR: /tmp/tuvtk-frontend-dist
+
+    volumes:
+      - type: bind
+        source: ./frontend
+        target: /app
+
+    ports:
+      - "${FRONTEND_PORT:-5173}:5173"
+
+    depends_on:
+      backend:
+        condition: service_started
+
+    command:
+      - /bin/sh
+      - ./scripts/start-dev.sh
+
+    init: true
+    restart: "no"
