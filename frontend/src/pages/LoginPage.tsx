@@ -1,10 +1,22 @@
 import { useState, type FormEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { LockKeyhole } from "lucide-react";
+import { LockKeyhole, ShieldCheck } from "lucide-react";
 
-import { ApiError } from "../api/http";
-import { login } from "../features/auth/api";
-import { authQueryKeys } from "../features/auth/queryKeys";
+import { ApiError } from "@/api/http";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Spinner } from "@/components/ui/spinner";
+import { login } from "@/features/auth/api";
+import { authQueryKeys } from "@/features/auth/queryKeys";
 
 export function LoginPage() {
   const queryClient = useQueryClient();
@@ -32,56 +44,80 @@ export function LoginPage() {
         : null;
 
   return (
-    <main className="login-page">
-      <section className="login-card" aria-labelledby="login-title">
-        <div className="login-brand" aria-hidden="true">
-          T
+    <main className="grid min-h-svh place-items-center bg-muted/30 p-4 sm:p-6">
+      <div className="w-full max-w-sm">
+        <div className="mb-6 flex items-center justify-center gap-3">
+          <span className="grid size-10 place-items-center rounded-md bg-primary text-sm font-bold text-primary-foreground">
+            T
+          </span>
+          <div className="leading-tight">
+            <p className="font-semibold">TÜV Thüringen Karpat</p>
+            <p className="text-sm text-muted-foreground">Internal platform</p>
+          </div>
         </div>
 
-        <div className="login-heading">
-          <span>TÜV Thüringen Karpat</span>
-          <h1 id="login-title">Sign in to TUVTK</h1>
-          <p>Use your Django account to access the internal platform.</p>
-        </div>
-
-        <form className="login-form" onSubmit={handleSubmit}>
-          <label>
-            <span>Username</span>
-            <input
-              autoComplete="username"
-              autoFocus
-              disabled={loginMutation.isPending}
-              onChange={(event) => setUsername(event.target.value)}
-              required
-              type="text"
-              value={username}
-            />
-          </label>
-
-          <label>
-            <span>Password</span>
-            <input
-              autoComplete="current-password"
-              disabled={loginMutation.isPending}
-              onChange={(event) => setPassword(event.target.value)}
-              required
-              type="password"
-              value={password}
-            />
-          </label>
-
-          {errorMessage ? (
-            <div className="login-error" role="alert">
-              {errorMessage}
+        <Card>
+          <CardHeader>
+            <div className="mb-2 flex size-9 items-center justify-center rounded-md bg-secondary text-secondary-foreground">
+              <ShieldCheck aria-hidden="true" className="size-4" />
             </div>
-          ) : null}
+            <CardTitle className="text-lg">Sign in</CardTitle>
+            <CardDescription>
+              Use your Django account to access the internal workspace.
+            </CardDescription>
+          </CardHeader>
 
-          <button className="login-submit" disabled={loginMutation.isPending} type="submit">
-            <LockKeyhole aria-hidden="true" size={18} />
-            {loginMutation.isPending ? "Signing in…" : "Sign in"}
-          </button>
-        </form>
-      </section>
+          <CardContent>
+            <form className="grid gap-4" onSubmit={handleSubmit}>
+              <div className="grid gap-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  autoComplete="username"
+                  autoFocus
+                  disabled={loginMutation.isPending}
+                  id="username"
+                  onChange={(event) => setUsername(event.target.value)}
+                  required
+                  type="text"
+                  value={username}
+                />
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  autoComplete="current-password"
+                  disabled={loginMutation.isPending}
+                  id="password"
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                  type="password"
+                  value={password}
+                />
+              </div>
+
+              {errorMessage ? (
+                <Alert variant="destructive">
+                  <AlertDescription>{errorMessage}</AlertDescription>
+                </Alert>
+              ) : null}
+
+              <Button
+                className="mt-1 w-full"
+                disabled={loginMutation.isPending}
+                type="submit"
+              >
+                {loginMutation.isPending ? (
+                  <Spinner />
+                ) : (
+                  <LockKeyhole aria-hidden="true" />
+                )}
+                {loginMutation.isPending ? "Signing in…" : "Sign in"}
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
     </main>
   );
 }
