@@ -1,4 +1,4 @@
-import type { NavigationItem } from "@/features/core/types";
+import type { NavigationItem } from "../../features/core/types.js";
 
 export type NavigationNode = NavigationItem & {
   children: NavigationNode[];
