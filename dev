@@ -66,7 +66,7 @@ run_in_service() {
     fi
 }
 
-backend() {
+run_backend() {
     if service_running backend; then
         compose_exec backend "$@"
     else
@@ -74,16 +74,16 @@ backend() {
     fi
 }
 
-frontend() {
+run_frontend() {
     run_in_service frontend "$@"
 }
 
 manage() {
-    backend python manage.py "$@"
+    run_backend python manage.py "$@"
 }
 
 npm() {
-    frontend npm "$@"
+    run_frontend npm "$@"
 }
 
 confirm() {
@@ -123,54 +123,337 @@ reset_volume() {
 
 show_help() {
     cat <<'HELP'
-Usage: ./dev <command> [arguments]
+Usage: ./dev <area|command> [subcommand] [arguments]
 
-Containers:
-  up                         Build and start the development environment
-  down                       Stop and remove containers
-  restart [service]          Restart everything or one service
-  status                     Show container status
-  logs [service]             Follow container logs
-  build [service]            Rebuild images
-  backend-shell              Open /bin/sh in the Django container
-  frontend-shell             Open /bin/sh in the React container
+Environment:
+  up                              Build and start the development environment
+  down                            Stop and remove containers
+  restart [service]               Restart everything or one service
+  status                          Show container status
+  logs [service]                  Follow container logs
+  build [service]                 Rebuild images
 
-Django:
-  django <arguments>         Run any manage.py command
-  app <name>                 Create an app under backend/apps/
-  migrations [app]           Create migration files
-  migrate                    Migrate the core/default database
-  migrate-registry           Migrate the registry database
-  migrate-all                Migrate both databases
-  shell                      Open the Django shell
-  check                      Run Django system checks
-  test [arguments]           Run Django tests
+Backend (Django):
+  backend app <name>              Create an app under backend/apps/
+  backend manage <arguments>      Run any manage.py command
+  backend migrations [app]        Create migration files
+  backend migrate [arguments]     Migrate the core/default database
+  backend migrate-registry        Migrate the registry database
+  backend migrate-all             Migrate both databases
+  backend check                   Run Django system checks
+  backend django-shell            Open the Django shell
+  backend shell                   Open /bin/sh in the backend container
+  backend admin-create            Create a core database administrator
+  backend admin-password [user]   Reset an administrator password
 
-Frontend:
-  frontend-sync              Sync node_modules from package-lock.json
-  frontend-lock              Create or refresh package-lock.json
-  frontend-install           Alias for frontend-sync
-  frontend-typecheck         Run TypeScript validation
-  frontend-build             Build the React application
-  npm <arguments>            Run any npm command in the frontend container
+Frontend (React/Vite):
+  frontend sync                   Sync node_modules from package-lock.json
+  frontend lock                   Create or refresh package-lock.json
+  frontend typecheck              Run TypeScript validation
+  frontend build                  Build the React application
+  frontend npm <arguments>        Run any npm command
+  frontend shell                  Open /bin/sh in the frontend container
+
+Tests:
+  test backend [arguments]        Run Django tests
 
 Validation:
-  validate                   Run Django checks/tests and frontend checks/build
-
-Administration:
-  admin-create               Create a core database administrator
-  admin-password [username]  Reset an administrator password
+  validate                        Run backend tests and frontend checks/build
 
 Database:
-  reset-core-db              Delete only the core database volume
-  reset-registry-db          Delete only the registry database volume
-  reset-db                   Delete both database volumes
+  database reset-core             Delete only the core database volume
+  database reset-registry         Delete only the registry database volume
+  database reset-all              Delete both database volumes
 
 Destructive:
-  wipe                       Remove containers, volumes and local images
+  wipe                            Remove containers, volumes and local images
 
+Run ./dev <area> help for area-specific commands.
 Destructive commands never delete backend/, frontend/, source files, or .env.
 HELP
+}
+
+show_backend_help() {
+    cat <<'HELP'
+Usage: ./dev backend <command> [arguments]
+
+Commands:
+  app <name>                      Create an app under backend/apps/
+  manage <arguments>              Run any manage.py command
+  migrations [app]                Create migration files
+  migrate [arguments]             Migrate the core/default database
+  migrate-registry [arguments]    Migrate the registry database
+  migrate-all                     Migrate both databases
+  check                           Run Django system checks
+  django-shell                    Open the Django shell
+  shell                           Open /bin/sh in the backend container
+  admin-create                    Create a core database administrator
+  admin-password [username]       Reset an administrator password
+HELP
+}
+
+show_frontend_help() {
+    cat <<'HELP'
+Usage: ./dev frontend <command> [arguments]
+
+Commands:
+  sync                            Sync node_modules from package-lock.json
+  lock                            Create or refresh package-lock.json
+  typecheck                       Run TypeScript validation
+  build                           Build the React application
+  npm <arguments>                 Run any npm command
+  shell                           Open /bin/sh in the frontend container
+HELP
+}
+
+show_test_help() {
+    cat <<'HELP'
+Usage: ./dev test <target> [arguments]
+
+Targets:
+  backend [arguments]             Run Django tests
+
+No frontend test runner is configured yet. Frontend type and build checks are
+available through ./dev frontend typecheck, ./dev frontend build, or ./dev validate.
+HELP
+}
+
+show_database_help() {
+    cat <<'HELP'
+Usage: ./dev database <command>
+
+Commands:
+  reset-core                      Delete only the core database volume
+  reset-registry                  Delete only the registry database volume
+  reset-all                       Delete both database volumes
+HELP
+}
+
+create_backend_app() {
+    [[ $# -eq 1 ]] || {
+        echo "Usage: ./dev backend app <application-name>" >&2
+        exit 2
+    }
+
+    local app_name="$1"
+    local app_host_path="backend/apps/${app_name}"
+    local app_container_path="apps/${app_name}"
+    local apps_file="${app_host_path}/apps.py"
+
+    if [[ ! "$app_name" =~ ^[a-z][a-z0-9_]*$ ]]; then
+        echo "Invalid app name: ${app_name}" >&2
+        echo "Use lowercase letters, numbers and underscores." >&2
+        exit 1
+    fi
+
+    if [[ -e "$app_host_path" ]]; then
+        echo "App already exists: ${app_host_path}" >&2
+        exit 1
+    fi
+
+    mkdir -p backend/apps
+    touch backend/apps/__init__.py
+
+    manage startapp "$app_name" "$app_container_path"
+
+    sed -i -E \
+        "s|^([[:space:]]*)name = .*$|\1name = \"apps.${app_name}\"|" \
+        "$apps_file"
+
+    if ! grep -q "name = \"apps.${app_name}\"" "$apps_file"; then
+        echo "Failed to update ${apps_file}" >&2
+        exit 1
+    fi
+
+    echo "Created Django app: ${app_host_path}"
+    echo "Python path: apps.${app_name}"
+    echo "Add its complete AppConfig path to INSTALLED_APPS."
+}
+
+backend_command() {
+    local command="${1:-help}"
+    shift || true
+
+    case "$command" in
+        app)
+            create_backend_app "$@"
+            ;;
+        manage)
+            [[ $# -gt 0 ]] || {
+                echo "Usage: ./dev backend manage <arguments>" >&2
+                exit 2
+            }
+            manage "$@"
+            ;;
+        migrations)
+            manage makemigrations "$@"
+            ;;
+        migrate)
+            manage migrate --database=default "$@"
+            ;;
+        migrate-registry)
+            manage migrate --database=registry "$@"
+            ;;
+        migrate-all)
+            manage migrate --database=default
+            manage migrate --database=registry
+            ;;
+        check)
+            manage check
+            ;;
+        django-shell)
+            manage shell
+            ;;
+        shell)
+            run_backend sh
+            ;;
+        admin-create)
+            manage createsuperuser --database=default
+            ;;
+        admin-password)
+            manage changepassword --database=default "${1:-admin}"
+            ;;
+        help|-h|--help)
+            show_backend_help
+            ;;
+        *)
+            echo "Unknown backend command: ${command}" >&2
+            echo >&2
+            show_backend_help >&2
+            exit 2
+            ;;
+    esac
+}
+
+frontend_command() {
+    local command="${1:-help}"
+    shift || true
+
+    case "$command" in
+        sync|install)
+            run_frontend sh ./scripts/sync-dependencies.sh
+            ;;
+        lock)
+            npm install --package-lock-only --include=dev
+            echo "Updated frontend/package-lock.json. Review and commit it."
+            ;;
+        typecheck)
+            npm run typecheck
+            ;;
+        build)
+            npm run build
+            ;;
+        npm)
+            [[ $# -gt 0 ]] || {
+                echo "Usage: ./dev frontend npm <arguments>" >&2
+                exit 2
+            }
+            npm "$@"
+            ;;
+        shell)
+            run_frontend sh
+            ;;
+        help|-h|--help)
+            show_frontend_help
+            ;;
+        *)
+            echo "Unknown frontend command: ${command}" >&2
+            echo >&2
+            show_frontend_help >&2
+            exit 2
+            ;;
+    esac
+}
+
+test_command() {
+    local target="${1:-help}"
+    shift || true
+
+    case "$target" in
+        backend)
+            manage test "$@"
+            ;;
+        help|-h|--help)
+            show_test_help
+            ;;
+        *)
+            echo "Unknown test target: ${target}" >&2
+            echo >&2
+            show_test_help >&2
+            exit 2
+            ;;
+    esac
+}
+
+database_command() {
+    local command="${1:-help}"
+    shift || true
+
+    case "$command" in
+        reset-core)
+            confirm RESET-CORE \
+                "This permanently deletes the core database." || {
+                echo "Cancelled."
+                exit 1
+            }
+
+            reset_volume \
+                db_core \
+                "${CORE_DB_VOLUME_NAME:-tuvtk_core_postgres_data}"
+
+            compose up -d backend
+            echo "Core database reset. Run: ./dev backend migrate"
+            ;;
+        reset-registry)
+            confirm RESET-REGISTRY \
+                "This permanently deletes the registry database." || {
+                echo "Cancelled."
+                exit 1
+            }
+
+            reset_volume \
+                db_registry \
+                "${REGISTRY_DB_VOLUME_NAME:-tuvtk_registry_postgres_data}"
+
+            compose up -d backend
+            echo "Registry database reset."
+            ;;
+        reset-all)
+            confirm RESET-ALL \
+                "This permanently deletes both databases." || {
+                echo "Cancelled."
+                exit 1
+            }
+
+            compose down --remove-orphans
+
+            "${DOCKER[@]}" volume rm \
+                "${CORE_DB_VOLUME_NAME:-tuvtk_core_postgres_data}" \
+                "${REGISTRY_DB_VOLUME_NAME:-tuvtk_registry_postgres_data}" \
+                2>/dev/null || true
+
+            compose up -d --build
+            echo "Both databases reset. Run: ./dev backend migrate"
+            ;;
+        help|-h|--help)
+            show_database_help
+            ;;
+        *)
+            echo "Unknown database command: ${command}" >&2
+            echo >&2
+            show_database_help >&2
+            exit 2
+            ;;
+    esac
+}
+
+moved_command() {
+    local old_command="$1"
+    local replacement="$2"
+
+    echo "Command moved: ./dev ${old_command}" >&2
+    echo "Use: ${replacement}" >&2
+    exit 2
 }
 
 command="${1:-help}"
@@ -180,11 +463,9 @@ case "$command" in
     up)
         compose up -d --build
         ;;
-
     down)
         compose down --remove-orphans
         ;;
-
     restart)
         if [[ $# -gt 0 ]]; then
             compose restart "$@"
@@ -192,186 +473,34 @@ case "$command" in
             compose restart
         fi
         ;;
-
     status|ps)
         compose ps
         ;;
-
     logs)
         compose logs -f --tail=200 "$@"
         ;;
-
     build)
         compose build "$@"
         ;;
-
-    backend-shell)
-        backend sh
+    backend)
+        backend_command "$@"
         ;;
-
-    frontend-shell)
-        frontend sh
+    frontend)
+        frontend_command "$@"
         ;;
-
-    django)
-        manage "$@"
-        ;;
-
-    app)
-        [[ $# -eq 1 ]] || {
-            echo "Usage: ./dev app <application-name>" >&2
-            exit 2
-        }
-
-        app_name="$1"
-        app_host_path="backend/apps/${app_name}"
-        app_container_path="apps/${app_name}"
-
-        if [[ ! "$app_name" =~ ^[a-z][a-z0-9_]*$ ]]; then
-            echo "Invalid app name: ${app_name}" >&2
-            echo "Use lowercase letters, numbers and underscores." >&2
-            exit 1
-        fi
-
-        if [[ -e "$app_host_path" ]]; then
-            echo "App already exists: ${app_host_path}" >&2
-            exit 1
-        fi
-
-        mkdir -p backend/apps
-        touch backend/apps/__init__.py
-
-        manage startapp "$app_name" "$app_container_path"
-
-        apps_file="${app_host_path}/apps.py"
-        sed -i -E \
-            "s|^([[:space:]]*)name = .*$|\1name = \"apps.${app_name}\"|" \
-            "$apps_file"
-
-        if ! grep -q "name = \"apps.${app_name}\"" "$apps_file"; then
-            echo "Failed to update ${apps_file}" >&2
-            exit 1
-        fi
-
-        echo "Created Django app: ${app_host_path}"
-        echo "Python path: apps.${app_name}"
-        echo "Add its complete AppConfig path to INSTALLED_APPS."
-        ;;
-
-    migrations)
-        manage makemigrations "$@"
-        ;;
-
-    migrate)
-        manage migrate --database=default "$@"
-        ;;
-
-    migrate-registry)
-        manage migrate --database=registry "$@"
-        ;;
-
-    migrate-all)
-        manage migrate --database=default
-        manage migrate --database=registry
-        ;;
-
-    shell)
-        manage shell
-        ;;
-
-    check)
-        manage check
-        ;;
-
     test)
-        manage test "$@"
+        test_command "$@"
         ;;
-
-    frontend-sync|frontend-install)
-        frontend sh ./scripts/sync-dependencies.sh
-        ;;
-
-    frontend-lock)
-        npm install --package-lock-only --include=dev
-        echo "Updated frontend/package-lock.json. Review and commit it."
-        ;;
-
-    frontend-typecheck)
-        npm run typecheck
-        ;;
-
-    frontend-build)
-        npm run build
-        ;;
-
-    npm)
-        npm "$@"
-        ;;
-
     validate)
         manage check
         manage test
-        frontend sh ./scripts/sync-dependencies.sh
+        run_frontend sh ./scripts/sync-dependencies.sh
         npm run typecheck
         npm run build
         ;;
-
-    admin-create)
-        manage createsuperuser --database=default
+    database)
+        database_command "$@"
         ;;
-
-    admin-password)
-        manage changepassword --database=default "${1:-admin}"
-        ;;
-
-    reset-core-db)
-        confirm RESET-CORE \
-            "This permanently deletes the core database." || {
-            echo "Cancelled."
-            exit 1
-        }
-
-        reset_volume \
-            db_core \
-            "${CORE_DB_VOLUME_NAME:-tuvtk_core_postgres_data}"
-
-        compose up -d backend
-        echo "Core database reset. Run: ./dev migrate"
-        ;;
-
-    reset-registry-db)
-        confirm RESET-REGISTRY \
-            "This permanently deletes the registry database." || {
-            echo "Cancelled."
-            exit 1
-        }
-
-        reset_volume \
-            db_registry \
-            "${REGISTRY_DB_VOLUME_NAME:-tuvtk_registry_postgres_data}"
-
-        compose up -d backend
-        echo "Registry database reset."
-        ;;
-
-    reset-db)
-        confirm RESET-ALL \
-            "This permanently deletes both databases." || {
-            echo "Cancelled."
-            exit 1
-        }
-
-        compose down --remove-orphans
-
-        "${DOCKER[@]}" volume rm \
-            "${CORE_DB_VOLUME_NAME:-tuvtk_core_postgres_data}" \
-            "${REGISTRY_DB_VOLUME_NAME:-tuvtk_registry_postgres_data}" \
-            2>/dev/null || true
-
-        compose up -d --build
-        echo "Both databases reset. Run: ./dev migrate"
-        ;;
-
     wipe)
         confirm WIPE \
             "This removes containers, database volumes and locally built images." || {
@@ -384,15 +513,73 @@ case "$command" in
             --remove-orphans \
             --rmi local
         ;;
-
+    backend-shell)
+        moved_command "backend-shell" "./dev backend shell"
+        ;;
+    frontend-shell)
+        moved_command "frontend-shell" "./dev frontend shell"
+        ;;
+    django)
+        moved_command "django" "./dev backend manage <arguments>"
+        ;;
+    app)
+        moved_command "app" "./dev backend app <name>"
+        ;;
+    migrations)
+        moved_command "migrations" "./dev backend migrations [app]"
+        ;;
+    migrate)
+        moved_command "migrate" "./dev backend migrate [arguments]"
+        ;;
+    migrate-registry)
+        moved_command "migrate-registry" "./dev backend migrate-registry [arguments]"
+        ;;
+    migrate-all)
+        moved_command "migrate-all" "./dev backend migrate-all"
+        ;;
+    shell)
+        moved_command "shell" "./dev backend django-shell"
+        ;;
+    check)
+        moved_command "check" "./dev backend check"
+        ;;
+    frontend-sync|frontend-install)
+        moved_command "$command" "./dev frontend sync"
+        ;;
+    frontend-lock)
+        moved_command "frontend-lock" "./dev frontend lock"
+        ;;
+    frontend-typecheck)
+        moved_command "frontend-typecheck" "./dev frontend typecheck"
+        ;;
+    frontend-build)
+        moved_command "frontend-build" "./dev frontend build"
+        ;;
+    npm)
+        moved_command "npm" "./dev frontend npm <arguments>"
+        ;;
+    admin-create)
+        moved_command "admin-create" "./dev backend admin-create"
+        ;;
+    admin-password)
+        moved_command "admin-password" "./dev backend admin-password [username]"
+        ;;
+    reset-core-db)
+        moved_command "reset-core-db" "./dev database reset-core"
+        ;;
+    reset-registry-db)
+        moved_command "reset-registry-db" "./dev database reset-registry"
+        ;;
+    reset-db)
+        moved_command "reset-db" "./dev database reset-all"
+        ;;
     help|-h|--help)
         show_help
         ;;
-
     *)
-        echo "Unknown command: ${command}" >&2
-        echo
-        show_help
+        echo "Unknown command or area: ${command}" >&2
+        echo >&2
+        show_help >&2
         exit 2
         ;;
 esac
