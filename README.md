@@ -83,8 +83,8 @@ Start and initialize the application:
 
 ```bash
 ./dev up
-./dev migrate
-./dev admin-create
+./dev backend migrate
+./dev backend admin-create
 ```
 
 The first frontend start generates `frontend/package-lock.json` only when it is missing. The committed lockfile is then used with `npm ci`.
@@ -98,7 +98,7 @@ API docs:          http://localhost:5173/api/v1/docs
 OpenAPI JSON:      http://localhost:5173/api/v1/openapi.json
 ```
 
-Sign in with the Django account created by `./dev admin-create`.
+Sign in with the Django account created by `./dev backend admin-create`.
 
 Normal Python, TypeScript, React, and CSS edits do not require a restart. Restart the frontend after changing dependencies or when Vite retains a stale module graph after a branch switch or merge.
 
@@ -309,8 +309,8 @@ Frontend components do not call `fetch` directly:
 After changing dependencies:
 
 ```bash
-./dev npm install <package> --save-exact
-./dev frontend-lock
+./dev frontend npm install <package> --save-exact
+./dev frontend lock
 ./dev restart frontend
 ./dev validate
 git add frontend/package.json frontend/package-lock.json
@@ -326,7 +326,7 @@ Development validation must not write generated bundles into the bind-mounted so
 VITE_BUILD_OUT_DIR=/tmp/tuvtk-frontend-dist
 ```
 
-Therefore `./dev frontend-build` and `./dev validate` write their temporary bundle inside the container. A production build without this environment variable uses Vite's conventional `frontend/dist` output.
+Therefore `./dev frontend build` and `./dev validate` write their temporary bundle inside the container. A production build without this environment variable uses Vite's conventional `frontend/dist` output.
 
 `vite.config.ts` separates React, React Router, TanStack Query, Base UI, Lucide, and remaining vendor modules into stable chunks. Large pages and optional capabilities should also use dynamic imports.
 
@@ -362,42 +362,55 @@ Keep the feature branch until `main` runs successfully and relevant validation p
 
 ## Development commands
 
+The harness separates environment, backend, frontend, tests, and database operations. Run `./dev help` or `./dev <area> help` to discover commands.
+
 ```bash
-./dev help
+# Environment
 ./dev up
 ./dev down
 ./dev restart [service]
 ./dev status
-./dev logs backend
-./dev logs frontend
-./dev backend-shell
-./dev frontend-shell
+./dev logs [service]
+./dev build [service]
 
-./dev check
-./dev test
-./dev migrations [app]
-./dev migrate
-./dev shell
+# Backend (Django)
+./dev backend app <name>
+./dev backend manage <arguments>
+./dev backend migrations [app]
+./dev backend migrate [arguments]
+./dev backend check
+./dev backend django-shell
+./dev backend shell
+./dev backend admin-create
+./dev backend admin-password [username]
 
-./dev frontend-sync
-./dev frontend-lock
-./dev frontend-typecheck
-./dev frontend-build
-./dev npm <arguments>
+# Frontend (React/Vite)
+./dev frontend sync
+./dev frontend lock
+./dev frontend typecheck
+./dev frontend build
+./dev frontend npm <arguments>
+./dev frontend shell
 
+# Tests and complete validation
+./dev test backend [arguments]
 ./dev validate
 ```
 
 `./dev validate` runs Django checks and tests, synchronizes frontend dependencies, runs theme-token validation, runs TypeScript validation, and creates a temporary Vite production bundle inside the container.
 
+No frontend test runner is configured yet. Frontend validation currently consists of dependency synchronization, theme-token validation, TypeScript validation, and the Vite production build.
+
 Database reset commands are destructive and request explicit confirmation:
 
 ```bash
-./dev reset-core-db
-./dev reset-registry-db
-./dev reset-db
+./dev database reset-core
+./dev database reset-registry
+./dev database reset-all
 ./dev wipe
 ```
+
+Legacy top-level commands such as `./dev app`, `./dev migrate`, and `./dev frontend-build` now stop and print the corresponding namespaced command instead of running ambiguously.
 
 ## Troubleshooting
 
@@ -436,6 +449,15 @@ git status
 git log -1 --oneline
 git diff origin/main -- dev
 ./dev help
+```
+
+For a namespaced command, inspect its area-specific help:
+
+```bash
+./dev backend help
+./dev frontend help
+./dev test help
+./dev database help
 ```
 
 Do not assume a command exists on an older branch.
