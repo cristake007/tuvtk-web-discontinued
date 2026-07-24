@@ -12,6 +12,14 @@ services:
     environment:
       DJANGO_DEBUG: "true"
 
+  celery_worker:
+    build:
+      target: development
+
+  celery_beat:
+    build:
+      target: development
+
   frontend:
     image: node:24-bookworm-slim
 
