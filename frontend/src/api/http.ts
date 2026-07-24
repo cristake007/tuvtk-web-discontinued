@@ -12,6 +12,10 @@ type ApiRequestOptions = RequestInit & {
   includeCsrf?: boolean;
 };
 
+type ApiDownloadOptions = ApiRequestOptions & {
+  accept?: string;
+};
+
 function readCookie(name: string): string | null {
   const prefix = `${name}=`;
 
@@ -110,13 +114,11 @@ export async function apiRequest<T>(
 
 export async function apiDownload(
   path: string,
-  options: ApiRequestOptions = {},
+  options: ApiDownloadOptions = {},
 ): Promise<Blob> {
-  const { headers, requestOptions } = buildRequestHeaders(options);
-  headers.set(
-    "Accept",
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  );
+  const { accept = "application/octet-stream", ...apiOptions } = options;
+  const { headers, requestOptions } = buildRequestHeaders(apiOptions);
+  headers.set("Accept", accept);
   const response = await fetch(path, {
     ...requestOptions,
     credentials: "same-origin",
