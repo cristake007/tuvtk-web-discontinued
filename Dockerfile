@@ -12,10 +12,10 @@ RUN apt-get update \
         libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY backend/requirements.txt /tmp/requirements.txt
+COPY backend/requirements.txt backend/requirements-dev.txt /tmp/
 
 RUN pip install --upgrade pip \
-    && pip install -r /tmp/requirements.txt
+    && pip install -r /tmp/requirements-dev.txt
 
 # This allows the image to run without a bind mount later.
 # During development, ./backend:/app replaces this copy.
