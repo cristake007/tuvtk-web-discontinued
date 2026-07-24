@@ -1,33 +1,38 @@
-import { describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 
 import {
   MAX_COMPANY_LOGO_BYTES,
   validateCompanyLogo,
-} from "./validation";
+} from "./validation.ts";
 
 describe("validateCompanyLogo", () => {
   it("accepts SVG files by MIME type or extension", () => {
-    expect(
+    assert.equal(
       validateCompanyLogo({ name: "logo", size: 100, type: "image/svg+xml" }),
-    ).toBeNull();
-    expect(
+      null,
+    );
+    assert.equal(
       validateCompanyLogo({ name: "logo.SVG", size: 100, type: "" }),
-    ).toBeNull();
+      null,
+    );
   });
 
   it("rejects non-SVG files", () => {
-    expect(
+    assert.equal(
       validateCompanyLogo({ name: "logo.png", size: 100, type: "image/png" }),
-    ).toBe("Select an SVG file.");
+      "Select an SVG file.",
+    );
   });
 
   it("rejects SVG files larger than the configured limit", () => {
-    expect(
+    assert.equal(
       validateCompanyLogo({
         name: "logo.svg",
         size: MAX_COMPANY_LOGO_BYTES + 1,
         type: "image/svg+xml",
       }),
-    ).toBe("The SVG file must be 256 KB or smaller.");
+      "The SVG file must be 256 KB or smaller.",
+    );
   });
 });
