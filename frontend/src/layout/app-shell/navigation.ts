@@ -1,5 +1,6 @@
 import {
   Building2,
+  CalendarRange,
   Circle,
   FileText,
   Files,
@@ -17,6 +18,7 @@ export type { NavigationNode } from "./navigation-model";
 
 const navigationIcons: Record<string, LucideIcon> = {
   "building-2": Building2,
+  "calendar-range": CalendarRange,
   "file-text": FileText,
   files: Files,
   "layout-dashboard": LayoutDashboard,
