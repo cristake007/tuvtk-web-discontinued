@@ -56,4 +56,4 @@ class CourseScheduler:
         if start_date.month == end_date.month and start_date.year == end_date.year:
             return f"{start_date:%d}-{end_date:%d.%m.%Y}"
 
-        return f"{start_date:%d.%m.%Y}-{end_date:%d.%m.%Y}"
+        return f"{start_date:%d.%m}-{end_date:%d.%m.%Y}"
