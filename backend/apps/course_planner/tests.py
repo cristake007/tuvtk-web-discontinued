@@ -45,19 +45,22 @@ class CoursePlannerApiTests(TestCase):
             content_type="text/csv",
         )
 
-    def test_generate_requires_authentication(self):
-        self.client.logout()
-
-        response = self.client.post(
+    def generate_request(self, input_file: SimpleUploadedFile):
+        return self.client.post(
             "/api/v1/course-planner/generate",
             {
-                "input_file": self.course_file(),
+                "input_file": input_file,
                 "year": 2027,
                 "months": "1",
                 "randomness": 5,
                 "holidays": "",
             },
         )
+
+    def test_generate_requires_authentication(self):
+        self.client.logout()
+
+        response = self.generate_request(self.course_file())
 
         self.assertEqual(response.status_code, 401)
 
@@ -79,17 +82,32 @@ class CoursePlannerApiTests(TestCase):
         self.assertEqual(len(payload["schedule"]), 2)
         self.assertEqual(payload["schedule"][0]["title"], "Auditor ISO 9001")
 
-    def test_invalid_input_columns_are_rejected(self):
-        response = self.client.post(
-            "/api/v1/course-planner/generate",
-            {
-                "input_file": self.course_file(b"Nume;Durata\nCurs;2\n"),
-                "year": 2027,
-                "months": "1",
-                "randomness": 5,
-                "holidays": "",
-            },
+    def test_generate_csv_with_excel_separator_directive(self):
+        response = self.generate_request(
+            self.course_file(
+                b"sep=;\n\n"
+                b"Title;Durata Curs;investitie;Permalink\n"
+                b"Auditor ISO 9001;2 zile;350 EUR;/curs/auditor-iso-9001\n"
+            )
         )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["schedule"][0]["title"], "Auditor ISO 9001")
+
+    def test_generate_csv_with_header_after_preamble(self):
+        response = self.generate_request(
+            self.course_file(
+                b"Export cursuri\n\n"
+                b"Title;Durata Curs;investitie;Permalink\n"
+                b"Auditor ISO 9001;2 zile;350 EUR;/curs/auditor-iso-9001\n"
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["schedule"][0]["title"], "Auditor ISO 9001")
+
+    def test_invalid_input_columns_are_rejected(self):
+        response = self.generate_request(self.course_file(b"Nume;Durata\nCurs;2\n"))
 
         self.assertEqual(response.status_code, 400)
         self.assertIn("Coloana obligatorie", response.json()["detail"])
