@@ -1,14 +1,11 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
-import type { ShellConfiguration } from "@/api/types";
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -25,7 +22,6 @@ import {
 } from "./navigation";
 
 type AppSidebarProps = {
-  configuration: ShellConfiguration;
   navigation: NavigationNode[];
 };
 
@@ -58,85 +54,6 @@ function isNodeActive(node: NavigationNode, pathname: string): boolean {
   return (
     isNavigationPathActive(pathname, node.path) ||
     node.children.some((child) => isNodeActive(child, pathname))
-  );
-}
-
-function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) {
-  const { setOpenMobile, state } = useSidebar();
-  const [logoFailed, setLogoFailed] = useState(false);
-  const [logoExpanded, setLogoExpanded] = useState(state !== "collapsed");
-  const previousState = useRef(state);
-
-  useEffect(() => {
-    setLogoFailed(false);
-  }, [configuration.logo_url]);
-
-  useLayoutEffect(() => {
-    if (previousState.current === state) {
-      return undefined;
-    }
-
-    previousState.current = state;
-
-    if (state === "collapsed") {
-      let secondFrame = 0;
-      const firstFrame = window.requestAnimationFrame(() => {
-        secondFrame = window.requestAnimationFrame(() => {
-          setLogoExpanded(false);
-        });
-      });
-
-      return () => {
-        window.cancelAnimationFrame(firstFrame);
-        if (secondFrame) {
-          window.cancelAnimationFrame(secondFrame);
-        }
-      };
-    }
-
-    setLogoExpanded(false);
-
-    let secondFrame = 0;
-    const firstFrame = window.requestAnimationFrame(() => {
-      secondFrame = window.requestAnimationFrame(() => {
-        setLogoExpanded(true);
-      });
-    });
-
-    return () => {
-      window.cancelAnimationFrame(firstFrame);
-      if (secondFrame) {
-        window.cancelAnimationFrame(secondFrame);
-      }
-    };
-  }, [state]);
-
-  const showConfiguredLogo = Boolean(configuration.logo_url) && !logoFailed;
-
-  return (
-    <NavLink
-      aria-label={`${configuration.site_name} dashboard`}
-      className="relative flex h-full w-full cursor-pointer items-center justify-center overflow-hidden bg-white px-3 outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
-      onClick={() => setOpenMobile(false)}
-      to="/"
-    >
-      {showConfiguredLogo ? (
-        <img
-          alt={`${configuration.organization_name} logo`}
-          className={[
-            "absolute h-24 w-64 max-w-none -translate-y-3 object-contain transform-gpu",
-            "transition-transform duration-200 ease-linear motion-reduce:transition-none",
-            logoExpanded ? "scale-110" : "scale-[0.3]",
-          ].join(" ")}
-          onError={() => setLogoFailed(true)}
-          src={configuration.logo_url ?? undefined}
-        />
-      ) : (
-        <span className="-translate-y-3 text-xs font-bold tracking-normal text-primary">
-          TUVTK
-        </span>
-      )}
-    </NavLink>
   );
 }
 
@@ -194,37 +111,38 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
 function BrandSidebarRail() {
   const { state, toggleSidebar } = useSidebar();
   const RailIcon = state === "collapsed" ? ChevronRight : ChevronLeft;
+  const expanded = state === "expanded";
 
   return (
     <button
-      aria-label={state === "collapsed" ? "Expand navigation" : "Collapse navigation"}
-      className="group/rail absolute top-16 bottom-0 z-40 hidden w-7 cursor-pointer items-center justify-center group-data-[side=left]:-right-3.5 group-data-[side=right]:-left-3.5 sm:flex"
+      aria-label={expanded ? "Restrânge navigația" : "Extinde navigația"}
+      className="group/rail absolute inset-y-0 z-40 hidden w-7 cursor-pointer items-center justify-center group-data-[side=left]:-right-3.5 group-data-[side=right]:-left-3.5 sm:flex"
       onClick={toggleSidebar}
-      title={state === "collapsed" ? "Expand navigation" : "Collapse navigation"}
+      title={expanded ? "Restrânge navigația" : "Extinde navigația"}
       type="button"
     >
       <span
         aria-hidden="true"
         className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-sidebar-border/70 transition-[background-color,box-shadow] duration-200 group-hover/rail:bg-primary group-hover/rail:shadow-[0_0_3px_rgb(22_65_148_/_0.18)]"
       />
-      <span className="relative z-10 grid size-6 aspect-square shrink-0 place-items-center overflow-hidden rounded-full border border-sidebar-border bg-white p-0 text-sidebar-foreground/70 shadow-sm transition-[border-color,color,transform,box-shadow] duration-200 group-hover/rail:scale-105 group-hover/rail:border-primary group-hover/rail:text-primary group-hover/rail:shadow-primary/15">
+      <span className="relative z-10 grid size-6 shrink-0 place-items-center overflow-hidden rounded-full border border-sidebar-border bg-white p-0 text-sidebar-foreground/70 shadow-sm transition-[border-color,color,transform,box-shadow] duration-200 group-hover/rail:scale-105 group-hover/rail:border-primary group-hover/rail:text-primary group-hover/rail:shadow-primary/15">
         <RailIcon aria-hidden="true" className="size-3" />
       </span>
     </button>
   );
 }
 
-export function AppSidebar({ configuration, navigation }: AppSidebarProps) {
+export function AppSidebar({ navigation }: AppSidebarProps) {
   return (
-    <Sidebar className="bg-white" collapsible="icon" variant="sidebar">
-      <SidebarHeader className="h-24 shrink-0 bg-white p-0">
-        <SidebarBrand configuration={configuration} />
-      </SidebarHeader>
-
-      <SidebarContent className="bg-white">
-        <SidebarGroup className="p-0 pt-1">
+    <Sidebar
+      className="top-[var(--app-header-height)]! bottom-0! h-auto! bg-white transition-[top,left,right,width] duration-200 ease-out motion-reduce:transition-none"
+      collapsible="icon"
+      variant="sidebar"
+    >
+      <SidebarContent className="bg-white pt-2">
+        <SidebarGroup className="p-0">
           <SidebarGroupContent>
-            <SidebarMenu aria-label="Primary navigation" className="gap-0">
+            <SidebarMenu aria-label="Navigație principală" className="gap-0">
               {navigation.map((item) => (
                 <NavigationEntry item={item} key={item.key} />
               ))}
