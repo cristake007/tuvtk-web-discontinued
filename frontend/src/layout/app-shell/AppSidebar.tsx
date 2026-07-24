@@ -66,7 +66,7 @@ function isNodeActive(node: NavigationNode, pathname: string): boolean {
 function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) {
   const { setOpenMobile, state } = useSidebar();
   const [logoFailed, setLogoFailed] = useState(false);
-  const [logoVisible, setLogoVisible] = useState(state !== "collapsed");
+  const [logoExpanded, setLogoExpanded] = useState(state !== "collapsed");
   const previousState = useRef(state);
 
   useEffect(() => {
@@ -81,16 +81,16 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
     previousState.current = state;
 
     if (state === "collapsed") {
-      setLogoVisible(false);
+      setLogoExpanded(false);
       return undefined;
     }
 
-    setLogoVisible(false);
+    setLogoExpanded(false);
 
     let secondFrame = 0;
     const firstFrame = window.requestAnimationFrame(() => {
       secondFrame = window.requestAnimationFrame(() => {
-        setLogoVisible(true);
+        setLogoExpanded(true);
       });
     });
 
@@ -112,30 +112,16 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
       to="/"
     >
       {showConfiguredLogo ? (
-        <>
-          <img
-            alt={`${configuration.organization_name} logo`}
-            className={[
-              "absolute h-16 w-52 max-w-none object-contain transform-gpu",
-              "transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none",
-              logoVisible
-                ? "scale-[1.55] opacity-100"
-                : "scale-[1.46] opacity-0",
-            ].join(" ")}
-            onError={() => setLogoFailed(true)}
-            src={configuration.logo_url ?? undefined}
-          />
-          <span
-            aria-hidden="true"
-            className={[
-              "absolute text-[10px] font-bold tracking-normal text-primary transform-gpu",
-              "transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none",
-              logoVisible ? "scale-90 opacity-0" : "scale-100 opacity-100",
-            ].join(" ")}
-          >
-            TUVTK
-          </span>
-        </>
+        <img
+          alt={`${configuration.organization_name} logo`}
+          className={[
+            "absolute h-16 w-52 max-w-none object-contain transform-gpu",
+            "transition-transform duration-200 ease-linear motion-reduce:transition-none",
+            logoExpanded ? "scale-[1.55]" : "scale-[0.34]",
+          ].join(" ")}
+          onError={() => setLogoFailed(true)}
+          src={configuration.logo_url ?? undefined}
+        />
       ) : (
         <span className="text-[11px] font-bold tracking-normal text-primary">
           TUVTK
