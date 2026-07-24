@@ -63,8 +63,11 @@ def update_integration_settings(
     settings.automatic_sync = automatic_sync
     settings.frequency = frequency
     if enabled and automatic_sync:
-        reference = settings.last_successful_at or timezone.now()
-        settings.next_sync_at = calculate_next_sync_at(reference, frequency)
+        settings.next_sync_at = (
+            calculate_next_sync_at(settings.last_successful_at, frequency)
+            if settings.last_successful_at
+            else timezone.now()
+        )
     else:
         settings.next_sync_at = None
     settings.save(
