@@ -2,7 +2,7 @@
 
 Internal operations platform with a React frontend, a Django REST Framework API, and two independent PostgreSQL databases.
 
-- `db_core` stores Django users, sessions, permissions, application configuration, navigation, and operational data.
+- `db_core` stores Django users, sessions, permissions, application configuration, navigation, generated files, and operational data.
 - `db_registry` is reserved for the large ONRC registry and related reference data.
 
 ## Stack
@@ -13,12 +13,14 @@ Internal operations platform with a React frontend, a Django REST Framework API,
 - Django 6
 - Django REST Framework
 - django-filter
-- drf-spectacular with local Swagger UI and ReDoc assets
+- drf-spectacular for OpenAPI, Swagger UI, and ReDoc
 - Django sessions and CSRF protection
 - Celery, prepared for future background jobs
 - openpyxl and xlrd for spreadsheet workflows
 - PostgreSQL 18
 - Gunicorn outside the development override
+
+The API stack is **Django REST Framework only**. Django Ninja is not used. API schemas and interactive documentation are generated with **drf-spectacular**.
 
 ### Frontend
 
@@ -30,6 +32,7 @@ Internal operations platform with a React frontend, a Django REST Framework API,
 - TanStack Query 5
 - Tailwind CSS 4
 - shadcn Base UI components
+- Sonner notifications
 - Lucide icons
 
 Exact frontend versions are pinned in `frontend/package.json` and locked in `frontend/package-lock.json`.
@@ -40,12 +43,11 @@ All user-facing frontend copy must be written in Romanian unless a specific feat
 
 This includes:
 
-- navigation labels;
-- page titles and descriptions;
-- buttons, form labels, placeholders, validation messages, alerts, empty states, loading states, tooltips, and accessibility labels;
-- text rendered from database-backed frontend configuration.
+- navigation labels and database-backed navigation text;
+- headings, descriptions, buttons, forms, placeholders, validation messages, notifications, empty states, loading states, and tooltips;
+- accessibility labels such as `aria-label` and meaningful image `alt` text.
 
-Technical identifiers remain in English where appropriate: route paths, API fields, TypeScript names, Django model fields, database columns, and code comments.
+Technical identifiers remain in English where appropriate: route paths, API fields, TypeScript names, Django model fields, database columns, and internal code symbols.
 
 Current primary navigation labels are:
 
@@ -119,7 +121,7 @@ API documentation is restricted to staff users.
 │   ├── apps/
 │   │   ├── authentication/          Browser session authentication
 │   │   ├── core/                    Shell configuration and navigation
-│   │   ├── course_planner/          Course-period generation and Excel export
+│   │   ├── course_planner/          Course planning, history, and generated files
 │   │   └── <domain>/                Domain applications
 │   ├── config/
 │   │   ├── api_urls.py
@@ -135,6 +137,7 @@ API documentation is restricted to staff users.
     ├── src/
     │   ├── api/                     Shared HTTP transport
     │   ├── app/                     Router configuration
+    │   ├── components/              Shared application components
     │   ├── components/ui/           Generated shadcn primitives
     │   ├── features/
     │   │   ├── auth/                Session authentication
@@ -143,7 +146,7 @@ API documentation is restricted to staff users.
     │   │   └── course-planner/      Course planner feature
     │   ├── layout/                  Application shell
     │   ├── pages/                   Route-level composition
-    │   └── styles/globals.css
+    │   └── styles/                  Theme and shared interaction styles
     ├── package.json
     ├── package-lock.json
     └── vite.config.ts
@@ -165,13 +168,13 @@ backend/apps/<domain>/
 
 Responsibilities:
 
-- `serializers.py` defines request and response contracts.
-- `views.py` handles HTTP input, authentication, permissions, status codes, and response mapping.
-- `services.py` contains reusable business workflows and database queries.
-- `models.py` owns persistence and database constraints.
+- `serializers.py` defines DRF request and response contracts;
+- `views.py` handles HTTP input, authentication, permissions, status codes, and response mapping;
+- `services.py` contains reusable business workflows and database queries;
+- `models.py` owns persistence and database constraints;
 - `tests.py` verifies authentication, permissions, CSRF, validation, filtering, success paths, and important failures.
 
-Keep API views thin. Django remains authoritative for validation, permissions, and business rules.
+Keep API views thin. Django remains authoritative for validation, permissions, and business rules. Do not introduce Django Ninja or a second API framework.
 
 ### API documentation
 
@@ -204,10 +207,11 @@ POST /api/v1/auth/logout
 
 ## Planificator cursuri
 
-The first workflow migrated from `cristake007/planificator` is available at:
+Routes:
 
 ```text
 /planificator-cursuri
+/planificator-cursuri/istoric
 ```
 
 API contract:
@@ -217,11 +221,15 @@ GET  /api/v1/course-planner/settings
 PUT  /api/v1/course-planner/settings
 POST /api/v1/course-planner/generate
 POST /api/v1/course-planner/export
+GET  /api/v1/course-planner/history
+GET  /api/v1/course-planner/history/<id>/files/excel
+GET  /api/v1/course-planner/history/<id>/files/word
+GET  /api/v1/course-planner/history/<id>/files/xml
 ```
 
-The module accepts CSV, XLSX, and XLS course lists, calculates periods around weekends and configured holidays, stores planner settings, and exports the legacy-compatible Excel structure required by later Word and XML workflows.
+The module accepts CSV, XLSX, and XLS course lists, calculates periods around weekends and configured holidays, stores planner settings, persists every successful generation, and stores generated artifacts for authenticated download.
 
-Only business logic and file contracts are migrated from the legacy project. Its Django templates, DaisyUI shell, page CSS, and browser JavaScript are not reused. See `docs/planificator-migration.md` for the staged migration plan.
+Only business logic and file contracts are migrated from `cristake007/planificator`. Its Django templates, DaisyUI shell, page CSS, and browser JavaScript are not reused. See `docs/planificator-migration.md` for the staged migration plan.
 
 ## Frontend conventions
 
@@ -240,16 +248,25 @@ frontend/src/pages/<Domain>Page.tsx
 
 Rules:
 
-- Use Romanian for all visible frontend copy.
-- Use React Router for routes and TanStack Query for server state.
-- Feature components do not call `fetch` directly; use `frontend/src/api/http.ts`.
-- Keep feature API calls, types, queries, validation, and components in the owning feature folder.
-- Keep route pages focused on composition.
-- UI primitives under `components/ui/` must not depend on application features.
-- Use the `@/` alias for application imports.
-- Lazy-load substantial pages and optional heavy capabilities, not the small initial shell.
+- use Romanian for all visible frontend copy;
+- use React Router for routes and TanStack Query for server state;
+- feature components do not call `fetch` directly; use `frontend/src/api/http.ts`;
+- use Sonner for transient success, warning, information, and error messages;
+- use the shared `FileUploadField` for application file-upload controls;
+- keep route pages focused on composition;
+- UI primitives under `components/ui/` must not depend on application features;
+- use the `@/` alias for application imports;
+- lazy-load substantial pages and optional heavy capabilities, not the small initial shell.
 
-The shared content background is owned by `AppShell`. Route pages should render their own content surfaces over it rather than recreating the background grid.
+### Application shell
+
+- The header spans the full application width and contains the configured logo.
+- The sidebar begins below the header.
+- The header remains visible and becomes slightly more compact when the content area is scrolled.
+- The shell content area uses a plain background with a `5px` outer gutter.
+- Do not reintroduce the diagonal background pattern.
+- Do not use a `Card` only as a wrapper for an entire route page.
+- Cards remain appropriate for real interface sections such as configuration panels, summaries, previews, and tables.
 
 ## UI system
 
@@ -264,9 +281,7 @@ Brand tokens are defined in `frontend/src/styles/globals.css`:
 
 Prefer semantic utilities such as `bg-primary`, `text-primary`, `bg-brand-red`, `text-muted-foreground`, and `border-border`.
 
-Files under `frontend/src/components/ui/` are generated primitives. Compose them from application components instead of rewriting their internal variants.
-
-The sidebar uses shadcn's native `SidebarProvider`, `Sidebar`, `SidebarMenuButton`, `collapsible="icon"`, and tooltip behavior. Preserve the current sidebar implementation unless a task explicitly requires changing it.
+Files under `frontend/src/components/ui/` are generated primitives. Compose them from application components instead of rewriting their internal variants without a concrete reason.
 
 ## Development commands
 
@@ -325,18 +340,19 @@ Frontend dependencies are managed through the committed lockfile:
 
 Do not use `sudo npm`, `npm audit fix --force`, `--no-package-lock`, or commit `node_modules`.
 
-Backend runtime dependencies belong in `backend/requirements.txt`. Development-only checks belong in `backend/requirements-dev.txt`. Rebuild the backend image after changing either file:
+Backend runtime dependencies belong in `backend/requirements.txt`. Development-only Python tooling belongs in `backend/requirements-dev.txt`. After changing either file, recreate the backend service from the updated image:
 
 ```bash
-./dev build backend
-./dev restart backend
+./dev up
 ```
+
+A plain `./dev restart backend` only restarts the existing container and does not apply newly installed image dependencies.
 
 ## Database rules
 
 Django aliases:
 
-- `default` connects to `db_core`.
+- `default` connects to `db_core`;
 - `registry` connects to `db_registry`.
 
 Do not create Django authentication, administration, session, or content-type tables in the registry database. Do not use cross-database foreign keys. Core records should reference registry companies through stable identifiers such as CUI.
