@@ -114,27 +114,29 @@ export function LoginForm() {
   const serverError = getLoginError(loginMutation.error);
 
   return (
-    <div className="w-full max-w-sm">
-      <div className="mb-7">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+    <div className="w-full max-w-[20rem]">
+      <div className="mb-5">
+        <h1 className="text-xl font-semibold tracking-tight text-foreground">
           Autentificare
         </h1>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+        <p className="mt-1.5 text-sm leading-5 text-muted-foreground">
           Introdu datele contului tău pentru a continua.
         </p>
       </div>
 
       <form aria-busy={loginMutation.isPending} noValidate onSubmit={handleSubmit}>
-        <FieldGroup className="gap-4">
+        <FieldGroup className="gap-3.5">
           <Field data-invalid={Boolean(fieldErrors.username)}>
-            <FieldLabel htmlFor="username">Nume de utilizator</FieldLabel>
+            <FieldLabel className="text-xs" htmlFor="username">
+              Nume de utilizator
+            </FieldLabel>
             <Input
               aria-describedby={fieldErrors.username ? "username-error" : undefined}
               aria-invalid={Boolean(fieldErrors.username)}
               autoCapitalize="none"
               autoComplete="username"
               autoFocus
-              className="h-11 rounded-sm"
+              className="h-10 rounded-sm text-sm"
               disabled={loginMutation.isPending}
               id="username"
               maxLength={150}
@@ -146,17 +148,21 @@ export function LoginForm() {
               type="text"
               value={credentials.username}
             />
-            <FieldError id="username-error">{fieldErrors.username}</FieldError>
+            <FieldError className="text-xs" id="username-error">
+              {fieldErrors.username}
+            </FieldError>
           </Field>
 
           <Field data-invalid={Boolean(fieldErrors.password)}>
-            <FieldLabel htmlFor="password">Parolă</FieldLabel>
+            <FieldLabel className="text-xs" htmlFor="password">
+              Parolă
+            </FieldLabel>
             <div className="relative">
               <Input
                 aria-describedby={fieldErrors.password ? "password-error" : undefined}
                 aria-invalid={Boolean(fieldErrors.password)}
                 autoComplete="current-password"
-                className="h-11 rounded-sm pr-11"
+                className="h-10 rounded-sm pr-10 text-sm"
                 disabled={loginMutation.isPending}
                 id="password"
                 name="password"
@@ -169,36 +175,40 @@ export function LoginForm() {
               <button
                 aria-label={passwordVisible ? "Ascunde parola" : "Afișează parola"}
                 aria-pressed={passwordVisible}
-                className="absolute inset-y-0 right-0 grid w-11 cursor-pointer place-items-center text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                className="absolute inset-y-0 right-0 grid w-10 cursor-pointer place-items-center text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                 disabled={loginMutation.isPending}
                 onClick={() => setPasswordVisible((current) => !current)}
                 type="button"
               >
                 {passwordVisible ? (
-                  <EyeOff aria-hidden="true" className="size-4" />
+                  <EyeOff aria-hidden="true" className="size-3.5" />
                 ) : (
-                  <Eye aria-hidden="true" className="size-4" />
+                  <Eye aria-hidden="true" className="size-3.5" />
                 )}
               </button>
             </div>
-            <FieldError id="password-error">{fieldErrors.password}</FieldError>
+            <FieldError className="text-xs" id="password-error">
+              {fieldErrors.password}
+            </FieldError>
           </Field>
 
           {serverError ? (
-            <Alert aria-live="polite" className="py-3" variant="destructive">
-              <AlertDescription className="text-sm">{serverError}</AlertDescription>
+            <Alert aria-live="polite" className="py-2.5" variant="destructive">
+              <AlertDescription className="text-xs leading-5">
+                {serverError}
+              </AlertDescription>
             </Alert>
           ) : null}
 
           <Button
-            className="h-11 w-full cursor-pointer rounded-sm font-medium"
+            className="h-10 w-full cursor-pointer rounded-sm text-sm font-medium"
             disabled={loginMutation.isPending}
             type="submit"
           >
             {loginMutation.isPending ? (
               <Spinner />
             ) : (
-              <LockKeyhole aria-hidden="true" className="size-4" />
+              <LockKeyhole aria-hidden="true" className="size-3.5" />
             )}
             {loginMutation.isPending ? "Se autentifică…" : "Autentificare"}
           </Button>
