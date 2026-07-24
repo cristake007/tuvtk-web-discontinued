@@ -3,7 +3,6 @@ from xml.etree import ElementTree
 
 from django.core.exceptions import ValidationError
 
-
 MAX_SVG_LOGO_BYTES = 256 * 1024
 SVG_NAMESPACE = "http://www.w3.org/2000/svg"
 XLINK_NAMESPACE = "http://www.w3.org/1999/xlink"
