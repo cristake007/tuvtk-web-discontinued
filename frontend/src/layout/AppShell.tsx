@@ -5,13 +5,13 @@ import { Outlet, useLocation } from "react-router-dom";
 
 import { coreBootstrapQueryKey, fetchCoreBootstrap } from "@/api/core";
 import { ApiError } from "@/api/http";
-import type { AuthenticationSession } from "@/api/types";
 import { ApplicationState } from "@/components/ApplicationState";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { logout } from "@/features/auth/api";
 import { authQueryKeys } from "@/features/auth/queryKeys";
+import type { AuthenticationSession } from "@/features/auth/types";
 
 import { AppHeader } from "./app-shell/AppHeader";
 import { AppSidebar } from "./app-shell/AppSidebar";
