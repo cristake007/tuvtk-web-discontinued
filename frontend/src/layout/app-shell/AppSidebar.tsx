@@ -1,11 +1,11 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import type { ShellConfiguration } from "@/api/types";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
@@ -15,7 +15,6 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
 
@@ -106,7 +105,7 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
   return (
     <NavLink
       aria-label={`${configuration.site_name} dashboard`}
-      className="relative flex h-full w-full cursor-pointer items-center justify-center overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+      className="relative flex h-full w-full cursor-pointer items-center justify-center overflow-hidden px-3 outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
       onClick={() => setOpenMobile(false)}
       to="/"
     >
@@ -116,7 +115,7 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
           className={[
             "absolute h-16 w-52 max-w-none object-contain transform-gpu",
             "transition-transform duration-200 ease-linear motion-reduce:transition-none",
-            logoExpanded ? "scale-[1.55]" : "scale-[0.34]",
+            logoExpanded ? "scale-105" : "scale-[0.22]",
           ].join(" ")}
           onError={() => setLogoFailed(true)}
           src={configuration.logo_url ?? undefined}
@@ -181,15 +180,38 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
   );
 }
 
+function BrandSidebarRail() {
+  const { state, toggleSidebar } = useSidebar();
+  const RailIcon = state === "collapsed" ? ChevronRight : ChevronLeft;
+
+  return (
+    <button
+      aria-label={state === "collapsed" ? "Expand navigation" : "Collapse navigation"}
+      className="group/rail absolute inset-y-0 z-30 hidden w-5 cursor-pointer items-center justify-center group-data-[side=left]:-right-2.5 group-data-[side=right]:-left-2.5 sm:flex"
+      onClick={toggleSidebar}
+      title={state === "collapsed" ? "Expand navigation" : "Collapse navigation"}
+      type="button"
+    >
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-sidebar-border/70 transition-all duration-200 group-hover/rail:w-[2px] group-hover/rail:bg-primary group-hover/rail:shadow-sm group-hover/rail:shadow-primary/40"
+      />
+      <span className="relative z-10 grid size-6 place-items-center rounded-full border border-sidebar-border bg-background text-sidebar-foreground shadow-sm transition-colors duration-200 group-hover/rail:border-primary group-hover/rail:bg-primary group-hover/rail:text-primary-foreground">
+        <RailIcon aria-hidden="true" className="size-3.5" />
+      </span>
+    </button>
+  );
+}
+
 export function AppSidebar({ configuration, navigation }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" variant="sidebar">
-      <SidebarHeader className="h-16 border-b border-sidebar-border p-0">
+      <SidebarHeader className="h-24 shrink-0 p-0">
         <SidebarBrand configuration={configuration} />
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup className="p-0 pt-3">
+        <SidebarGroup className="p-0 pt-1">
           <SidebarGroupContent>
             <SidebarMenu aria-label="Primary navigation" className="gap-0">
               {navigation.map((item) => (
@@ -200,14 +222,7 @@ export function AppSidebar({ configuration, navigation }: AppSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border">
-        <div className="flex min-h-9 items-center gap-2 px-2 text-xs text-sidebar-foreground/60 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-          <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-success" />
-          <span className="truncate group-data-[collapsible=icon]:hidden">Connected</span>
-        </div>
-      </SidebarFooter>
-
-      <SidebarRail />
+      <BrandSidebarRail />
     </Sidebar>
   );
 }
