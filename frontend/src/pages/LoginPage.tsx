@@ -43,7 +43,7 @@ function RotatingQuote() {
   useEffect(() => {
     const interval = window.setInterval(() => {
       setQuoteIndex((current) => (current + 1) % quotes.length);
-    }, 12_000);
+    }, 30_000);
 
     return () => window.clearInterval(interval);
   }, [quotes.length]);
