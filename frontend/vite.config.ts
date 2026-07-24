@@ -16,6 +16,46 @@ export default defineConfig({
   build: {
     outDir: buildOutDir,
     emptyOutDir: true,
+    rolldownOptions: {
+      output: {
+        codeSplitting: {
+          groups: [
+            {
+              name: "react-vendor",
+              test: /node_modules\/(?:react|react-dom|scheduler)\//,
+              priority: 50,
+            },
+            {
+              name: "router-vendor",
+              test: /node_modules\/(?:react-router|react-router-dom)\//,
+              priority: 40,
+            },
+            {
+              name: "query-vendor",
+              test: /node_modules\/@tanstack\//,
+              priority: 40,
+            },
+            {
+              name: "base-ui-vendor",
+              test: /node_modules\/(?:@base-ui|@floating-ui)\//,
+              maxSize: 240_000,
+              priority: 30,
+            },
+            {
+              name: "icons-vendor",
+              test: /node_modules\/lucide-react\//,
+              priority: 20,
+            },
+            {
+              name: "vendor",
+              test: /node_modules\//,
+              maxSize: 240_000,
+              priority: 10,
+            },
+          ],
+        },
+      },
+    },
   },
   server: {
     host: "0.0.0.0",
