@@ -1,6 +1,5 @@
 import { CompanyLogoSettings } from "@/features/branding/CompanyLogoSettings";
 
-
 export function SettingsPage() {
   return (
     <section className="flex w-full flex-col gap-6">
