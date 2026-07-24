@@ -1,14 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import {
-  type QueryClient,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
 import { ImageUp, Trash2 } from "lucide-react";
 
-import { coreBootstrapQueryKey, fetchCoreBootstrap } from "@/api/core";
-import { ApiError } from "@/api/http";
 import { ApplicationState } from "@/components/ApplicationState";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -19,111 +10,27 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import type { CoreBootstrap, ShellConfiguration } from "@/features/core/types";
 
-import { removeCompanyLogo, uploadCompanyLogo } from "./api";
-import { validateCompanyLogo } from "./validation";
-
-function updateCachedConfiguration(
-  queryClient: QueryClient,
-  configuration: ShellConfiguration,
-) {
-  queryClient.setQueryData<CoreBootstrap>(coreBootstrapQueryKey, (current) =>
-    current ? { ...current, configuration } : current,
-  );
-}
-
-function formatMutationError(error: Error | null): string | null {
-  if (!error) {
-    return null;
-  }
-
-  return error instanceof ApiError
-    ? error.message
-    : "The company logo could not be updated. Please try again.";
-}
+import { useCompanyLogoSettings } from "./useCompanyLogoSettings";
 
 export function CompanyLogoSettings() {
-  const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [selectionError, setSelectionError] = useState<string | null>(null);
-
-  const bootstrapQuery = useQuery({
-    queryKey: coreBootstrapQueryKey,
-    queryFn: fetchCoreBootstrap,
-    retry: false,
-    staleTime: 60_000,
-  });
-
-  const uploadMutation = useMutation({
-    mutationFn: uploadCompanyLogo,
-    onSuccess: (configuration) => {
-      updateCachedConfiguration(queryClient, configuration);
-      resetSelection();
-    },
-  });
-
-  const removeMutation = useMutation({
-    mutationFn: removeCompanyLogo,
-    onSuccess: () => {
-      const current = queryClient.getQueryData<CoreBootstrap>(coreBootstrapQueryKey);
-      if (current) {
-        updateCachedConfiguration(queryClient, {
-          ...current.configuration,
-          logo_url: null,
-        });
-      }
-      resetSelection();
-    },
-  });
-
-  useEffect(() => {
-    if (!selectedFile) {
-      setPreviewUrl(null);
-      return undefined;
-    }
-
-    const objectUrl = URL.createObjectURL(selectedFile);
-    setPreviewUrl(objectUrl);
-
-    return () => URL.revokeObjectURL(objectUrl);
-  }, [selectedFile]);
-
-  function clearFileInput() {
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  }
-
-  function resetSelection() {
-    setSelectedFile(null);
-    setSelectionError(null);
-    clearFileInput();
-  }
-
-  function selectLogo(file: File | undefined) {
-    uploadMutation.reset();
-    removeMutation.reset();
-
-    const error = validateCompanyLogo(file);
-    setSelectionError(error);
-
-    if (!file || error) {
-      clearFileInput();
-      setSelectedFile(null);
-      return;
-    }
-
-    setSelectedFile(file);
-  }
-
-  function removeConfiguredLogo() {
-    uploadMutation.reset();
-    setSelectionError(null);
-    removeMutation.mutate();
-  }
+  const {
+    bootstrapQuery,
+    configuredLogoUrl,
+    displayedLogoUrl,
+    fileInputRef,
+    isSaving,
+    mutationError,
+    removeConfiguredLogo,
+    removePending,
+    removeSuccess,
+    selectedFile,
+    selectionError,
+    selectLogo,
+    uploadPending,
+    uploadSelectedLogo,
+    uploadSuccess,
+  } = useCompanyLogoSettings();
 
   if (bootstrapQuery.isPending) {
     return (
@@ -154,13 +61,6 @@ export function CompanyLogoSettings() {
       />
     );
   }
-
-  const configuredLogoUrl = bootstrapQuery.data.configuration.logo_url;
-  const displayedLogoUrl = previewUrl ?? configuredLogoUrl;
-  const mutationError =
-    formatMutationError(uploadMutation.error) ??
-    formatMutationError(removeMutation.error);
-  const isSaving = uploadMutation.isPending || removeMutation.isPending;
 
   return (
     <Card className="max-w-3xl">
@@ -211,7 +111,7 @@ export function CompanyLogoSettings() {
           </Alert>
         ) : null}
 
-        {uploadMutation.isSuccess ? (
+        {uploadSuccess ? (
           <Alert>
             <AlertTitle>Logo updated</AlertTitle>
             <AlertDescription>
@@ -220,7 +120,7 @@ export function CompanyLogoSettings() {
           </Alert>
         ) : null}
 
-        {removeMutation.isSuccess ? (
+        {removeSuccess ? (
           <Alert>
             <AlertTitle>Logo removed</AlertTitle>
             <AlertDescription>
@@ -232,15 +132,11 @@ export function CompanyLogoSettings() {
         <div className="flex flex-wrap gap-2">
           <Button
             disabled={!selectedFile || isSaving}
-            onClick={() => {
-              if (selectedFile) {
-                uploadMutation.mutate(selectedFile);
-              }
-            }}
+            onClick={uploadSelectedLogo}
             type="button"
           >
             <ImageUp aria-hidden="true" />
-            {uploadMutation.isPending ? "Uploading..." : "Upload logo"}
+            {uploadPending ? "Uploading..." : "Upload logo"}
           </Button>
           <Button
             disabled={!configuredLogoUrl || isSaving}
@@ -249,7 +145,7 @@ export function CompanyLogoSettings() {
             variant="destructive"
           >
             <Trash2 aria-hidden="true" />
-            {removeMutation.isPending ? "Removing..." : "Remove logo"}
+            {removePending ? "Removing..." : "Remove logo"}
           </Button>
         </div>
       </CardContent>
