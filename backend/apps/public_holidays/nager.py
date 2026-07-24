@@ -1,7 +1,7 @@
 import json
 from dataclasses import dataclass
 from datetime import date
-from http.client import HTTPSConnection
+from http.client import HTTPException, HTTPSConnection
 from typing import Any
 
 
@@ -61,7 +61,7 @@ class NagerDateClient:
                 )
         except NagerDateError:
             raise
-        except OSError as exc:
+        except (HTTPException, OSError) as exc:
             raise NagerDateError("Serviciul Nager.Date nu poate fi contactat.") from exc
         finally:
             connection.close()
