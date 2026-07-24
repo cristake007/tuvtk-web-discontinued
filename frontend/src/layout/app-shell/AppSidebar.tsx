@@ -88,8 +88,8 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
           src={configuration.logo_url ?? undefined}
         />
       ) : (
-        <span className="grid size-8 shrink-0 place-items-center bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">
-          T
+        <span className="font-bold tracking-wide text-primary group-data-[collapsible=icon]:text-[10px] group-data-[collapsible=icon]:tracking-normal">
+          TUVTK
         </span>
       )}
     </NavLink>
