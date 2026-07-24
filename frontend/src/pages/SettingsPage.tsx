@@ -2,7 +2,7 @@ import { CompanyLogoSettings } from "@/features/branding/CompanyLogoSettings";
 
 export function SettingsPage() {
   return (
-    <section className="flex w-full flex-col gap-6">
+    <section className="flex w-full flex-col gap-6 p-4 sm:p-6 lg:p-8">
       <div>
         <p className="text-sm font-medium text-primary">Application settings</p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">Company branding</h1>
