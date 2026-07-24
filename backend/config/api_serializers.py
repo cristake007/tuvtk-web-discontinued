@@ -6,6 +6,11 @@ class DatabaseHealthSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=("ok", "error"))
 
 
+class HealthDatabasesSerializer(serializers.Serializer):
+    core = DatabaseHealthSerializer()
+    registry = DatabaseHealthSerializer()
+
+
 class HealthResponseSerializer(serializers.Serializer):
     status = serializers.ChoiceField(choices=("ok", "degraded"))
-    databases = serializers.DictField(child=DatabaseHealthSerializer())
+    databases = HealthDatabasesSerializer()
