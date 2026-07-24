@@ -49,6 +49,7 @@ Do not create Django authentication, administration, session, or content-type ta
 backend/config/                     Django settings, API URLs, Celery, schema, system views
 backend/apps/authentication/        Browser session authentication
 backend/apps/core/                  Shell configuration and navigation
+backend/apps/course_planner/        Course-period generation and Excel export
 backend/apps/<domain>/              Domain models, serializers, services, views, URLs, tests
 backend/tests/                      Cross-application integration tests
 
@@ -59,6 +60,7 @@ frontend/src/components/ui/         Generated shadcn primitives
 frontend/src/features/auth/         Authentication feature
 frontend/src/features/branding/     Branding feature
 frontend/src/features/core/         Shared shell API contracts
+frontend/src/features/course-planner/ Course planner API, state, and interface
 frontend/src/features/<domain>/     Domain API, types, queries, hooks, components
 frontend/src/layout/                Shared application shell
 frontend/src/pages/                 Route-level composition
@@ -100,6 +102,18 @@ Implementation order:
 8. Build focused feature components and a route-level page.
 9. Lazy-load only substantial routes or optional heavy capabilities.
 10. Add database-backed navigation and verify permission filtering.
+
+## Legacy Planificator migration
+
+`cristake007/planificator` is the functional source for several internal tools. Migrate those workflows one at a time into independent modules.
+
+- Port business rules, file contracts, validation behavior, and required settings.
+- Do not copy the legacy Django templates, DaisyUI, Tailwind browser runtime, page CSS, JavaScript shell, navigation, authentication, or deployment structure.
+- Rebuild every visible workflow in React using the current shadcn shell and semantic theme.
+- Keep exported file structures compatible when a later migrated tool consumes them.
+- The current migrated workflow is `Planificator cursuri`; Word matching, XML, WordPress updates, diplomas, and their settings remain separate future stages.
+
+See `docs/planificator-migration.md` for the staged migration scope.
 
 ## Backend conventions
 
@@ -159,6 +173,7 @@ Approved navigation labels:
 Dashboard
 Companii
 Documente
+Planificator cursuri
 Setări
 ```
 
@@ -168,7 +183,7 @@ Do not rename `Dashboard` to `Spațiu de lucru` or `Panou de control` unless exp
 
 - React and TypeScript own user-facing pages.
 - Use React Router for routes and TanStack Query for server state.
-- `frontend/src/api/http.ts` owns credentials, CSRF, response parsing, and `ApiError`.
+- `frontend/src/api/http.ts` owns credentials, CSRF, response parsing, downloads, and `ApiError`.
 - Feature components must not call `fetch` directly.
 - Feature API calls, types, query keys, validation, hooks, and components belong to the owning feature folder.
 - Route pages should compose features rather than contain all domain logic.
@@ -179,7 +194,7 @@ Do not rename `Dashboard` to `Spațiu de lucru` or `Panou de control` unless exp
 - Effects in application-owned code must declare explicit dependency arrays.
 - Images must include meaningful `alt` text or an explicit empty `alt` when decorative.
 
-The shared diagonal content grid belongs to `AppShell`. Do not recreate it in individual pages. Dashboard, Companii, and Documente currently render a shared card surface over that grid.
+The shared diagonal content grid belongs to `AppShell`. Do not recreate it in individual pages. Dashboard, Companii, Documente, and Planificator cursuri render their content surfaces over that grid.
 
 Run:
 
