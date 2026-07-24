@@ -1,6 +1,24 @@
 from django.db import models
 
 
+class ApplicationDefinition(models.Model):
+    key = models.SlugField(max_length=80, unique=True)
+    name = models.CharField(max_length=120)
+    description = models.TextField(blank=True)
+    route_prefix = models.CharField(max_length=240, blank=True)
+    position = models.PositiveIntegerField(default=0)
+    is_enabled = models.BooleanField(default=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ("position", "name")
+        verbose_name = "application definition"
+        verbose_name_plural = "application definitions"
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class ApplicationConfiguration(models.Model):
     site_name = models.CharField(max_length=120, default="TUVTK")
     organization_name = models.CharField(
@@ -8,6 +26,7 @@ class ApplicationConfiguration(models.Model):
         default="TÜV Thüringen Karpat",
     )
     sidebar_title = models.CharField(max_length=120, default="Workspace")
+    company_logo_svg = models.TextField(blank=True, default="")
     is_active = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -20,6 +39,11 @@ class ApplicationConfiguration(models.Model):
 
 
 class NavigationItem(models.Model):
+    application = models.ForeignKey(
+        ApplicationDefinition,
+        on_delete=models.PROTECT,
+        related_name="navigation_items",
+    )
     key = models.SlugField(max_length=80, unique=True)
     label = models.CharField(max_length=120)
     path = models.CharField(max_length=240)
