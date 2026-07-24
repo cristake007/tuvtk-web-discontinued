@@ -33,9 +33,10 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "rest_framework",
+    "django_filters",
     "drf_spectacular",
     "drf_spectacular_sidecar",
-    "apps.accounts.apps.AccountsConfig",
+    "apps.authentication.apps.AuthenticationConfig",
     "apps.core.apps.CoreConfig",
 ]
 
@@ -147,13 +148,16 @@ if env_bool("DJANGO_TRUST_X_FORWARDED_PROTO"):
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "apps.accounts.authentication.BrowserSessionAuthentication",
+        "apps.authentication.authentication.BrowserSessionAuthentication",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
+    ],
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
     ],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
@@ -170,6 +174,15 @@ SPECTACULAR_SETTINGS = {
     "SWAGGER_UI_FAVICON_HREF": "SIDECAR",
     "REDOC_DIST": "SIDECAR",
 }
+
+# Safe local defaults keep Celery importable before a real broker is deployed.
+# Set both values through environment variables when a worker is introduced.
+CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "memory://")
+CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", "cache+memory://")
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+CELERY_TIMEZONE = TIME_ZONE
 
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
