@@ -1,13 +1,13 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
-import type { NavigationItem } from "../../features/core/types.ts";
+import type { NavigationItem } from "../../features/core/types.js";
 
 import {
   buildNavigationTree,
   findCurrentNavigationItem,
   isNavigationPathActive,
-} from "./navigation.ts";
+} from "./navigation.js";
 
 const items: NavigationItem[] = [
   {
