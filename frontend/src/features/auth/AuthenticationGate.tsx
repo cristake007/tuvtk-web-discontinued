@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { ApplicationState } from "@/components/ApplicationState";
@@ -21,7 +21,7 @@ function DeferredView({
   description,
   title,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
   description: string;
   title: string;
 }) {
