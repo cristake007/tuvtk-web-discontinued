@@ -24,7 +24,7 @@ export function AppHeader({
       <div className="flex w-full items-center gap-3">
         <SidebarTrigger
           aria-label="Toggle navigation"
-          className="-ml-1 shrink-0 cursor-pointer rounded-sm text-primary hover:bg-primary/5 hover:text-brand-red aria-expanded:bg-primary/5 aria-expanded:text-brand-red"
+          className="-ml-1 shrink-0 cursor-pointer rounded-sm text-primary hover:bg-primary/5 hover:text-brand-red aria-expanded:bg-primary/5 aria-expanded:text-brand-red md:hidden"
         />
 
         <div className="flex min-w-0 flex-1 justify-center px-1 sm:px-4">
