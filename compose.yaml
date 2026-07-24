@@ -40,6 +40,103 @@ services:
 
     restart: unless-stopped
 
+  celery_worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: ${CELERY_WORKER_CONTAINER_NAME:-tuvtk_celery_worker}
+
+    working_dir: /app
+
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+
+    env_file:
+      - .env
+
+    volumes:
+      - type: bind
+        source: ./backend
+        target: /app
+
+    depends_on:
+      db_core:
+        condition: service_healthy
+      db_registry:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    command:
+      - /bin/sh
+      - -c
+      - |
+        exec celery -A config worker \
+          --loglevel="${CELERY_LOG_LEVEL:-info}" \
+          --concurrency="${CELERY_WORKER_CONCURRENCY:-2}" \
+          --hostname="worker@%h"
+
+    restart: unless-stopped
+
+  celery_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: ${CELERY_BEAT_CONTAINER_NAME:-tuvtk_celery_beat}
+
+    working_dir: /app
+
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+
+    env_file:
+      - .env
+
+    volumes:
+      - type: bind
+        source: ./backend
+        target: /app
+
+    depends_on:
+      db_core:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    command:
+      - /bin/sh
+      - -c
+      - |
+        exec celery -A config beat \
+          --loglevel="${CELERY_LOG_LEVEL:-info}" \
+          --schedule=/tmp/tuvtk-celerybeat-schedule
+
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-bookworm
+
+    container_name: ${REDIS_CONTAINER_NAME:-tuvtk_redis}
+
+    command:
+      - redis-server
+      - --appendonly
+      - "yes"
+      - --save
+      - "60"
+      - "1000"
+
+    volumes:
+      - redis_data:/data
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+    restart: unless-stopped
+
   db_core:
     image: postgres:18-bookworm
 
@@ -101,3 +198,5 @@ volumes:
     name: ${CORE_DB_VOLUME_NAME:-tuvtk_core_postgres_data}
   registry_postgres_data:
     name: ${REGISTRY_DB_VOLUME_NAME:-tuvtk_registry_postgres_data}
+  redis_data:
+    name: ${REDIS_VOLUME_NAME:-tuvtk_redis_data}
