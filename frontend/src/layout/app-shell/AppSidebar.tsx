@@ -105,7 +105,7 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
   return (
     <NavLink
       aria-label={`${configuration.site_name} dashboard`}
-      className="relative flex h-full w-full cursor-pointer items-center justify-center overflow-hidden px-3 outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+      className="relative flex h-full w-full cursor-pointer items-center justify-center overflow-hidden bg-white px-3 outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
       onClick={() => setOpenMobile(false)}
       to="/"
     >
@@ -113,15 +113,15 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
         <img
           alt={`${configuration.organization_name} logo`}
           className={[
-            "absolute h-20 w-60 max-w-none -translate-y-2 object-contain transform-gpu",
+            "absolute h-24 w-64 max-w-none -translate-y-3 object-contain transform-gpu",
             "transition-transform duration-200 ease-linear motion-reduce:transition-none",
-            logoExpanded ? "scale-105" : "scale-25",
+            logoExpanded ? "scale-110" : "scale-[0.3]",
           ].join(" ")}
           onError={() => setLogoFailed(true)}
           src={configuration.logo_url ?? undefined}
         />
       ) : (
-        <span className="-translate-y-2 text-[11px] font-bold tracking-normal text-primary">
+        <span className="-translate-y-3 text-xs font-bold tracking-normal text-primary">
           TUVTK
         </span>
       )}
@@ -205,12 +205,12 @@ function BrandSidebarRail() {
 
 export function AppSidebar({ configuration, navigation }: AppSidebarProps) {
   return (
-    <Sidebar collapsible="icon" variant="sidebar">
-      <SidebarHeader className="h-24 shrink-0 p-0">
+    <Sidebar className="bg-white" collapsible="icon" variant="sidebar">
+      <SidebarHeader className="h-24 shrink-0 bg-white p-0">
         <SidebarBrand configuration={configuration} />
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="bg-white">
         <SidebarGroup className="p-0 pt-1">
           <SidebarGroupContent>
             <SidebarMenu aria-label="Primary navigation" className="gap-0">
