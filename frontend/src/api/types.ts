@@ -2,6 +2,7 @@ export type ShellConfiguration = {
   site_name: string;
   organization_name: string;
   sidebar_title: string;
+  logo_url: string | null;
 };
 
 export type ShellUser = {
@@ -29,6 +30,7 @@ export type NavigationItem = {
   icon: string;
   position: number;
   parent_key: string | null;
+  application_key: string;
 };
 
 export type CoreBootstrap = {
