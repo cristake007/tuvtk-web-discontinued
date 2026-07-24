@@ -139,7 +139,7 @@ export function AppSidebar({ navigation }: AppSidebarProps) {
       collapsible="icon"
       variant="sidebar"
     >
-      <SidebarContent className="bg-white pt-2">
+      <SidebarContent className="bg-white pt-[calc(var(--app-header-height)+0.5rem)] md:pt-2">
         <SidebarGroup className="p-0">
           <SidebarGroupContent>
             <SidebarMenu aria-label="Navigație principală" className="gap-0">
