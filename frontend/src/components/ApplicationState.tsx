@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ServerCrash } from "lucide-react";
 
@@ -9,18 +10,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Spinner } from "@/components/ui/spinner";
 import {
   fetchPublicBranding,
   publicBrandingQueryKey,
 } from "@/features/branding/api";
-import { PublicBrandMark } from "@/features/branding/PublicBrandMark";
-import type { PublicBranding } from "@/features/branding/types";
-
-const fallbackBranding: PublicBranding = {
-  site_name: "TUVTK",
-  organization_name: "TÜV Thüringen Karpat",
-  logo_url: null,
-};
 
 type ApplicationStateProps = {
   title: string;
@@ -44,21 +38,34 @@ export function ApplicationState({
     retry: 1,
     staleTime: 5 * 60_000,
   });
+  const [logoFailed, setLogoFailed] = useState(false);
+  const logoUrl = brandingQuery.data?.logo_url ?? null;
+
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [logoUrl]);
 
   if (loading) {
-    const branding = brandingQuery.data ?? fallbackBranding;
+    const showLogo = Boolean(logoUrl) && !logoFailed;
 
     return (
       <main
         aria-live="polite"
-        className="flex min-h-svh items-center justify-center bg-white px-6 py-12"
+        className="flex min-h-svh items-center justify-center bg-background px-6 py-12"
         role="status"
       >
         <div className="flex w-full max-w-lg flex-col items-center text-center">
-          <PublicBrandMark
-            branding={branding}
-            className="animate-pulse motion-reduce:animate-none"
-          />
+          {showLogo ? (
+            <img
+              alt={`${brandingQuery.data?.organization_name ?? "Company"} logo`}
+              className="max-h-36 max-w-[26rem] animate-pulse object-contain object-center motion-reduce:animate-none"
+              onError={() => setLogoFailed(true)}
+              src={logoUrl ?? undefined}
+            />
+          ) : (
+            <Spinner className="size-8 text-primary" />
+          )}
+
           <p className="mt-6 text-lg font-semibold tracking-tight text-foreground">
             {title}
           </p>
@@ -71,7 +78,7 @@ export function ApplicationState({
   }
 
   return (
-    <main className="grid min-h-svh place-items-center bg-white p-6">
+    <main className="grid min-h-svh place-items-center bg-background p-6">
       <Card className="w-full max-w-md" role="alert">
         <CardHeader className="items-center text-center">
           <span className="mb-2 grid size-10 place-items-center rounded-lg bg-muted text-muted-foreground">
