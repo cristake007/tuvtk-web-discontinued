@@ -11,6 +11,15 @@ from openpyxl.utils import get_column_letter
 from openpyxl.utils.exceptions import InvalidFileException
 
 MAX_COURSES = 10_000
+MAX_HEADER_SCAN_ROWS = 25
+
+HEADER_ALIASES = {
+    "title": ("title", "titlu", "nume curs"),
+    "duration": ("durata curs", "duration", "durata"),
+    "permalink": ("permalink", "link", "url"),
+    "investment": ("investitie", "investment", "pret", "price"),
+}
+REQUIRED_HEADERS = ("title", "duration", "permalink")
 
 
 class CourseFileError(ValueError):
@@ -41,6 +50,58 @@ def _display_value(value: Any) -> str:
     return str(value).strip()
 
 
+def _header_map(row: list[Any]) -> dict[str, int]:
+    return {
+        normalized: index
+        for index, value in enumerate(row)
+        if (normalized := _normalize_header(value))
+    }
+
+
+def _header_score(headers: dict[str, int]) -> int:
+    return sum(
+        any(alias in headers for alias in HEADER_ALIASES[name])
+        for name in REQUIRED_HEADERS
+    )
+
+
+def _select_header_row(rows: list[list[Any]]) -> tuple[int, dict[str, int]]:
+    best_index: int | None = None
+    best_headers: dict[str, int] = {}
+    best_score = -1
+
+    for index, row in enumerate(rows[:MAX_HEADER_SCAN_ROWS]):
+        headers = _header_map(row)
+        if not headers:
+            continue
+
+        score = _header_score(headers)
+        if score > best_score:
+            best_index = index
+            best_headers = headers
+            best_score = score
+
+        if score == len(REQUIRED_HEADERS):
+            return index, headers
+
+    if best_index is None:
+        raise CourseFileError("Fișierul nu conține un rând de antet valid.")
+
+    return best_index, best_headers
+
+
+def _has_complete_header(rows: list[list[Any]]) -> bool:
+    try:
+        _, headers = _select_header_row(rows)
+    except CourseFileError:
+        return False
+    return _header_score(headers) == len(REQUIRED_HEADERS)
+
+
+def _parse_csv_rows(decoded: str, delimiter: str) -> list[list[Any]]:
+    return [list(row) for row in csv.reader(io.StringIO(decoded), delimiter=delimiter)]
+
+
 def _read_csv(data: bytes) -> list[list[Any]]:
     decoded: str | None = None
     for encoding in ("utf-8-sig", "utf-8", "cp1250", "latin-1"):
@@ -53,14 +114,43 @@ def _read_csv(data: bytes) -> list[list[Any]]:
     if decoded is None:
         raise CourseFileError("Fișierul CSV nu poate fi decodat.")
 
+    lines = decoded.splitlines()
+    first_content_index = next(
+        (index for index, line in enumerate(lines) if line.strip()),
+        None,
+    )
+    if first_content_index is not None:
+        separator_directive = re.fullmatch(
+            r"\s*sep=(.)\s*",
+            lines[first_content_index],
+            flags=re.IGNORECASE,
+        )
+        if separator_directive is not None:
+            delimiter = separator_directive.group(1)
+            del lines[first_content_index]
+            return _parse_csv_rows("\n".join(lines), delimiter)
+
+    delimiters: list[str] = []
     sample = decoded[:8192]
     try:
-        dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
-        reader = csv.reader(io.StringIO(decoded), dialect)
+        detected = csv.Sniffer().sniff(sample, delimiters=",;\t|").delimiter
+        delimiters.append(detected)
     except csv.Error:
-        reader = csv.reader(io.StringIO(decoded), delimiter=";")
+        pass
 
-    return [list(row) for row in reader]
+    for delimiter in (";", ",", "\t", "|"):
+        if delimiter not in delimiters:
+            delimiters.append(delimiter)
+
+    fallback_rows: list[list[Any]] | None = None
+    for delimiter in delimiters:
+        rows = _parse_csv_rows(decoded, delimiter)
+        if fallback_rows is None:
+            fallback_rows = rows
+        if _has_complete_header(rows):
+            return rows
+
+    return fallback_rows or []
 
 
 def _read_xlsx(data: bytes) -> list[list[Any]]:
@@ -118,20 +208,14 @@ def parse_course_file(data: bytes, extension: str) -> list[CourseInput]:
     if not rows:
         raise CourseFileError("Fișierul nu conține date.")
 
-    headers = {_normalize_header(value): index for index, value in enumerate(rows[0])}
-    aliases = {
-        "title": ("title", "titlu", "nume curs"),
-        "duration": ("durata curs", "duration", "durata"),
-        "permalink": ("permalink", "link", "url"),
-        "investment": ("investitie", "investment", "pret", "price"),
-    }
+    header_row_index, headers = _select_header_row(rows)
 
     def find_column(name: str, *, required: bool = True) -> int | None:
-        for alias in aliases[name]:
+        for alias in HEADER_ALIASES[name]:
             if alias in headers:
                 return headers[alias]
         if required:
-            expected = aliases[name][0]
+            expected = HEADER_ALIASES[name][0]
             raise CourseFileError(f'Coloana obligatorie „{expected}” lipsește.')
         return None
 
@@ -141,7 +225,7 @@ def parse_course_file(data: bytes, extension: str) -> list[CourseInput]:
     investment_index = find_column("investment", required=False)
     courses: list[CourseInput] = []
 
-    for original_order, row in enumerate(rows[1:]):
+    for original_order, row in enumerate(rows[header_row_index + 1 :]):
         def cell(index: int | None) -> Any:
             if index is None or index >= len(row):
                 return None
