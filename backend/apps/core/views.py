@@ -4,7 +4,7 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -12,6 +12,7 @@ from .serializers import (
     CompanyLogoUploadSerializer,
     CoreBootstrapSerializer,
     ErrorDetailSerializer,
+    PublicBrandingSerializer,
     ShellConfigurationSerializer,
 )
 from .services import (
@@ -21,6 +22,26 @@ from .services import (
     serialize_shell_configuration,
 )
 from .svg import MAX_SVG_LOGO_BYTES, sanitize_svg_logo
+
+
+class PublicBrandingView(APIView):
+    authentication_classes = []
+    permission_classes = [AllowAny]
+
+    @extend_schema(
+        operation_id="core_public_branding",
+        responses=PublicBrandingSerializer,
+        summary="Return public application branding",
+        tags=["core"],
+    )
+    def get(self, request):
+        configuration = serialize_shell_configuration(get_active_configuration())
+        payload = {
+            "site_name": configuration["site_name"],
+            "organization_name": configuration["organization_name"],
+            "logo_url": configuration["logo_url"],
+        }
+        return Response(PublicBrandingSerializer(payload).data)
 
 
 class CoreBootstrapView(APIView):
@@ -38,7 +59,8 @@ class CoreBootstrapView(APIView):
 
 
 class CompanyLogoView(APIView):
-    permission_classes = [IsAuthenticated]
+    authentication_classes = []
+    permission_classes = [AllowAny]
 
     @extend_schema(
         operation_id="core_company_logo",
@@ -61,7 +83,7 @@ class CompanyLogoView(APIView):
             configuration.company_logo_svg,
             content_type="image/svg+xml; charset=utf-8",
         )
-        response["Cache-Control"] = "private, max-age=31536000, immutable"
+        response["Cache-Control"] = "public, max-age=31536000, immutable"
         response["Content-Disposition"] = 'inline; filename="company-logo.svg"'
         response["Content-Security-Policy"] = (
             "default-src 'none'; style-src 'unsafe-inline'; img-src data:"
