@@ -1,5 +1,16 @@
 from django.contrib.auth.models import AbstractBaseUser, AnonymousUser
 
+AUTHENTICATION_ENDPOINTS = {
+    "csrf": "/api/v1/auth/csrf",
+    "session": "/api/v1/auth/session",
+    "login": "/api/v1/auth/login",
+    "logout": "/api/v1/auth/logout",
+}
+
+
+def get_authentication_endpoints() -> dict[str, str]:
+    return AUTHENTICATION_ENDPOINTS.copy()
+
 
 def serialize_session_user(user: AbstractBaseUser) -> dict[str, object]:
     display_name = user.get_full_name().strip() or user.get_username()
