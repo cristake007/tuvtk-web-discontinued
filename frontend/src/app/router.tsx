@@ -2,12 +2,13 @@ import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
 
 import { ApplicationState } from "@/components/ApplicationState";
-import { AuthenticationGate } from "../features/auth/AuthenticationGate";
-import { DashboardPage } from "../pages/DashboardPage";
-import { ModulePlaceholderPage } from "../pages/ModulePlaceholderPage";
+import { DashboardPage } from "@/pages/DashboardPage";
+import { ModulePlaceholderPage } from "@/pages/ModulePlaceholderPage";
+
+import { AuthenticationGate } from "./AuthenticationGate";
 
 const SettingsPage = lazy(async () => {
-  const module = await import("../pages/SettingsPage");
+  const module = await import("@/pages/SettingsPage");
   return { default: module.SettingsPage };
 });
 
