@@ -161,7 +161,7 @@ export function CoursePlanHistoryTable() {
     getErrorMessage(downloadMutation.error);
 
   return (
-    <div className="flex min-w-0 flex-col gap-5 p-5 sm:p-7 lg:p-9">
+    <div className="flex min-w-0 flex-col gap-5">
       <header>
         <p className="text-sm font-medium text-primary">Planificator cursuri</p>
         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
