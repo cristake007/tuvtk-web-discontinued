@@ -1,6 +1,7 @@
 import re
 from pathlib import Path
 
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from .files import MAX_COURSES
@@ -116,12 +117,14 @@ class CoursePlanGenerationSerializer(serializers.ModelSerializer):
             "files",
         )
 
-    def get_created_by(self, obj):
+    @extend_schema_field(serializers.CharField(allow_null=True))
+    def get_created_by(self, obj) -> str | None:
         if obj.created_by is None:
             return None
         return obj.created_by.get_full_name() or obj.created_by.get_username()
 
-    def get_files(self, obj):
+    @extend_schema_field(CoursePlanFilesSerializer)
+    def get_files(self, obj) -> dict:
         def file_payload(field):
             return {
                 "available": bool(field),
