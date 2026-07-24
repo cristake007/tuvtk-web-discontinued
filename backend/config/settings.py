@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     "drf_spectacular_sidecar",
     "apps.authentication.apps.AuthenticationConfig",
     "apps.core.apps.CoreConfig",
+    "apps.course_planner.apps.CoursePlannerConfig",
 ]
 
 
