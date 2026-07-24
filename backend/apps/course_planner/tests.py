@@ -1,4 +1,5 @@
 import io
+from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -19,9 +20,8 @@ class CourseSchedulerTests(TestCase):
 
     def test_long_course_formats_cross_month_range(self):
         scheduler = CourseScheduler(2027, [])
-        start_date = scheduler.get_available_start_days(2, 18)[0]
 
-        date_range = scheduler.format_date_range(start_date, 18)
+        date_range = scheduler.format_date_range(date(2027, 2, 15), 18)
 
         self.assertRegex(date_range, r"^\d{2}\.\d{2}-\d{2}\.\d{2}\.2027$")
 
