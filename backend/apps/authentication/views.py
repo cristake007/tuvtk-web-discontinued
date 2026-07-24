@@ -11,6 +11,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .serializers import (
+    AuthenticationEndpointsSerializer,
     AuthenticationSessionSerializer,
     ErrorDetailSerializer,
     LoginRequestSerializer,
@@ -25,19 +26,18 @@ class AuthenticationRootView(APIView):
 
     @extend_schema(
         operation_id="authentication_root",
-        responses=dict,
+        responses=AuthenticationEndpointsSerializer,
         summary="Return authentication API endpoints",
         tags=["authentication"],
     )
     def get(self, request):
-        return Response(
-            {
-                "csrf": "/api/v1/auth/csrf",
-                "session": "/api/v1/auth/session",
-                "login": "/api/v1/auth/login",
-                "logout": "/api/v1/auth/logout",
-            }
-        )
+        payload = {
+            "csrf": "/api/v1/auth/csrf",
+            "session": "/api/v1/auth/session",
+            "login": "/api/v1/auth/login",
+            "logout": "/api/v1/auth/logout",
+        }
+        return Response(AuthenticationEndpointsSerializer(payload).data)
 
 
 @method_decorator(never_cache, name="dispatch")
