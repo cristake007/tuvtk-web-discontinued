@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -101,14 +102,16 @@ export function AppHeader({
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end" className="w-64">
-          <DropdownMenuLabel className="py-2">
-            <span className="block truncate text-sm font-medium text-foreground">
-              {user.display_name}
-            </span>
-            <span className="mt-0.5 block truncate font-normal text-muted-foreground">
-              {user.email || user.username}
-            </span>
-          </DropdownMenuLabel>
+          <DropdownMenuGroup>
+            <DropdownMenuLabel className="py-2">
+              <span className="block truncate text-sm font-medium text-foreground">
+                {user.display_name}
+              </span>
+              <span className="mt-0.5 block truncate font-normal text-muted-foreground">
+                {user.email || user.username}
+              </span>
+            </DropdownMenuLabel>
+          </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem disabled={logoutPending} onClick={onLogout}>
             {logoutPending ? <Spinner /> : <LogOut aria-hidden="true" />}
