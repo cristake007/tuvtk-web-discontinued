@@ -2,7 +2,7 @@ from calendar import monthrange
 from dataclasses import asdict, dataclass
 from datetime import date, datetime, timedelta
 
-from django.db import transaction
+from django.db import DatabaseError, transaction
 from django.db.models import Q, QuerySet
 from django.utils import timezone
 
@@ -152,23 +152,24 @@ def _reconcile_holidays(
                 "national_holiday": holiday.national_holiday,
                 "subdivision_codes": list(holiday.subdivision_codes),
                 "holiday_types": list(holiday.holiday_types),
-                "synced_at": synced_at,
             }
             if stored is None:
                 PublicHoliday.objects.create(
                     date=holiday.date,
                     local_name=holiday.local_name,
                     source=PublicHoliday.Source.NAGER,
+                    synced_at=synced_at,
                     **values,
                 )
                 created += 1
                 continue
 
             changed = any(getattr(stored, field) != value for field, value in values.items())
+            for field, value in values.items():
+                setattr(stored, field, value)
+            stored.synced_at = synced_at
+            stored.save(update_fields=(*values.keys(), "synced_at", "updated_at"))
             if changed:
-                for field, value in values.items():
-                    setattr(stored, field, value)
-                stored.save(update_fields=(*values.keys(), "updated_at"))
                 updated += 1
 
         stale_ids = [item.pk for item in existing_by_key.values()]
@@ -235,7 +236,7 @@ def run_synchronization(*, automatic: bool) -> SynchronizationResult:
         )
     except NagerDateError as exc:
         return _record_failure(str(exc), now)
-    except (OSError, ValueError):
+    except (DatabaseError, OSError, ValueError):
         return _record_failure(
             "Sincronizarea nu a putut fi salvată; datele existente au fost păstrate.",
             now,
@@ -269,7 +270,11 @@ def get_holidays(
 
 
 def get_holiday_dates(*, year: int, months: list[int] | None = None) -> list[date]:
-    return list(get_holidays(year=year, months=months).values_list("date", flat=True).distinct())
+    return list(
+        get_holidays(year=year, months=months)
+        .values_list("date", flat=True)
+        .distinct()
+    )
 
 
 def is_holiday(value: date) -> bool:
