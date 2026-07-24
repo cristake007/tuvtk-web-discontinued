@@ -22,7 +22,11 @@ export function PlannerHeader() {
         </div>
       </div>
 
-      <Button render={<Link to="/planificator-cursuri/istoric" />} variant="outline">
+      <Button
+        nativeButton={false}
+        render={<Link to="/planificator-cursuri/istoric" />}
+        variant="outline"
+      >
         <History aria-hidden="true" />
         Istoric generări
       </Button>
