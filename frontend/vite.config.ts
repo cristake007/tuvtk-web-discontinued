@@ -1,10 +1,18 @@
-import { defineConfig } from "vite";
+import { fileURLToPath, URL } from "node:url";
+
+import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
 
 const buildOutDir = process.env.VITE_BUILD_OUT_DIR ?? "dist";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+    },
+  },
   build: {
     outDir: buildOutDir,
     emptyOutDir: true,
