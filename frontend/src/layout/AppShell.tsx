@@ -83,7 +83,7 @@ export function AppShell() {
           navigation={navigation}
         />
 
-        <SidebarInset className="min-h-svh overflow-hidden">
+        <SidebarInset className="min-h-svh overflow-hidden bg-white">
           <AppHeader
             logoutPending={logoutMutation.isPending}
             navigation={bootstrap.navigation}
@@ -91,7 +91,7 @@ export function AppShell() {
             user={bootstrap.user}
           />
 
-          <div className="flex min-h-0 flex-1 flex-col overflow-auto">
+          <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-white">
             <div className="mx-auto flex w-full max-w-screen-2xl flex-1 flex-col p-4 sm:p-6 lg:p-8">
               {logoutMutation.isError ? (
                 <Alert className="mb-4 border-warning/40 bg-warning/10">
