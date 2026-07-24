@@ -151,8 +151,8 @@ class Migration(migrations.Migration):
                     ),
                     models.CheckConstraint(
                         condition=(
-                            models.Q(("is_internal", True), ("source", "internal"))
-                            | models.Q(("is_internal", False), ("source", "nager"))
+                            models.Q(source="internal", is_internal=True)
+                            | models.Q(source="nager", is_internal=False)
                         ),
                         name="public_holiday_source_internal_consistent",
                     ),
