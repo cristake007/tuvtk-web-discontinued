@@ -1,6 +1,6 @@
-import type { ShellUser } from "@/api/types";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import type { ShellUser } from "@/features/auth/types";
 
 import { UserMenu } from "./UserMenu";
 
