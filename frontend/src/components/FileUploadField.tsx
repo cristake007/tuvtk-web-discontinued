@@ -1,11 +1,5 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type DragEvent,
-  type LucideIcon,
-} from "react";
-import { FileUp, X } from "lucide-react";
+import { useEffect, useRef, useState, type DragEvent } from "react";
+import { FileUp, X, type LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
