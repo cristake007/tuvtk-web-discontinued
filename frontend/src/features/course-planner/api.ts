@@ -35,9 +35,9 @@ export async function generateCourseSchedule(
   const formData = new FormData();
   formData.append("input_file", input.inputFile);
   formData.append("year", String(input.year));
+  formData.append("months", input.months.join(","));
   formData.append("randomness", String(input.randomness));
-  input.months.forEach((month) => formData.append("months", String(month)));
-  input.holidays.forEach((holiday) => formData.append("holidays", holiday));
+  formData.append("holidays", input.holidays.join(","));
 
   return apiRequest<GenerateScheduleResponse>(`${coursePlannerPath}/generate`, {
     method: "POST",
