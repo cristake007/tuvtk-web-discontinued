@@ -83,12 +83,12 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
       {showConfiguredLogo ? (
         <img
           alt={`${configuration.organization_name} logo`}
-          className="h-16 w-52 max-w-none scale-[1.65] object-contain group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:scale-100"
+          className="h-16 w-52 max-w-none scale-[1.55] object-contain transition-[width,height,transform] duration-200 ease-linear motion-reduce:transition-none group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:scale-100"
           onError={() => setLogoFailed(true)}
           src={configuration.logo_url ?? undefined}
         />
       ) : (
-        <span className="font-bold tracking-wide text-primary group-data-[collapsible=icon]:text-[10px] group-data-[collapsible=icon]:tracking-normal">
+        <span className="font-bold tracking-wide text-primary transition-[font-size,letter-spacing] duration-200 ease-linear motion-reduce:transition-none group-data-[collapsible=icon]:text-[10px] group-data-[collapsible=icon]:tracking-normal">
           TUVTK
         </span>
       )}
