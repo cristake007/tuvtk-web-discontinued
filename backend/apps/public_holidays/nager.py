@@ -85,7 +85,15 @@ class NagerDateClient:
                     f"Înregistrarea Nager.Date {index} nu este un obiect valid."
                 )
 
-            required = ("date", "localName", "name", "countryCode", "global", "counties", "types")
+            required = (
+                "date",
+                "localName",
+                "name",
+                "countryCode",
+                "global",
+                "counties",
+                "types",
+            )
             if any(field not in row for field in required):
                 raise NagerDateError(
                     f"Înregistrarea Nager.Date {index} este incompletă."
@@ -123,6 +131,8 @@ class NagerDateClient:
                 raise NagerDateError(
                     f"Înregistrarea Nager.Date {index} nu are tipuri de sărbătoare."
                 )
+            if not row["global"] or "Public" not in holiday_types:
+                continue
 
             identity = (holiday_date, local_name)
             if identity in seen:
@@ -136,7 +146,7 @@ class NagerDateClient:
                     local_name=local_name,
                     english_name=english_name,
                     country_code="RO",
-                    national_holiday=row["global"],
+                    national_holiday=True,
                     subdivision_codes=tuple(subdivision_codes),
                     holiday_types=tuple(holiday_types),
                 )
@@ -151,7 +161,11 @@ class NagerDateClient:
                 f"Înregistrarea Nager.Date {index} are câmpul {field} invalid."
             )
         normalized = value.strip()
-        if not normalized or len(normalized) > 255 or any(char in normalized for char in "<>="):
+        if (
+            not normalized
+            or len(normalized) > 255
+            or any(char in normalized for char in "<>=")
+        ):
             raise NagerDateError(
                 f"Înregistrarea Nager.Date {index} are câmpul {field} invalid."
             )
