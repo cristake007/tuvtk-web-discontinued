@@ -1,12 +1,5 @@
-import { Card } from "@/components/ui/card";
+import { WorkspaceCardPage } from "@/pages/WorkspaceCardPage";
 
 export function DashboardPage() {
-  return (
-    <section className="relative flex min-h-[calc(100svh-4rem)] flex-1 overflow-hidden">
-      <Card
-        aria-label="Dashboard content"
-        className="relative z-10 m-5 min-h-[30rem] flex-1 border-border/70 bg-card shadow-sm sm:m-7 lg:m-9"
-      />
-    </section>
-  );
+  return <WorkspaceCardPage ariaLabel="Conținut panou de control" />;
 }
