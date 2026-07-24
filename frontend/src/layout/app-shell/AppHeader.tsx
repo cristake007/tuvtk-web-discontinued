@@ -20,7 +20,7 @@ export function AppHeader({
   onLogout,
 }: AppHeaderProps) {
   return (
-    <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center border-b border-border/70 bg-background/90 px-4 shadow-xs backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 sm:px-6">
+    <header className="sticky top-0 z-20 flex h-16 shrink-0 items-center border-b border-border/70 bg-background/90 px-4 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-background/80 sm:px-6">
       <div className="flex w-full items-center gap-3">
         <SidebarTrigger
           aria-label="Toggle navigation"
