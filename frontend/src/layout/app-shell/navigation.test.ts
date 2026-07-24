@@ -1,12 +1,13 @@
-import { describe, expect, it } from "vitest";
+import assert from "node:assert/strict";
+import { describe, it } from "node:test";
 
-import type { NavigationItem } from "@/features/core/types";
+import type { NavigationItem } from "../../features/core/types.ts";
 
 import {
   buildNavigationTree,
   findCurrentNavigationItem,
   isNavigationPathActive,
-} from "./navigation";
+} from "./navigation.ts";
 
 const items: NavigationItem[] = [
   {
@@ -49,10 +50,10 @@ const items: NavigationItem[] = [
 
 describe("isNavigationPathActive", () => {
   it("matches exact and nested paths without matching unrelated prefixes", () => {
-    expect(isNavigationPathActive("/companies", "/companies")).toBe(true);
-    expect(isNavigationPathActive("/companies/42", "/companies")).toBe(true);
-    expect(isNavigationPathActive("/company", "/companies")).toBe(false);
-    expect(isNavigationPathActive("/settings", "/")).toBe(false);
+    assert.equal(isNavigationPathActive("/companies", "/companies"), true);
+    assert.equal(isNavigationPathActive("/companies/42", "/companies"), true);
+    assert.equal(isNavigationPathActive("/company", "/companies"), false);
+    assert.equal(isNavigationPathActive("/settings", "/"), false);
   });
 });
 
@@ -60,18 +61,21 @@ describe("buildNavigationTree", () => {
   it("sorts root items and nests children", () => {
     const tree = buildNavigationTree(items);
 
-    expect(tree.map((item) => item.key)).toEqual([
-      "dashboard",
-      "companies",
-      "settings",
-    ]);
-    expect(tree[1]?.children.map((item) => item.key)).toEqual(["company-detail"]);
+    assert.deepEqual(
+      tree.map((item) => item.key),
+      ["dashboard", "companies", "settings"],
+    );
+    assert.deepEqual(
+      tree[1]?.children.map((item) => item.key),
+      ["company-detail"],
+    );
   });
 });
 
 describe("findCurrentNavigationItem", () => {
   it("returns the most specific matching navigation item", () => {
-    expect(findCurrentNavigationItem(items, "/companies/detail/42")?.key).toBe(
+    assert.equal(
+      findCurrentNavigationItem(items, "/companies/detail/42")?.key,
       "company-detail",
     );
   });
