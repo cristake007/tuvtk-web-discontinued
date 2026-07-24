@@ -61,18 +61,15 @@ async function readResponseBody(response: Response): Promise<unknown> {
   }
 }
 
-export async function apiRequest<T>(
-  path: string,
-  options: ApiRequestOptions = {},
-): Promise<T> {
+function buildRequestHeaders(
+  options: ApiRequestOptions,
+): { headers: Headers; requestOptions: RequestInit } {
   const { includeCsrf = false, ...requestOptions } = options;
   const headers = new Headers(requestOptions.headers);
-
   headers.set("Accept", "application/json");
 
   const bodyIsFormData =
     typeof FormData !== "undefined" && requestOptions.body instanceof FormData;
-
   if (requestOptions.body && !bodyIsFormData && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
@@ -85,6 +82,14 @@ export async function apiRequest<T>(
     headers.set("X-CSRFToken", token);
   }
 
+  return { headers, requestOptions };
+}
+
+export async function apiRequest<T>(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<T> {
+  const { headers, requestOptions } = buildRequestHeaders(options);
   const response = await fetch(path, {
     ...requestOptions,
     credentials: "same-origin",
@@ -101,6 +106,32 @@ export async function apiRequest<T>(
   }
 
   return body as T;
+}
+
+export async function apiDownload(
+  path: string,
+  options: ApiRequestOptions = {},
+): Promise<Blob> {
+  const { headers, requestOptions } = buildRequestHeaders(options);
+  headers.set(
+    "Accept",
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  );
+  const response = await fetch(path, {
+    ...requestOptions,
+    credentials: "same-origin",
+    headers,
+  });
+
+  if (!response.ok) {
+    const body = await readResponseBody(response);
+    throw new ApiError(
+      readErrorDetail(body) ?? `API request failed: ${response.status}`,
+      response.status,
+    );
+  }
+
+  return response.blob();
 }
 
 export async function ensureCsrfCookie(): Promise<void> {
