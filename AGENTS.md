@@ -2,9 +2,9 @@
 
 ## Purpose
 
-This repository contains a Dockerized React frontend and Django REST Framework backend. Make changes that are focused, testable, easy to review, and compatible with the root `./dev` harness.
+This repository contains a Dockerized React frontend and Django REST Framework backend. Make focused, testable changes that are easy to review and compatible with the root `./dev` harness.
 
-Reuse the existing authentication, CSRF handling, application bootstrap, database-backed navigation, shadcn shell, semantic theme, and validation tooling instead of rebuilding them.
+Reuse the existing authentication, CSRF handling, application bootstrap, database-backed navigation, shadcn shell, semantic theme, shared content grid, and validation tooling instead of rebuilding them.
 
 ## Working approach
 
@@ -38,14 +38,16 @@ git log -1 --oneline
 - `db_core` stores Django system tables and operational data.
 - `db_registry` stores ONRC registry and reference data.
 - Django aliases are `default` for core and `registry` for ONRC data.
+- Celery is available for future background tasks but must not be introduced into a workflow without a concrete need and broker plan.
+- django-filter is the default DRF filtering backend for endpoints that need structured filters.
 
 Do not create Django authentication, administration, session, or content-type tables in the registry database. Do not create cross-database foreign keys. Reference registry records through stable identifiers such as CUI.
 
 ## Repository layout
 
 ```text
-backend/config/                     Django settings, API URLs, schema, and system views
-backend/apps/accounts/              Browser session authentication
+backend/config/                     Django settings, API URLs, Celery, schema, system views
+backend/apps/authentication/        Browser session authentication
 backend/apps/core/                  Shell configuration and navigation
 backend/apps/<domain>/              Domain models, serializers, services, views, URLs, tests
 backend/tests/                      Cross-application integration tests
@@ -108,6 +110,8 @@ The public API prefix is `/api/v1/`. Each domain app owns its endpoints.
 - `urls.py`: domain URL declarations.
 - `services.py`: workflows, queries, and transaction boundaries.
 - `models.py`: persistence and database constraints.
+- `filters.py`: django-filter definitions when an endpoint needs filtering.
+- `tasks.py`: Celery tasks only when asynchronous execution is justified.
 - `tests.py`: success, authentication, permissions, CSRF, validation, and important errors.
 
 Use Django REST Framework and drf-spectacular. Do not reintroduce Django Ninja or create a second API framework.
@@ -123,6 +127,8 @@ Protected endpoints use the configured browser session authentication and return
 ## Authentication contract
 
 ```text
+GET  /api/v1/auth
+GET  /api/v1/auth/
 GET  /api/v1/auth/csrf
 GET  /api/v1/auth/session
 POST /api/v1/auth/login
@@ -134,6 +140,29 @@ POST /api/v1/auth/logout
 - Logout is CSRF-protected, idempotent, and returns `204`.
 - Permission checks belong in Django; React is not a security boundary.
 - Do not add JWT or another user store without a concrete external-client requirement.
+
+## Frontend language
+
+All user-facing frontend copy must be written in Romanian unless the feature explicitly requires another language.
+
+This applies to:
+
+- navigation labels and database-backed navigation text;
+- headings, descriptions, buttons, forms, placeholders, tooltips, alerts, empty states, loading states, and validation messages;
+- accessibility labels such as `aria-label` and meaningful image `alt` text.
+
+Keep technical identifiers in English where appropriate: route paths, API fields, TypeScript names, Django fields, database columns, and internal code symbols.
+
+Approved navigation labels:
+
+```text
+Dashboard
+Companii
+Documente
+Setări
+```
+
+Do not rename `Dashboard` to `Spațiu de lucru` or `Panou de control` unless explicitly requested.
 
 ## Frontend conventions
 
@@ -149,6 +178,8 @@ POST /api/v1/auth/logout
 - Keep TypeScript strict and do not use `@ts-ignore`.
 - Effects in application-owned code must declare explicit dependency arrays.
 - Images must include meaningful `alt` text or an explicit empty `alt` when decorative.
+
+The shared diagonal content grid belongs to `AppShell`. Do not recreate it in individual pages. Dashboard, Companii, and Documente currently render a shared card surface over that grid.
 
 Run:
 
@@ -223,7 +254,7 @@ Use the root harness instead of ad hoc Docker commands for normal workflows.
 ./dev validate
 ```
 
-`./dev validate` is the complete quality gate and must remain deterministic. It runs Django checks, Ruff, OpenAPI validation, Django tests, frontend dependency synchronization, frontend convention checks, TypeScript validation, frontend unit tests, theme validation, and the Vite build.
+`./dev validate` is the complete quality gate and must remain deterministic. It runs Django checks, Ruff, OpenAPI validation, Django tests, frontend dependency synchronization, frontend convention checks, TypeScript validation, frontend tests, theme validation, and the Vite build.
 
 Do not run destructive database reset or wipe commands without explicit user authorization.
 
