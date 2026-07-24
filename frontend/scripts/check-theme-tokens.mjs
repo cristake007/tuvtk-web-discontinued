@@ -36,6 +36,8 @@ const requiredTokens = [
   "--brand-red",
 ];
 
+const tailwindBuiltInTokens = new Set(["--radius-full"]);
+
 async function collectCssFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
   const paths = [];
@@ -92,7 +94,7 @@ for (const [path, source] of cssSources) {
   const displayPath = relative(frontendRoot, path);
 
   for (const match of source.matchAll(/var\(\s*(--[a-z0-9-]+)/gi)) {
-    if (!definedTokens.has(match[1])) {
+    if (!definedTokens.has(match[1]) && !tailwindBuiltInTokens.has(match[1])) {
       errors.push(`${displayPath}: undefined design token ${match[1]}`);
     }
   }
@@ -117,5 +119,5 @@ if (errors.length > 0) {
 }
 
 console.log(
-  `Theme token validation passed (${definedTokens.size} tokens, ${cssPaths.length} stylesheets).`,
+  `Theme token validation passed (${definedTokens.size} local tokens, ${cssPaths.length} stylesheets).`,
 );
