@@ -76,14 +76,14 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
   return (
     <NavLink
       aria-label={`${configuration.site_name} dashboard`}
-      className="flex h-full w-full cursor-pointer items-center px-3 outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+      className="flex h-full w-full cursor-pointer items-center justify-center px-4 outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:px-0"
       onClick={() => setOpenMobile(false)}
       to="/"
     >
       {showConfiguredLogo ? (
         <img
           alt={`${configuration.organization_name} logo`}
-          className="max-h-10 w-auto max-w-40 object-contain group-data-[collapsible=icon]:max-h-8 group-data-[collapsible=icon]:max-w-8"
+          className="h-14 w-auto max-w-48 object-contain group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:max-w-8"
           onError={() => setLogoFailed(true)}
           src={configuration.logo_url ?? undefined}
         />
@@ -150,7 +150,7 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
 export function AppSidebar({ configuration, navigation }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" variant="sidebar">
-      <SidebarHeader className="h-16 border-b border-sidebar-border p-2">
+      <SidebarHeader className="h-20 border-b border-sidebar-border p-2">
         <SidebarBrand configuration={configuration} />
       </SidebarHeader>
 
