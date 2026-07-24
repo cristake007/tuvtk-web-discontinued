@@ -8,7 +8,6 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
@@ -190,10 +189,7 @@ export function AppSidebar({ configuration, navigation }: AppSidebarProps) {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup className="p-0">
-          <SidebarGroupLabel className="px-4 text-primary/65">
-            Workspace
-          </SidebarGroupLabel>
+        <SidebarGroup className="p-0 pt-3">
           <SidebarGroupContent>
             <SidebarMenu aria-label="Primary navigation" className="gap-0">
               {navigation.map((item) => (
