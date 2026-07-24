@@ -1,7 +1,7 @@
 import { useEffect, useMemo } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 
 import { coreBootstrapQueryKey, fetchCoreBootstrap } from "@/api/core";
 import { ApiError } from "@/api/http";
@@ -15,10 +15,7 @@ import type { AuthenticationSession } from "@/features/auth/types";
 
 import { AppHeader } from "./app-shell/AppHeader";
 import { AppSidebar } from "./app-shell/AppSidebar";
-import {
-  buildNavigationTree,
-  findCurrentNavigationItem,
-} from "./app-shell/navigation";
+import { buildNavigationTree } from "./app-shell/navigation";
 
 const unauthenticatedSession: AuthenticationSession = {
   authenticated: false,
@@ -26,7 +23,6 @@ const unauthenticatedSession: AuthenticationSession = {
 };
 
 export function AppShell() {
-  const location = useLocation();
   const queryClient = useQueryClient();
 
   const bootstrapQuery = useQuery({
@@ -78,11 +74,6 @@ export function AppShell() {
   }
 
   const bootstrap = bootstrapQuery.data;
-  const currentItem = findCurrentNavigationItem(
-    bootstrap.navigation,
-    location.pathname,
-  );
-  const pageTitle = currentItem?.label ?? "Workspace";
 
   return (
     <TooltipProvider delay={0}>
@@ -95,8 +86,8 @@ export function AppShell() {
         <SidebarInset className="min-h-svh overflow-hidden">
           <AppHeader
             logoutPending={logoutMutation.isPending}
+            navigation={bootstrap.navigation}
             onLogout={() => logoutMutation.mutate()}
-            pageTitle={pageTitle}
             user={bootstrap.user}
           />
 
