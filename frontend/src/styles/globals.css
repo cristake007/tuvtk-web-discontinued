@@ -58,7 +58,7 @@
     "Segoe UI", sans-serif;
   --radius: 3px;
 
-  --background: oklch(0.9747 0.0051 247.88);
+  --background: #ffffff;
   --foreground: oklch(0.243 0.024 248.84);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.243 0.024 248.84);
@@ -85,7 +85,7 @@
   --chart-4: oklch(0.67 0.15 82);
   --chart-5: oklch(0.5649 0.0301 246.63);
 
-  --sidebar: oklch(1 0 0);
+  --sidebar: #ffffff;
   --sidebar-foreground: oklch(0.243 0.024 248.84);
   --sidebar-primary: #164194;
   --sidebar-primary-foreground: #ffffff;
@@ -154,14 +154,14 @@
   html {
     min-width: 320px;
     min-height: 100%;
-    background: var(--background);
+    background: #ffffff;
   }
 
   body {
     min-width: 320px;
     min-height: 100svh;
     margin: 0;
-    background: var(--background);
+    background: #ffffff;
     color: var(--foreground);
     font-family: var(--font-app-sans);
     font-synthesis: none;
@@ -171,6 +171,7 @@
 
   #root {
     min-height: 100svh;
+    background: #ffffff;
   }
 
   ::selection {
