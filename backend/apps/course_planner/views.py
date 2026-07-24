@@ -161,7 +161,7 @@ class ExportScheduleView(APIView):
         values = serializer.validated_data
         try:
             excel_data = create_excel_export(values["schedule"], values["holidays"])
-        except (KeyError, OSError, TypeError, ValueError) as exc:
+        except (KeyError, OSError, TypeError, ValueError):
             return Response(
                 {"detail": "Fișierul Excel nu a putut fi generat."},
                 status=status.HTTP_400_BAD_REQUEST,
