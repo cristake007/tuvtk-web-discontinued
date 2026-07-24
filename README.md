@@ -1,9 +1,10 @@
 # TUVTK Web
 
-Internal operations platform with a React frontend, a Django REST Framework API, and two independent PostgreSQL databases.
+Internal operations platform with a React frontend, a Django REST Framework API, asynchronous Celery services, and two independent PostgreSQL databases.
 
-- `db_core` stores Django users, sessions, permissions, application configuration, navigation, generated files, and operational data.
+- `db_core` stores Django users, sessions, permissions, application configuration, navigation, generated files, integrations, and operational data.
 - `db_registry` is reserved for the large ONRC registry and related reference data.
+- Redis is an internal broker and result backend for Celery; it is not published on a host port.
 
 ## Stack
 
@@ -15,7 +16,8 @@ Internal operations platform with a React frontend, a Django REST Framework API,
 - django-filter
 - drf-spectacular for OpenAPI, Swagger UI, and ReDoc
 - Django sessions and CSRF protection
-- Celery, prepared for future background jobs
+- Celery worker and Celery Beat
+- Redis broker and result backend
 - openpyxl and xlrd for spreadsheet workflows
 - PostgreSQL 18
 - Gunicorn outside the development override
@@ -59,6 +61,8 @@ Planificator cursuri
 Setări
 ```
 
+`Setări` currently contains the `Integrări` submenu.
+
 ## Development architecture
 
 ```text
@@ -74,9 +78,12 @@ Django :8000
   ├── internal Compose service only
   ├── default database  ──> db_core
   └── registry database ──> db_registry
+
+Celery worker ──> Redis ──> background tasks
+Celery Beat   ──> Redis ──> scheduled task delivery
 ```
 
-`compose.override.yaml` starts Django `runserver` and Vite for development. Backend and frontend source directories are bind-mounted for automatic reload.
+`compose.override.yaml` starts Django `runserver`, Vite, the Celery worker, and Celery Beat for development. Backend and frontend source directories are bind-mounted. Python source changes require restarting the worker and Beat processes because Celery does not reload task code automatically.
 
 ## Initial setup
 
@@ -96,6 +103,8 @@ Replace the example Django secret and database passwords in `.env`, then run:
 ./dev backend migrate
 ./dev backend admin-create
 ```
+
+`./dev up` builds and starts Django, React, both PostgreSQL services, Redis, the Celery worker, and Celery Beat.
 
 Open:
 
@@ -122,6 +131,7 @@ API documentation is restricted to staff users.
 │   │   ├── authentication/          Browser session authentication
 │   │   ├── core/                    Shell configuration and navigation
 │   │   ├── course_planner/          Course planning, history, and generated files
+│   │   ├── public_holidays/         Nager.Date, internal holidays, and calendar API
 │   │   └── <domain>/                Domain applications
 │   ├── config/
 │   │   ├── api_urls.py
@@ -143,7 +153,8 @@ API documentation is restricted to staff users.
     │   │   ├── auth/                Session authentication
     │   │   ├── branding/            Company branding settings
     │   │   ├── core/                Shared shell contracts
-    │   │   └── course-planner/      Course planner feature
+    │   │   ├── course-planner/      Course planner feature
+    │   │   └── integrations/        External-service settings and interfaces
     │   ├── layout/                  Application shell
     │   ├── pages/                   Route-level composition
     │   └── styles/                  Theme and shared interaction styles
@@ -161,6 +172,7 @@ backend/apps/<domain>/
 ├── models.py
 ├── serializers.py
 ├── services.py
+├── tasks.py          optional Celery boundary
 ├── urls.py
 ├── views.py
 └── tests.py
@@ -171,10 +183,11 @@ Responsibilities:
 - `serializers.py` defines DRF request and response contracts;
 - `views.py` handles HTTP input, authentication, permissions, status codes, and response mapping;
 - `services.py` contains reusable business workflows and database queries;
+- `tasks.py` calls reusable services and must not duplicate business logic;
 - `models.py` owns persistence and database constraints;
 - `tests.py` verifies authentication, permissions, CSRF, validation, filtering, success paths, and important failures.
 
-Keep API views thin. Django remains authoritative for validation, permissions, and business rules. Do not introduce Django Ninja or a second API framework.
+Keep API views and Celery tasks thin. Django services remain authoritative for validation, transactions, and business rules. Do not introduce Django Ninja or a second API framework.
 
 ### API documentation
 
@@ -231,6 +244,78 @@ The module accepts CSV, XLSX, and XLS course lists, calculates periods around we
 
 Only business logic and file contracts are migrated from `cristake007/planificator`. Its Django templates, DaisyUI shell, page CSS, and browser JavaScript are not reused. See `docs/planificator-migration.md` for the staged migration plan.
 
+## Zile sărbătoare și Nager.Date
+
+The `public_holidays` Django app is the central calendar for Romanian legal holidays and company-specific internal non-working days.
+
+Frontend route:
+
+```text
+/settings/integrations
+```
+
+API contract:
+
+```text
+GET    /api/v1/integrations/public-holidays/holidays?year=2027
+GET    /api/v1/integrations/public-holidays/settings
+PUT    /api/v1/integrations/public-holidays/settings
+POST   /api/v1/integrations/public-holidays/sync
+POST   /api/v1/integrations/public-holidays/internal
+PATCH  /api/v1/integrations/public-holidays/internal/<id>
+DELETE /api/v1/integrations/public-holidays/internal/<id>
+```
+
+Behavior:
+
+- Nager.Date v3 supplies `localName`; the stored and exposed primary name is localized for Romania.
+- API dates are exposed as `ZZ.LL.AAAA`.
+- Synchronization imports national holidays of type `Public` for the current and following year.
+- Reconciliation updates and removes only Nager.Date-managed records.
+- Internal days are marked `internal` and are never overwritten or removed by Nager.Date synchronization.
+- Network or validation failures retain the previously stored holiday calendar.
+- Settings support automatic synchronization every one month, six months, or one year.
+
+Other Django applications must read stored data through the backend facade, not by calling Nager.Date or the application's own HTTP API:
+
+```python
+from apps.public_holidays.calendar import (
+    get_holiday_dates,
+    get_holidays,
+    is_holiday,
+)
+```
+
+### Celery scheduling
+
+Celery Beat sends `public_holidays.sync_if_due` every day at `03:15` in the configured `Europe/Bucharest` timezone. The task performs no external request unless:
+
+- the integration is enabled;
+- automatic synchronization is enabled;
+- `next_sync_at` is empty or has been reached.
+
+Only one Celery Beat instance may run for one environment. Multiple workers are supported because the synchronization service uses a database-backed lock with stale-lock recovery.
+
+Useful commands:
+
+```bash
+./dev status
+./dev logs celery_worker
+./dev logs celery_beat
+./dev logs redis
+./dev restart celery_worker
+./dev restart celery_beat
+```
+
+Manual task dispatch for diagnostics:
+
+```bash
+./dev backend manage shell -c \
+'from apps.public_holidays.tasks import sync_public_holidays_task; print(sync_public_holidays_task.delay().id)'
+```
+
+The manual **Preia zilele acum** action calls the same synchronization service synchronously and reports the result directly in the interface. Celery and the HTTP endpoint do not contain separate implementations.
+
 ## Frontend conventions
 
 Pages are composition boundaries. Domain logic belongs in focused feature folders.
@@ -263,7 +348,7 @@ Rules:
 - The header spans the full application width and contains the configured logo.
 - The sidebar begins below the header.
 - The header remains visible and becomes slightly more compact when the content area is scrolled.
-- The shell content area uses a plain background with a `5px` outer gutter.
+- The shell owns the outer content gutter and plain background.
 - Do not reintroduce the diagonal background pattern.
 - Do not use a `Card` only as a wrapper for an entire route page.
 - Cards remain appropriate for real interface sections such as configuration panels, summaries, previews, and tables.
@@ -340,13 +425,18 @@ Frontend dependencies are managed through the committed lockfile:
 
 Do not use `sudo npm`, `npm audit fix --force`, `--no-package-lock`, or commit `node_modules`.
 
-Backend runtime dependencies belong in `backend/requirements.txt`. Development-only Python tooling belongs in `backend/requirements-dev.txt`. After changing either file, recreate the backend service from the updated image:
+Backend runtime dependencies belong in `backend/requirements.txt`. Development-only Python tooling belongs in `backend/requirements-dev.txt`. After changing either file, recreate all Python services from the updated image:
 
 ```bash
 ./dev up
 ```
 
-A plain `./dev restart backend` only restarts the existing container and does not apply newly installed image dependencies.
+A plain restart only restarts the existing container and does not install image dependencies. After Python source changes that affect tasks, restart both Celery processes:
+
+```bash
+./dev restart celery_worker
+./dev restart celery_beat
+```
 
 ## Database rules
 
@@ -366,6 +456,8 @@ Database reset commands are destructive and request explicit confirmation:
 ./dev wipe
 ```
 
+The Redis volume contains transient broker/result data and is not a source of truth. PostgreSQL remains authoritative for integration settings and holiday records.
+
 ## Production security
 
 Production must use HTTPS and configure secure cookies and proxy handling:
@@ -383,4 +475,12 @@ DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS=true
 DJANGO_SECURE_HSTS_PRELOAD=true
 ```
 
-The Vite development server is not a production server. Production must serve the compiled React application behind the same HTTPS origin that proxies `/api/`, `/admin/`, `/media/`, and `/static/` to Django.
+Production must run:
+
+- one web service;
+- one or more Celery workers;
+- exactly one Celery Beat scheduler;
+- one private Redis service;
+- outbound HTTPS access from the worker to `date.nager.at`.
+
+Redis must not be exposed publicly. The Vite development server is not a production server. Production must serve the compiled React application behind the same HTTPS origin that proxies `/api/`, `/admin/`, `/media/`, and `/static/` to Django.
