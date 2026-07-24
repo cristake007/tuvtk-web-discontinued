@@ -47,6 +47,14 @@ compose_run() {
     fi
 }
 
+compose_run_with_dependencies() {
+    if [[ -t 0 && -t 1 ]]; then
+        compose run --rm "$@"
+    else
+        compose run --rm -T "$@"
+    fi
+}
+
 run_in_service() {
     local service="$1"
     shift
@@ -59,7 +67,11 @@ run_in_service() {
 }
 
 backend() {
-    run_in_service backend "$@"
+    if service_running backend; then
+        compose_exec backend "$@"
+    else
+        compose_run_with_dependencies backend "$@"
+    fi
 }
 
 frontend() {
