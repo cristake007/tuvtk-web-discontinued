@@ -97,7 +97,9 @@ class GenerateScheduleView(APIView):
 
         try:
             courses = parse_course_file(upload.read(), extension)
-            normalized_holidays, parsed_holidays = parse_holidays(values["holidays"])
+            normalized_holidays, parsed_holidays = parse_holidays(
+                values.get("holidays", [])
+            )
             schedule = generate_schedule(
                 courses,
                 year=values["year"],
