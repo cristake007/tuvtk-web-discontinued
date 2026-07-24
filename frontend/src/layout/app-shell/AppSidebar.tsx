@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import type { ShellConfiguration } from "@/api/types";
@@ -18,11 +19,6 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 import {
   getNavigationIcon,
@@ -68,39 +64,44 @@ function isNodeActive(node: NavigationNode, pathname: string): boolean {
 }
 
 function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) {
-  const { isMobile, setOpenMobile, state } = useSidebar();
+  const { setOpenMobile } = useSidebar();
+  const [logoFailed, setLogoFailed] = useState(false);
+
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [configuration.logo_url]);
+
+  const showConfiguredLogo = Boolean(configuration.logo_url) && !logoFailed;
 
   return (
-    <Tooltip>
-      <TooltipTrigger
-        render={
-          <NavLink
-            aria-label={`${configuration.site_name} dashboard`}
-            className="flex h-full cursor-pointer items-center gap-3 px-2 outline-none transition-colors hover:bg-primary/5 focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
-            onClick={() => setOpenMobile(false)}
-            to="/"
-          />
-        }
-      >
+    <NavLink
+      aria-label={`${configuration.site_name} dashboard`}
+      className="flex h-full cursor-pointer items-center gap-3 px-2 outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+      onClick={() => setOpenMobile(false)}
+      to="/"
+    >
+      {showConfiguredLogo ? (
+        <img
+          alt={`${configuration.organization_name} logo`}
+          className="max-h-10 w-auto max-w-28 shrink-0 object-contain group-data-[collapsible=icon]:max-h-8 group-data-[collapsible=icon]:max-w-8"
+          onError={() => setLogoFailed(true)}
+          src={configuration.logo_url ?? undefined}
+        />
+      ) : (
         <span className="grid size-8 shrink-0 place-items-center bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">
           T
         </span>
-        <span className="min-w-0 leading-tight group-data-[collapsible=icon]:hidden">
-          <span className="block truncate text-sm font-semibold text-primary">
-            {configuration.site_name}
-          </span>
-          <span className="block truncate text-xs text-primary/65">
-            {configuration.sidebar_title}
-          </span>
+      )}
+
+      <span className="min-w-0 leading-tight group-data-[collapsible=icon]:hidden">
+        <span className="block truncate text-sm font-semibold text-primary">
+          {configuration.site_name}
         </span>
-      </TooltipTrigger>
-      <TooltipContent
-        {...sidebarTooltip}
-        hidden={state !== "collapsed" || isMobile}
-      >
-        {configuration.site_name}
-      </TooltipContent>
-    </Tooltip>
+        <span className="block truncate text-xs text-primary/65">
+          {configuration.sidebar_title}
+        </span>
+      </span>
+    </NavLink>
   );
 }
 
