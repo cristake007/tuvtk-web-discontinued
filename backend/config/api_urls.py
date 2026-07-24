@@ -19,4 +19,5 @@ urlpatterns = [
     path("auth", authentication_root, name="authentication-root-no-slash"),
     path("auth/", include("apps.authentication.urls")),
     path("core/", include("apps.core.urls")),
+    path("course-planner/", include("apps.course_planner.urls")),
 ]
