@@ -121,16 +121,14 @@ export function PlannerConfigurationCard({
           </div>
 
           <fieldset className="grid gap-3" disabled={busy}>
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <legend className="text-sm font-medium">Lunile incluse</legend>
-              <div className="flex gap-2">
-                <Button onClick={onSelectAllMonths} size="xs" type="button" variant="outline">
-                  Toate
-                </Button>
-                <Button onClick={onClearMonths} size="xs" type="button" variant="ghost">
-                  Niciuna
-                </Button>
-              </div>
+            <legend className="text-sm font-medium">Lunile incluse</legend>
+            <div className="flex justify-end gap-2">
+              <Button onClick={onSelectAllMonths} size="xs" type="button" variant="outline">
+                Toate
+              </Button>
+              <Button onClick={onClearMonths} size="xs" type="button" variant="ghost">
+                Niciuna
+              </Button>
             </div>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
               {monthNames.map((monthName, index) => {
@@ -175,11 +173,11 @@ export function PlannerConfigurationCard({
         </CardContent>
 
         <CardFooter className="flex flex-wrap justify-between gap-3">
-          <Button disabled={savePending} onClick={onSave} type="button" variant="outline">
+          <Button disabled={busy} onClick={onSave} type="button" variant="outline">
             {savePending ? <Spinner /> : <Save aria-hidden="true" />}
             {savePending ? "Se salvează…" : "Salvează setările"}
           </Button>
-          <Button disabled={generatePending} size="lg" type="submit">
+          <Button disabled={busy} size="lg" type="submit">
             {generatePending ? <Spinner /> : <FileSpreadsheet aria-hidden="true" />}
             {generatePending ? "Se generează…" : "Generează planificarea"}
           </Button>
