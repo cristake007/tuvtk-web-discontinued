@@ -77,9 +77,10 @@ export function CoursePlannerPanel() {
 
   const saveMutation = useMutation({
     mutationFn: saveCoursePlannerSettings,
-    onError: (error) => toast.error("Setările nu au putut fi salvate", {
-      description: getErrorMessage(error),
-    }),
+    onError: (error) =>
+      toast.error("Setările nu au putut fi salvate", {
+        description: getErrorMessage(error),
+      }),
     onSuccess: (savedSettings) => {
       queryClient.setQueryData(coursePlannerQueryKey, savedSettings);
       toast.success("Setările planificatorului au fost salvate.");
@@ -88,9 +89,10 @@ export function CoursePlannerPanel() {
 
   const generateMutation = useMutation({
     mutationFn: generateCourseSchedule,
-    onError: (error) => toast.error("Planificarea nu a putut fi generată", {
-      description: getErrorMessage(error),
-    }),
+    onError: (error) =>
+      toast.error("Planificarea nu a putut fi generată", {
+        description: getErrorMessage(error),
+      }),
     onSuccess: (response) => {
       setResult(response);
       queryClient.setQueryData(coursePlannerQueryKey, {
@@ -110,9 +112,10 @@ export function CoursePlannerPanel() {
         generationId: request.generationId,
         fileType: "excel",
       }),
-    onError: (error) => toast.error("Fișierul Excel nu a putut fi descărcat", {
-      description: getErrorMessage(error),
-    }),
+    onError: (error) =>
+      toast.error("Fișierul Excel nu a putut fi descărcat", {
+        description: getErrorMessage(error),
+      }),
     onSuccess: (blob, request) => {
       saveBlob(blob, request.filename);
       toast.success("Fișierul Excel a fost descărcat.");
@@ -184,7 +187,7 @@ export function CoursePlannerPanel() {
   }
 
   return (
-    <div className="flex min-w-0 flex-col gap-6 p-5 sm:p-7 lg:p-9">
+    <div className="flex w-full min-w-0 flex-1 flex-col gap-6 p-5 sm:p-7 lg:p-9">
       <PlannerHeader />
 
       <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
