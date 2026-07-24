@@ -11,6 +11,7 @@ from .models import PublicHoliday, PublicHolidaySettings
 from .nager import NagerDateClient, NagerDateError, NagerHoliday
 from .serializers import PublicHolidaySerializer
 from .services import (
+    get_holiday_dates,
     get_integration_settings,
     sync_public_holidays_if_due,
     synchronize_public_holidays_now,
@@ -131,6 +132,22 @@ class PublicHolidaySynchronizationTests(TestCase):
 
         self.assertEqual(result.status, "skipped")
         fetch_mock.assert_not_called()
+
+    def test_backend_calendar_returns_unique_dates(self):
+        PublicHoliday.objects.create(
+            date=date(self.current_year, 7, 15),
+            local_name="A doua regulă internă",
+            source=PublicHoliday.Source.INTERNAL,
+            is_internal=True,
+            country_code="RO",
+            source_year=self.current_year,
+            national_holiday=True,
+            holiday_types=["Internal"],
+        )
+
+        dates = get_holiday_dates(year=self.current_year, months=[7])
+
+        self.assertEqual(dates, [date(self.current_year, 7, 15)])
 
     def test_serializer_exposes_romanian_date_format(self):
         holiday = PublicHoliday.objects.get(source=PublicHoliday.Source.INTERNAL)
