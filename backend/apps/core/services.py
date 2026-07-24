@@ -4,7 +4,6 @@ from apps.accounts.services import serialize_account_user
 
 from .models import ApplicationConfiguration, NavigationItem
 
-
 DEFAULT_CONFIGURATION = {
     "site_name": "TUVTK",
     "organization_name": "TÜV Thüringen Karpat",
