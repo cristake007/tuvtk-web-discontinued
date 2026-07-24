@@ -113,15 +113,15 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
         <img
           alt={`${configuration.organization_name} logo`}
           className={[
-            "absolute h-16 w-52 max-w-none object-contain transform-gpu",
+            "absolute h-20 w-60 max-w-none -translate-y-2 object-contain transform-gpu",
             "transition-transform duration-200 ease-linear motion-reduce:transition-none",
-            logoExpanded ? "scale-105" : "scale-[0.22]",
+            logoExpanded ? "scale-105" : "scale-25",
           ].join(" ")}
           onError={() => setLogoFailed(true)}
           src={configuration.logo_url ?? undefined}
         />
       ) : (
-        <span className="text-[11px] font-bold tracking-normal text-primary">
+        <span className="-translate-y-2 text-[11px] font-bold tracking-normal text-primary">
           TUVTK
         </span>
       )}
