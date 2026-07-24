@@ -142,43 +142,42 @@ def _reconcile_holidays(
     created = 0
     updated = 0
 
-    with transaction.atomic():
-        for holiday in holidays:
-            key = (holiday.date, holiday.local_name)
-            stored = existing_by_key.pop(key, None)
-            values = {
-                "english_name": holiday.english_name,
-                "description": "",
-                "is_internal": False,
-                "country_code": "RO",
-                "source_year": holiday.date.year,
-                "national_holiday": holiday.national_holiday,
-                "subdivision_codes": list(holiday.subdivision_codes),
-                "holiday_types": list(holiday.holiday_types),
-            }
-            if stored is None:
-                PublicHoliday.objects.create(
-                    date=holiday.date,
-                    local_name=holiday.local_name,
-                    source=PublicHoliday.Source.NAGER,
-                    synced_at=synced_at,
-                    **values,
-                )
-                created += 1
-                continue
+    for holiday in holidays:
+        key = (holiday.date, holiday.local_name)
+        stored = existing_by_key.pop(key, None)
+        values = {
+            "english_name": holiday.english_name,
+            "description": "",
+            "is_internal": False,
+            "country_code": "RO",
+            "source_year": holiday.date.year,
+            "national_holiday": holiday.national_holiday,
+            "subdivision_codes": list(holiday.subdivision_codes),
+            "holiday_types": list(holiday.holiday_types),
+        }
+        if stored is None:
+            PublicHoliday.objects.create(
+                date=holiday.date,
+                local_name=holiday.local_name,
+                source=PublicHoliday.Source.NAGER,
+                synced_at=synced_at,
+                **values,
+            )
+            created += 1
+            continue
 
-            changed = any(getattr(stored, field) != value for field, value in values.items())
-            for field, value in values.items():
-                setattr(stored, field, value)
-            stored.synced_at = synced_at
-            stored.save(update_fields=(*values.keys(), "synced_at", "updated_at"))
-            if changed:
-                updated += 1
+        changed = any(getattr(stored, field) != value for field, value in values.items())
+        for field, value in values.items():
+            setattr(stored, field, value)
+        stored.synced_at = synced_at
+        stored.save(update_fields=(*values.keys(), "synced_at", "updated_at"))
+        if changed:
+            updated += 1
 
-        stale_ids = [item.pk for item in existing_by_key.values()]
-        removed = len(stale_ids)
-        if stale_ids:
-            PublicHoliday.objects.filter(pk__in=stale_ids).delete()
+    stale_ids = [item.pk for item in existing_by_key.values()]
+    removed = len(stale_ids)
+    if stale_ids:
+        PublicHoliday.objects.filter(pk__in=stale_ids).delete()
 
     return created, updated, removed
 
@@ -208,23 +207,25 @@ def run_synchronization(*, automatic: bool) -> SynchronizationResult:
         for year in years:
             holidays.extend(fetch_romanian_holidays(year))
 
-        created, updated, removed = _reconcile_holidays(holidays, years, now)
-        next_sync_at = (
-            calculate_next_sync_at(now, settings.frequency)
-            if settings.automatic_sync
-            else None
-        )
-        PublicHolidaySettings.objects.filter(pk=1).update(
-            last_attempted_at=now,
-            last_successful_at=now,
-            next_sync_at=next_sync_at,
-            last_status=PublicHolidaySettings.SyncStatus.SUCCESS,
-            last_error="",
-            last_accepted_count=len(holidays),
-            last_created_count=created,
-            last_updated_count=updated,
-            last_removed_count=removed,
-        )
+        with transaction.atomic():
+            created, updated, removed = _reconcile_holidays(holidays, years, now)
+            next_sync_at = (
+                calculate_next_sync_at(now, settings.frequency)
+                if settings.automatic_sync
+                else None
+            )
+            PublicHolidaySettings.objects.filter(pk=1).update(
+                last_attempted_at=now,
+                last_successful_at=now,
+                next_sync_at=next_sync_at,
+                last_status=PublicHolidaySettings.SyncStatus.SUCCESS,
+                last_error="",
+                last_accepted_count=len(holidays),
+                last_created_count=created,
+                last_updated_count=updated,
+                last_removed_count=removed,
+            )
+
         return SynchronizationResult(
             status="success",
             message=(
