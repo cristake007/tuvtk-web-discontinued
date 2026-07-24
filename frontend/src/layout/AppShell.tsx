@@ -85,7 +85,7 @@ export function AppShell() {
   const pageTitle = currentItem?.label ?? "Workspace";
 
   return (
-    <TooltipProvider delay={250}>
+    <TooltipProvider delay={0}>
       <SidebarProvider>
         <AppSidebar
           configuration={bootstrap.configuration}
