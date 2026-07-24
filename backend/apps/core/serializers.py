@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from apps.accounts.serializers import AccountUserSerializer, ErrorDetailSerializer
+from apps.authentication.serializers import ErrorDetailSerializer, SessionUserSerializer
 
 
 class ShellConfigurationSerializer(serializers.Serializer):
@@ -28,7 +28,7 @@ class NavigationItemSerializer(serializers.Serializer):
 
 class CoreBootstrapSerializer(serializers.Serializer):
     configuration = ShellConfigurationSerializer()
-    user = AccountUserSerializer()
+    user = SessionUserSerializer()
     navigation = NavigationItemSerializer(many=True)
 
 
