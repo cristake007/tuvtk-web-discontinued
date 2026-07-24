@@ -16,19 +16,24 @@ ENGLISH_LABELS = {
 }
 
 
-def update_navigation_labels(apps, labels):
+def update_navigation_labels(apps, labels, sidebar_title):
+    ApplicationConfiguration = apps.get_model("core", "ApplicationConfiguration")
     NavigationItem = apps.get_model("core", "NavigationItem")
 
     for key, label in labels.items():
         NavigationItem.objects.filter(key=key).update(label=label)
 
+    ApplicationConfiguration.objects.filter(is_active=True).update(
+        sidebar_title=sidebar_title
+    )
+
 
 def localize_navigation_labels(apps, schema_editor):
-    update_navigation_labels(apps, ROMANIAN_LABELS)
+    update_navigation_labels(apps, ROMANIAN_LABELS, "Navigație")
 
 
 def restore_navigation_labels(apps, schema_editor):
-    update_navigation_labels(apps, ENGLISH_LABELS)
+    update_navigation_labels(apps, ENGLISH_LABELS, "Workspace")
 
 
 class Migration(migrations.Migration):
