@@ -78,7 +78,7 @@ export function HeaderSearch({ navigation }: { navigation: NavigationItem[] }) {
           <Search aria-hidden="true" className="text-primary/70" />
         </InputGroupAddon>
         <InputGroupInput
-          aria-label="Search application pages"
+          aria-label="Caută în paginile aplicației"
           autoComplete="off"
           className="h-10 text-sm placeholder:text-muted-foreground/80"
           onChange={(event) => {
@@ -87,7 +87,7 @@ export function HeaderSearch({ navigation }: { navigation: NavigationItem[] }) {
           }}
           onFocus={() => setOpen(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Search pages..."
+          placeholder="Caută pagini..."
           ref={inputRef}
           type="search"
           value={query}
@@ -124,7 +124,7 @@ export function HeaderSearch({ navigation }: { navigation: NavigationItem[] }) {
             </div>
           ) : (
             <p className="px-3 py-3 text-center text-sm text-muted-foreground">
-              No matching pages.
+              Nu există pagini corespunzătoare.
             </p>
           )}
         </div>
