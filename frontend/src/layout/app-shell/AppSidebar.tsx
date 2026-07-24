@@ -64,7 +64,7 @@ function isNodeActive(node: NavigationNode, pathname: string): boolean {
 }
 
 function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) {
-  const { setOpenMobile } = useSidebar();
+  const { setOpenMobile, state } = useSidebar();
   const [logoFailed, setLogoFailed] = useState(false);
 
   useEffect(() => {
@@ -72,23 +72,44 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
   }, [configuration.logo_url]);
 
   const showConfiguredLogo = Boolean(configuration.logo_url) && !logoFailed;
+  const collapsed = state === "collapsed";
 
   return (
     <NavLink
       aria-label={`${configuration.site_name} dashboard`}
-      className="flex h-full w-full cursor-pointer items-center justify-center overflow-hidden outline-none [container-type:inline-size] focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+      className="relative flex h-full w-full cursor-pointer items-center justify-center overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
       onClick={() => setOpenMobile(false)}
       to="/"
     >
       {showConfiguredLogo ? (
-        <img
-          alt={`${configuration.organization_name} logo`}
-          className="h-16 w-[clamp(1.9rem,65cqw,11rem)] max-w-none origin-center scale-[1.48] transform-gpu object-contain"
-          onError={() => setLogoFailed(true)}
-          src={configuration.logo_url ?? undefined}
-        />
+        <>
+          <img
+            alt={`${configuration.organization_name} logo`}
+            className={[
+              "absolute h-16 w-52 max-w-none object-contain transform-gpu",
+              "transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none",
+              collapsed
+                ? "scale-[1.46] opacity-0"
+                : "scale-[1.55] opacity-100 delay-50",
+            ].join(" ")}
+            onError={() => setLogoFailed(true)}
+            src={configuration.logo_url ?? undefined}
+          />
+          <span
+            aria-hidden="true"
+            className={[
+              "absolute text-[10px] font-bold tracking-normal text-primary transform-gpu",
+              "transition-[opacity,transform] duration-150 ease-out motion-reduce:transition-none",
+              collapsed
+                ? "scale-100 opacity-100 delay-75"
+                : "scale-90 opacity-0",
+            ].join(" ")}
+          >
+            TUVTK
+          </span>
+        </>
       ) : (
-        <span className="text-[clamp(0.625rem,8cqw,1rem)] font-bold tracking-wide text-primary">
+        <span className="text-[11px] font-bold tracking-normal text-primary">
           TUVTK
         </span>
       )}
