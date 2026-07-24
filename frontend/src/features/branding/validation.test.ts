@@ -4,7 +4,7 @@ import { describe, it } from "node:test";
 import {
   MAX_COMPANY_LOGO_BYTES,
   validateCompanyLogo,
-} from "./validation.ts";
+} from "./validation.js";
 
 describe("validateCompanyLogo", () => {
   it("accepts SVG files by MIME type or extension", () => {
