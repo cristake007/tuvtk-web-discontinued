@@ -34,7 +34,7 @@ export function InternalHolidayForm({
 }) {
   return (
     <Card>
-      <form onSubmit={onSubmit}>
+      <form className="flex flex-col gap-(--card-spacing)" onSubmit={onSubmit}>
         <CardHeader className="border-b">
           <div className="flex items-start gap-3">
             <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-secondary text-secondary-foreground">
