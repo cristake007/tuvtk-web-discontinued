@@ -1,6 +1,5 @@
 import { LogOut, ShieldCheck, UserRound } from "lucide-react";
 
-import type { ShellUser } from "@/api/types";
 import { Avatar, AvatarBadge, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Spinner } from "@/components/ui/spinner";
+import type { ShellUser } from "@/features/auth/types";
 
 type UserMenuProps = {
   user: ShellUser;
