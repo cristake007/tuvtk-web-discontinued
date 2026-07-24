@@ -138,7 +138,7 @@ export function LoginForm({ siteName }: { siteName: string }) {
               autoCapitalize="none"
               autoComplete="username"
               autoFocus
-              className="h-12"
+              className="h-12 rounded-sm"
               disabled={loginMutation.isPending}
               id="username"
               maxLength={150}
@@ -160,7 +160,7 @@ export function LoginForm({ siteName }: { siteName: string }) {
                 aria-describedby={fieldErrors.password ? "password-error" : undefined}
                 aria-invalid={Boolean(fieldErrors.password)}
                 autoComplete="current-password"
-                className="h-12 pr-12"
+                className="h-12 rounded-sm pr-12"
                 disabled={loginMutation.isPending}
                 id="password"
                 name="password"
@@ -195,7 +195,7 @@ export function LoginForm({ siteName }: { siteName: string }) {
           ) : null}
 
           <Button
-            className="h-12 w-full cursor-pointer"
+            className="h-12 w-full cursor-pointer rounded-sm"
             disabled={loginMutation.isPending}
             type="submit"
           >
