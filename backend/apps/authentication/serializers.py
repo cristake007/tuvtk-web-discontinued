@@ -1,6 +1,13 @@
 from rest_framework import serializers
 
 
+class AuthenticationEndpointsSerializer(serializers.Serializer):
+    csrf = serializers.CharField()
+    session = serializers.CharField()
+    login = serializers.CharField()
+    logout = serializers.CharField()
+
+
 class SessionUserSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     username = serializers.CharField()
