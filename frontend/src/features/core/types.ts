@@ -1,4 +1,4 @@
-import type { ShellUser } from "@/features/auth/types";
+import type { ShellUser } from "../auth/types.js";
 
 export type ShellConfiguration = {
   site_name: string;
