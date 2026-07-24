@@ -1,4 +1,4 @@
-FROM python:3.14-slim-bookworm
+FROM python:3.14-slim-bookworm AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -15,7 +15,7 @@ RUN apt-get update \
 COPY backend/requirements.txt backend/requirements-dev.txt /tmp/
 
 RUN pip install --upgrade pip \
-    && pip install -r /tmp/requirements-dev.txt
+    && pip install -r /tmp/requirements.txt
 
 # This allows the image to run without a bind mount later.
 # During development, ./backend:/app replaces this copy.
@@ -24,3 +24,11 @@ COPY backend/ /app/
 EXPOSE 8000
 
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
+
+
+FROM base AS development
+
+RUN pip install -r /tmp/requirements-dev.txt
+
+
+FROM base AS production
