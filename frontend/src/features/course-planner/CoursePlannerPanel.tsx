@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 
 import {
+  coursePlannerHistoryQueryKey,
   coursePlannerQueryKey,
-  exportCourseSchedule,
+  downloadCoursePlanFile,
   fetchCoursePlannerSettings,
   generateCourseSchedule,
   saveCoursePlannerSettings,
@@ -51,6 +52,11 @@ type ScheduleRow = {
   months: Record<number, string>;
 };
 
+type ExcelDownloadRequest = {
+  generationId: string;
+  filename: string;
+};
+
 function getErrorMessage(error: Error | null): string | null {
   if (!error) {
     return null;
@@ -59,6 +65,17 @@ function getErrorMessage(error: Error | null): string | null {
     return error.message;
   }
   return "Operațiunea nu a putut fi finalizată.";
+}
+
+function saveBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
 }
 
 function buildScheduleRows(schedule: ScheduledCourse[]): ScheduleRow[] {
@@ -128,21 +145,17 @@ export function CoursePlannerPanel() {
         ...settings,
         holidays: normalizedHolidays,
       });
+      void queryClient.invalidateQueries({ queryKey: coursePlannerHistoryQueryKey });
     },
   });
 
-  const exportMutation = useMutation({
-    mutationFn: exportCourseSchedule,
-    onSuccess: (blob) => {
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement("a");
-      anchor.href = url;
-      anchor.download = `planificare_cursuri_${settings.year}.xlsx`;
-      document.body.append(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(url);
-    },
+  const downloadMutation = useMutation({
+    mutationFn: (request: ExcelDownloadRequest) =>
+      downloadCoursePlanFile({
+        generationId: request.generationId,
+        fileType: "excel",
+      }),
+    onSuccess: (blob, request) => saveBlob(blob, request.filename),
   });
 
   function currentSettings(): CoursePlannerSettings {
@@ -165,7 +178,7 @@ export function CoursePlannerPanel() {
   function handleGenerate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     generateMutation.reset();
-    exportMutation.reset();
+    downloadMutation.reset();
 
     if (!inputFile) {
       setLocalError("Selectează fișierul CSV sau Excel cu lista cursurilor.");
@@ -196,7 +209,7 @@ export function CoursePlannerPanel() {
     getErrorMessage(settingsQuery.error) ??
     getErrorMessage(saveMutation.error) ??
     getErrorMessage(generateMutation.error) ??
-    getErrorMessage(exportMutation.error);
+    getErrorMessage(downloadMutation.error);
 
   return (
     <div className="flex min-w-0 flex-col gap-6 p-5 sm:p-7 lg:p-9">
@@ -362,22 +375,23 @@ export function CoursePlannerPanel() {
             {saveMutation.isPending ? "Se salvează…" : "Salvează setările"}
           </Button>
           <Button
-            disabled={!result || exportMutation.isPending}
+            disabled={!result || downloadMutation.isPending}
             onClick={() => {
               if (!result) {
                 return;
               }
-              exportMutation.mutate({
-                year: settings.year,
-                holidays: normalizedHolidays,
-                schedule: result.schedule,
+              downloadMutation.mutate({
+                generationId: result.generation.id,
+                filename:
+                  result.generation.files.excel.filename ??
+                  `planificare_cursuri_${result.generation.year}.xlsx`,
               });
             }}
             type="button"
             variant="outline"
           >
-            {exportMutation.isPending ? <Spinner /> : <Download aria-hidden="true" />}
-            {exportMutation.isPending ? "Se exportă…" : "Exportă Excel"}
+            {downloadMutation.isPending ? <Spinner /> : <Download aria-hidden="true" />}
+            {downloadMutation.isPending ? "Se descarcă…" : "Descarcă Excel"}
           </Button>
         </div>
       </form>
