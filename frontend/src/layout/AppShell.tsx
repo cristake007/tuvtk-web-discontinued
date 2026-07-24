@@ -22,6 +22,13 @@ const unauthenticatedSession: AuthenticationSession = {
   user: null,
 };
 
+const appContentGridStyle = {
+  backgroundColor: "var(--background)",
+  backgroundImage:
+    "repeating-linear-gradient(-45deg, var(--background), var(--background) 13px, var(--muted) 13px, var(--muted) 14px)",
+  backgroundSize: "40px 40px",
+} as const;
+
 export function AppShell() {
   const queryClient = useQueryClient();
 
@@ -91,7 +98,10 @@ export function AppShell() {
             user={bootstrap.user}
           />
 
-          <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-white">
+          <div
+            className="flex min-h-0 flex-1 flex-col overflow-auto"
+            style={appContentGridStyle}
+          >
             <div className="flex w-full flex-1 flex-col">
               {logoutMutation.isError ? (
                 <Alert className="m-4 mb-0 border-warning/40 bg-warning/10 sm:m-6 sm:mb-0 lg:m-8 lg:mb-0">
