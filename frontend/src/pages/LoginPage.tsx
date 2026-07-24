@@ -1,91 +1,73 @@
-import { useState, type FormEvent } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import {
-  Database,
-  LayoutDashboard,
-  LockKeyhole,
-  ShieldCheck,
-  type LucideIcon,
-} from "lucide-react";
+import { useEffect, useState, type FormEvent } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Eye, EyeOff, LockKeyhole } from "lucide-react";
 
 import { ApiError } from "@/api/http";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Field, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { login } from "@/features/auth/api";
 import { authQueryKeys } from "@/features/auth/queryKeys";
+import {
+  fetchPublicBranding,
+  publicBrandingQueryKey,
+} from "@/features/branding/api";
+import type { PublicBranding } from "@/features/branding/types";
 
-const workspaceFeatures: Array<{
-  icon: LucideIcon;
-  title: string;
-  description: string;
-}> = [
-  {
-    icon: LayoutDashboard,
-    title: "One internal workspace",
-    description: "Company records, documents, settings, and future modules in one interface.",
-  },
-  {
-    icon: Database,
-    title: "Connected business data",
-    description: "Operational and registry data remain separated and managed by Django.",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Protected access",
-    description: "Django sessions, permissions, password hashing, and CSRF protection.",
-  },
-];
+const fallbackBranding: PublicBranding = {
+  site_name: "TUVTK",
+  organization_name: "TÜV Thüringen Karpat",
+  logo_url: null,
+};
 
-function BrandLockup({ compact = false }: { compact?: boolean }) {
+function BrandMark({
+  branding,
+  compact = false,
+}: {
+  branding: PublicBranding;
+  compact?: boolean;
+}) {
+  const [logoFailed, setLogoFailed] = useState(false);
+
+  useEffect(() => {
+    setLogoFailed(false);
+  }, [branding.logo_url]);
+
+  const showLogo = Boolean(branding.logo_url) && !logoFailed;
+
   return (
-    <div className="flex items-center gap-3">
-      <span className="relative grid size-11 shrink-0 place-items-center rounded-md bg-primary text-base font-bold text-primary-foreground shadow-sm">
-        T
-        <span className="absolute inset-x-0 bottom-0 h-1 rounded-b-md bg-brand-red" />
-      </span>
-      <span className="leading-tight">
-        <span className="block font-semibold">TÜV Thüringen Karpat</span>
+    <div
+      className={
+        compact
+          ? "flex min-h-16 items-center"
+          : "flex min-h-44 w-full items-center justify-center bg-white px-10 py-8 shadow-2xl shadow-black/15"
+      }
+    >
+      {showLogo ? (
+        <img
+          alt={`${branding.organization_name} logo`}
+          className={
+            compact
+              ? "max-h-14 max-w-64 object-contain object-left"
+              : "max-h-28 max-w-full object-contain"
+          }
+          onError={() => setLogoFailed(true)}
+          src={branding.logo_url ?? undefined}
+        />
+      ) : (
         <span
           className={
             compact
-              ? "block text-sm text-muted-foreground"
-              : "block text-sm text-primary-foreground/70"
+              ? "text-2xl font-bold tracking-tight text-primary"
+              : "text-4xl font-bold tracking-tight text-primary"
           }
         >
-          Internal operations platform
+          {branding.site_name}
         </span>
-      </span>
+      )}
     </div>
-  );
-}
-
-function WorkspaceFeature({
-  icon: Icon,
-  title,
-  description,
-}: (typeof workspaceFeatures)[number]) {
-  return (
-    <li className="flex gap-3">
-      <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-md bg-primary-foreground/10 ring-1 ring-primary-foreground/15">
-        <Icon aria-hidden="true" className="size-4" />
-      </span>
-      <span>
-        <span className="block text-sm font-semibold">{title}</span>
-        <span className="mt-0.5 block text-sm leading-relaxed text-primary-foreground/70">
-          {description}
-        </span>
-      </span>
-    </li>
   );
 }
 
@@ -93,6 +75,16 @@ export function LoginPage() {
   const queryClient = useQueryClient();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordVisible, setPasswordVisible] = useState(false);
+
+  const brandingQuery = useQuery({
+    queryKey: publicBrandingQueryKey,
+    queryFn: fetchPublicBranding,
+    retry: 1,
+    staleTime: 5 * 60_000,
+  });
+
+  const branding = brandingQuery.data ?? fallbackBranding;
 
   const loginMutation = useMutation({
     mutationFn: login,
@@ -102,123 +94,145 @@ export function LoginPage() {
     },
   });
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     loginMutation.mutate({ username, password });
-  };
+  }
 
   const errorMessage =
     loginMutation.error instanceof ApiError
       ? loginMutation.error.message
       : loginMutation.isError
-        ? "Login failed. Please try again."
+        ? "Sign in failed. Verify your credentials and try again."
         : null;
 
   return (
-    <main className="min-h-svh bg-background lg:grid lg:grid-cols-[minmax(0,1.05fr)_minmax(26rem,0.95fr)]">
-      <section className="relative hidden overflow-hidden bg-primary p-12 text-primary-foreground lg:flex lg:flex-col lg:justify-between xl:p-16">
-        <span className="absolute inset-x-0 top-0 h-1 bg-brand-red" />
-        <BrandLockup />
+    <main className="min-h-svh bg-background lg:grid lg:grid-cols-[minmax(24rem,0.82fr)_minmax(34rem,1.18fr)]">
+      <aside className="relative hidden min-h-svh overflow-hidden bg-primary text-primary-foreground lg:flex">
+        <div className="absolute inset-x-0 top-0 h-1 bg-brand-red" />
+        <div className="absolute -top-48 -right-48 size-[34rem] rounded-full border border-white/10" />
+        <div className="absolute -top-28 -right-28 size-[24rem] rounded-full border border-white/10" />
+        <div className="absolute right-16 bottom-20 h-px w-44 bg-white/15" />
+        <div className="absolute right-16 bottom-20 h-20 w-px bg-white/15" />
 
-        <div className="max-w-xl">
-          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.14em] text-primary-foreground/60">
-            Secure workspace
-          </p>
-          <h1 className="max-w-lg text-4xl font-semibold tracking-tight xl:text-5xl">
-            The operational platform for TÜV Thüringen Karpat.
-          </h1>
-          <p className="mt-5 max-w-lg text-base leading-relaxed text-primary-foreground/75">
-            A focused interface for internal work, backed by Django permissions and reliable business data.
+        <div className="relative z-10 flex w-full flex-col px-12 py-10 xl:px-16 xl:py-12">
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-primary-foreground/60">
+            Internal workspace
           </p>
 
-          <ul className="mt-10 grid gap-5">
-            {workspaceFeatures.map((feature) => (
-              <WorkspaceFeature key={feature.title} {...feature} />
-            ))}
-          </ul>
-        </div>
-
-        <p className="text-sm text-primary-foreground/55">
-          Authorized users only
-        </p>
-      </section>
-
-      <section className="flex min-h-svh items-center justify-center p-5 sm:p-8 lg:min-h-0 lg:p-12">
-        <div className="w-full max-w-md">
-          <div className="mb-7 lg:hidden">
-            <BrandLockup compact />
+          <div className="flex flex-1 items-center">
+            <div className="w-full max-w-xl">
+              <BrandMark branding={branding} />
+              <div className="mt-7 border-l-2 border-brand-red pl-5">
+                <p className="text-xl font-semibold tracking-tight">
+                  {branding.organization_name}
+                </p>
+                <p className="mt-1 text-sm text-primary-foreground/65">
+                  {branding.site_name}
+                </p>
+              </div>
+            </div>
           </div>
 
-          <Card className="gap-0 overflow-hidden py-0 shadow-xl shadow-foreground/5">
-            <div className="h-1 bg-brand-red" />
-            <CardHeader className="px-6 pt-7 pb-5 sm:px-8">
-              <CardTitle className="text-2xl tracking-tight">Welcome back</CardTitle>
-              <CardDescription className="max-w-sm leading-relaxed">
-                Sign in with your Django account to continue to the internal workspace.
-              </CardDescription>
-            </CardHeader>
+          <p className="text-xs font-medium uppercase tracking-[0.14em] text-primary-foreground/45">
+            Authorized access only
+          </p>
+        </div>
+      </aside>
 
-            <CardContent className="px-6 pb-7 sm:px-8">
-              <form onSubmit={handleSubmit}>
-                <FieldGroup>
-                  <Field>
-                    <FieldLabel htmlFor="username">Username</FieldLabel>
-                    <Input
-                      aria-invalid={loginMutation.isError}
-                      autoComplete="username"
-                      autoFocus
-                      disabled={loginMutation.isPending}
-                      id="username"
-                      name="username"
-                      onChange={(event) => setUsername(event.target.value)}
-                      placeholder="Enter your username"
-                      required
-                      type="text"
-                      value={username}
-                    />
-                  </Field>
+      <section className="flex min-h-svh items-center justify-center px-5 py-10 sm:px-8 lg:px-12">
+        <div className="w-full max-w-md">
+          <div className="mb-10 lg:hidden">
+            <BrandMark branding={branding} compact />
+            <p className="mt-4 text-sm font-medium text-foreground">
+              {branding.organization_name}
+            </p>
+          </div>
 
-                  <Field>
-                    <FieldLabel htmlFor="password">Password</FieldLabel>
-                    <Input
-                      aria-invalid={loginMutation.isError}
-                      autoComplete="current-password"
-                      disabled={loginMutation.isPending}
-                      id="password"
-                      name="password"
-                      onChange={(event) => setPassword(event.target.value)}
-                      placeholder="Enter your password"
-                      required
-                      type="password"
-                      value={password}
-                    />
-                  </Field>
+          <div className="mb-8">
+            <p className="text-sm font-semibold text-primary">{branding.site_name}</p>
+            <h1 className="mt-2 text-3xl font-semibold tracking-tight text-foreground">
+              Sign in
+            </h1>
+            <p className="mt-3 text-sm leading-6 text-muted-foreground">
+              Use your company account to access the internal workspace.
+            </p>
+          </div>
 
-                  {errorMessage ? (
-                    <Alert variant="destructive">
-                      <AlertDescription>{errorMessage}</AlertDescription>
-                    </Alert>
-                  ) : null}
+          <form onSubmit={handleSubmit}>
+            <FieldGroup className="gap-5">
+              <Field>
+                <FieldLabel htmlFor="username">Username</FieldLabel>
+                <Input
+                  aria-invalid={loginMutation.isError}
+                  autoComplete="username"
+                  autoFocus
+                  className="h-11"
+                  disabled={loginMutation.isPending}
+                  id="username"
+                  name="username"
+                  onChange={(event) => setUsername(event.target.value)}
+                  required
+                  type="text"
+                  value={username}
+                />
+              </Field>
 
-                  <Button
-                    className="h-10 w-full cursor-pointer"
+              <Field>
+                <FieldLabel htmlFor="password">Password</FieldLabel>
+                <div className="relative">
+                  <Input
+                    aria-invalid={loginMutation.isError}
+                    autoComplete="current-password"
+                    className="h-11 pr-11"
                     disabled={loginMutation.isPending}
-                    type="submit"
+                    id="password"
+                    name="password"
+                    onChange={(event) => setPassword(event.target.value)}
+                    required
+                    type={passwordVisible ? "text" : "password"}
+                    value={password}
+                  />
+                  <button
+                    aria-label={passwordVisible ? "Hide password" : "Show password"}
+                    aria-pressed={passwordVisible}
+                    className="absolute inset-y-0 right-0 grid w-11 cursor-pointer place-items-center text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                    disabled={loginMutation.isPending}
+                    onClick={() => setPasswordVisible((current) => !current)}
+                    type="button"
                   >
-                    {loginMutation.isPending ? (
-                      <Spinner />
+                    {passwordVisible ? (
+                      <EyeOff aria-hidden="true" className="size-4" />
                     ) : (
-                      <LockKeyhole aria-hidden="true" />
+                      <Eye aria-hidden="true" className="size-4" />
                     )}
-                    {loginMutation.isPending ? "Signing in…" : "Sign in securely"}
-                  </Button>
-                </FieldGroup>
-              </form>
-            </CardContent>
-          </Card>
+                  </button>
+                </div>
+              </Field>
 
-          <p className="mt-6 text-center text-xs leading-relaxed text-muted-foreground">
-            Access is restricted to approved company accounts. Contact the platform administrator when access is unavailable.
+              {errorMessage ? (
+                <Alert aria-live="polite" variant="destructive">
+                  <AlertDescription>{errorMessage}</AlertDescription>
+                </Alert>
+              ) : null}
+
+              <Button
+                className="h-11 w-full cursor-pointer"
+                disabled={loginMutation.isPending}
+                type="submit"
+              >
+                {loginMutation.isPending ? (
+                  <Spinner />
+                ) : (
+                  <LockKeyhole aria-hidden="true" />
+                )}
+                {loginMutation.isPending ? "Signing in…" : "Sign in"}
+              </Button>
+            </FieldGroup>
+          </form>
+
+          <p className="mt-8 border-t border-border pt-5 text-xs leading-5 text-muted-foreground">
+            Access is restricted to authorized company accounts.
           </p>
         </div>
       </section>
