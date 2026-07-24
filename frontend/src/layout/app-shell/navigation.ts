@@ -5,6 +5,7 @@ import {
   FileText,
   Files,
   LayoutDashboard,
+  Plug,
   Settings,
   type LucideIcon,
 } from "lucide-react";
@@ -22,6 +23,7 @@ const navigationIcons: Record<string, LucideIcon> = {
   "file-text": FileText,
   files: Files,
   "layout-dashboard": LayoutDashboard,
+  plug: Plug,
   settings: Settings,
 };
 
