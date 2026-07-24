@@ -3,6 +3,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
 from .models import ApplicationConfiguration, ApplicationDefinition, NavigationItem
+from .svg import MAX_SVG_LOGO_BYTES
 
 
 VALID_LOGO = b"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40">
@@ -131,7 +132,9 @@ class CoreBootstrapApiTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertTrue(response.json()["logo_url"].startswith("/api/v1/core/company-logo"))
+        self.assertTrue(
+            response.json()["logo_url"].startswith("/api/v1/core/company-logo")
+        )
 
         self.configuration.refresh_from_db()
         self.assertIn("<svg", self.configuration.company_logo_svg)
@@ -165,6 +168,47 @@ class CoreBootstrapApiTests(TestCase):
         logo = SimpleUploadedFile(
             "unsafe.svg",
             b'<svg xmlns="http://www.w3.org/2000/svg"><script>alert(1)</script></svg>',
+            content_type="image/svg+xml",
+        )
+
+        response = self.client.post(
+            "/api/v1/core/settings/company-logo",
+            {"logo": logo},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.configuration.refresh_from_db()
+        self.assertEqual(self.configuration.company_logo_svg, "")
+
+    def test_external_svg_resource_is_rejected(self):
+        user = self.create_user("staff-user", is_staff=True)
+        self.client.force_login(user)
+        logo = SimpleUploadedFile(
+            "external.svg",
+            b'<svg xmlns="http://www.w3.org/2000/svg"><image href="https://example.com/logo.png"/></svg>',
+            content_type="image/svg+xml",
+        )
+
+        response = self.client.post(
+            "/api/v1/core/settings/company-logo",
+            {"logo": logo},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.configuration.refresh_from_db()
+        self.assertEqual(self.configuration.company_logo_svg, "")
+
+    def test_oversized_svg_is_rejected(self):
+        user = self.create_user("staff-user", is_staff=True)
+        self.client.force_login(user)
+        oversized_svg = (
+            b'<svg xmlns="http://www.w3.org/2000/svg"><text>'
+            + b"x" * MAX_SVG_LOGO_BYTES
+            + b"</text></svg>"
+        )
+        logo = SimpleUploadedFile(
+            "oversized.svg",
+            oversized_svg,
             content_type="image/svg+xml",
         )
 
