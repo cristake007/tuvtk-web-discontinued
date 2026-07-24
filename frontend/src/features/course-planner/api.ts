@@ -11,12 +11,6 @@ import type {
 
 const coursePlannerPath = "/api/v1/course-planner";
 
-const fileAcceptTypes: Record<CoursePlanFileType, string> = {
-  excel: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-  word: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-  xml: "application/xml",
-};
-
 export const coursePlannerQueryKey = ["course-planner", "settings"] as const;
 export const coursePlannerHistoryQueryKey = ["course-planner", "history"] as const;
 
@@ -68,7 +62,6 @@ export function downloadCoursePlanFile(input: {
 }): Promise<Blob> {
   return apiDownload(
     `${coursePlannerPath}/history/${input.generationId}/files/${input.fileType}`,
-    { accept: fileAcceptTypes[input.fileType] },
   );
 }
 
@@ -82,6 +75,5 @@ export async function exportCourseSchedule(input: {
     method: "POST",
     body: JSON.stringify(input),
     includeCsrf: true,
-    accept: fileAcceptTypes.excel,
   });
 }
