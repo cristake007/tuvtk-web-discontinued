@@ -68,11 +68,11 @@ export function UserMenu({ user, logoutPending, onLogout }: UserMenuProps) {
         <UserAvatar user={user} />
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-72 p-1.5" sideOffset={8}>
+      <DropdownMenuContent align="end" className="w-60 p-1" sideOffset={8}>
         <DropdownMenuGroup>
-          <DropdownMenuLabel className="px-2 py-2.5">
-            <span className="flex items-center gap-3">
-              <UserAvatar large user={user} />
+          <DropdownMenuLabel className="px-2 py-2">
+            <span className="flex items-center gap-2.5">
+              <UserAvatar user={user} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-semibold text-foreground">
                   {user.display_name}
@@ -80,7 +80,7 @@ export function UserMenu({ user, logoutPending, onLogout }: UserMenuProps) {
                 <span className="mt-0.5 block truncate font-normal text-muted-foreground">
                   {identity}
                 </span>
-                <Badge className="mt-1.5" variant="secondary">
+                <Badge className="mt-1.5 max-w-full" variant="secondary">
                   <RoleIcon aria-hidden="true" />
                   {roleLabel}
                 </Badge>
@@ -91,7 +91,7 @@ export function UserMenu({ user, logoutPending, onLogout }: UserMenuProps) {
 
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          className="cursor-pointer py-2"
+          className="cursor-pointer py-1.5"
           disabled={logoutPending}
           onClick={onLogout}
           variant="destructive"
