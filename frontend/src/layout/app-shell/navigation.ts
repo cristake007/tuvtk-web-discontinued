@@ -8,7 +8,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import type { NavigationItem } from "@/api/types";
+import type { NavigationItem } from "@/features/core/types";
 
 export type NavigationNode = NavigationItem & {
   children: NavigationNode[];
