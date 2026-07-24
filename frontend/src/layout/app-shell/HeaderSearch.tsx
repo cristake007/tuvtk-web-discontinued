@@ -100,28 +100,30 @@ export function HeaderSearch({ navigation }: { navigation: NavigationItem[] }) {
       </InputGroup>
 
       {open && query.trim() ? (
-        <div className="absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-sm border border-border bg-popover p-1.5 text-popover-foreground shadow-lg">
+        <div className="absolute inset-x-0 top-full z-50 mt-2 overflow-hidden rounded-sm border border-border bg-popover p-1 text-popover-foreground shadow-lg">
           {results.length > 0 ? (
             <div className="flex flex-col">
               {results.map((item) => (
                 <button
-                  className="flex cursor-pointer items-center gap-3 rounded-sm px-3 py-2.5 text-left text-sm transition-colors hover:bg-primary/5 hover:text-primary focus-visible:bg-primary/5 focus-visible:text-primary focus-visible:outline-none"
+                  className="flex cursor-pointer items-center gap-2 rounded-sm px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-primary/5 hover:text-primary focus-visible:bg-primary/5 focus-visible:text-primary focus-visible:outline-none"
                   key={item.key}
                   onClick={() => selectResult(item.path)}
                   type="button"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium">{item.label}</span>
-                    <span className="block truncate text-xs text-muted-foreground">
+                    <span className="block truncate font-medium leading-5">
+                      {item.label}
+                    </span>
+                    <span className="block truncate text-[11px] leading-4 text-muted-foreground">
                       {item.path}
                     </span>
                   </span>
-                  <ArrowRight aria-hidden="true" className="size-4 shrink-0" />
+                  <ArrowRight aria-hidden="true" className="size-3.5 shrink-0" />
                 </button>
               ))}
             </div>
           ) : (
-            <p className="px-3 py-4 text-center text-sm text-muted-foreground">
+            <p className="px-3 py-3 text-center text-sm text-muted-foreground">
               No matching pages.
             </p>
           )}
