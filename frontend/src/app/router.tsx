@@ -13,6 +13,11 @@ const CoursePlannerPage = lazy(async () => {
   return { default: module.CoursePlannerPage };
 });
 
+const CoursePlannerHistoryPage = lazy(async () => {
+  const module = await import("@/pages/CoursePlannerHistoryPage");
+  return { default: module.CoursePlannerHistoryPage };
+});
+
 const SettingsPage = lazy(async () => {
   const module = await import("@/pages/SettingsPage");
   return { default: module.SettingsPage };
@@ -30,6 +35,22 @@ function CoursePlannerRoute() {
       }
     >
       <CoursePlannerPage />
+    </Suspense>
+  );
+}
+
+function CoursePlannerHistoryRoute() {
+  return (
+    <Suspense
+      fallback={
+        <ApplicationState
+          description="Se încarcă generările și fișierele disponibile."
+          loading
+          title="Se încarcă istoricul"
+        />
+      }
+    >
+      <CoursePlannerHistoryPage />
     </Suspense>
   );
 }
@@ -70,6 +91,10 @@ export const router = createBrowserRouter([
       {
         path: "planificator-cursuri",
         element: <CoursePlannerRoute />,
+      },
+      {
+        path: "planificator-cursuri/istoric",
+        element: <CoursePlannerHistoryRoute />,
       },
       {
         path: "settings",
