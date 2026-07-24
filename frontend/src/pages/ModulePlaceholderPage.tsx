@@ -16,7 +16,7 @@ export function ModulePlaceholderPage({
   description: string;
 }) {
   return (
-    <section className="flex flex-1 items-center justify-center py-8">
+    <section className="flex flex-1 items-center justify-center p-4 sm:p-6 lg:p-8">
       <Card className="w-full max-w-2xl">
         <CardHeader className="items-center text-center">
           <span className="mb-3 grid size-11 place-items-center rounded-lg bg-secondary text-secondary-foreground">
