@@ -52,17 +52,24 @@ function RotatingQuote() {
 
   return (
     <div className="mx-auto flex max-w-lg flex-col items-center text-center">
-      <Quote
-        aria-hidden="true"
-        className="size-7 text-brand-red"
-        strokeWidth={1.75}
-      />
-      <blockquote
-        className="mt-5 text-base leading-7 font-medium tracking-tight text-foreground"
-        key={quote.text}
-      >
-        „{quote.text}”
-      </blockquote>
+      <div className="flex items-start justify-center gap-3">
+        <Quote
+          aria-hidden="true"
+          className="mt-1 size-4 shrink-0 fill-brand-red text-brand-red"
+          strokeWidth={1.5}
+        />
+        <blockquote
+          className="max-w-md text-base leading-7 font-medium tracking-tight text-foreground"
+          key={quote.text}
+        >
+          {quote.text}
+        </blockquote>
+        <Quote
+          aria-hidden="true"
+          className="mt-1 size-4 shrink-0 rotate-180 fill-brand-red text-brand-red"
+          strokeWidth={1.5}
+        />
+      </div>
       <cite className="mt-4 text-sm font-medium not-italic text-primary/75">
         {quote.attribution}
       </cite>
@@ -86,7 +93,7 @@ export function LoginPage() {
         <section className="flex min-h-[48svh] items-center justify-center px-6 py-12 sm:px-10 lg:min-h-svh lg:px-14 xl:px-20">
           <div className="w-full max-w-xl text-center">
             <PublicBrandMark branding={branding} className="mx-auto" />
-            <p className="mt-8 text-2xl font-semibold tracking-tight text-foreground">
+            <p className="mt-3 text-2xl font-semibold tracking-tight text-foreground">
               {branding.organization_name}
             </p>
 
@@ -107,15 +114,17 @@ export function LoginPage() {
         </div>
 
         <div className="relative hidden items-center justify-center px-8 lg:flex">
-          <div className="h-[58vh] min-h-96 max-h-[36rem] w-[3px]">
+          <div className="h-[72vh] min-h-[32rem] max-h-[46rem] w-[5px]">
             <Separator
-              className="h-full w-[3px] bg-transparent"
+              className="h-full w-[5px] bg-transparent"
               orientation="vertical"
               style={{
                 background:
-                  "linear-gradient(to bottom, transparent 0%, rgb(22 65 148 / 0.38) 14%, #164194 32%, #164194 68%, rgb(22 65 148 / 0.38) 86%, transparent 100%)",
+                  "linear-gradient(to bottom, transparent 0%, rgb(22 65 148 / 0.38) 12%, #164194 28%, #164194 72%, rgb(22 65 148 / 0.38) 88%, transparent 100%)",
                 clipPath:
-                  "polygon(50% 0%, 100% 16%, 100% 84%, 50% 100%, 0% 84%, 0% 16%)",
+                  "polygon(50% 0%, 100% 14%, 100% 86%, 50% 100%, 0% 86%, 0% 14%)",
+                filter:
+                  "drop-shadow(0 0 4px rgb(22 65 148 / 0.32)) drop-shadow(0 0 10px rgb(22 65 148 / 0.16))",
               }}
             />
           </div>
