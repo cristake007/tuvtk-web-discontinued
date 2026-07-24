@@ -76,19 +76,19 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
   return (
     <NavLink
       aria-label={`${configuration.site_name} dashboard`}
-      className="flex h-full w-full cursor-pointer items-center justify-center overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+      className="flex h-full w-full cursor-pointer items-center justify-center overflow-hidden outline-none [container-type:inline-size] focus-visible:ring-2 focus-visible:ring-sidebar-ring"
       onClick={() => setOpenMobile(false)}
       to="/"
     >
       {showConfiguredLogo ? (
         <img
           alt={`${configuration.organization_name} logo`}
-          className="h-16 w-52 max-w-none scale-[1.55] object-contain transition-[width,height,transform] duration-200 ease-linear motion-reduce:transition-none group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-10 group-data-[collapsible=icon]:scale-100"
+          className="h-16 w-[clamp(1.9rem,65cqw,11rem)] max-w-none origin-center scale-[1.48] transform-gpu object-contain"
           onError={() => setLogoFailed(true)}
           src={configuration.logo_url ?? undefined}
         />
       ) : (
-        <span className="font-bold tracking-wide text-primary transition-[font-size,letter-spacing] duration-200 ease-linear motion-reduce:transition-none group-data-[collapsible=icon]:text-[10px] group-data-[collapsible=icon]:tracking-normal">
+        <span className="text-[clamp(0.625rem,8cqw,1rem)] font-bold tracking-wide text-primary">
           TUVTK
         </span>
       )}
