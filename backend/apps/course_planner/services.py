@@ -1,4 +1,3 @@
-import calendar
 import random
 from datetime import date, datetime
 from typing import Any, Sequence
@@ -7,12 +6,27 @@ from .files import CourseInput
 from .models import CoursePlannerSettings
 from .scheduler import CourseScheduler
 
+MONTH_NAMES_RO = {
+    1: "Ianuarie",
+    2: "Februarie",
+    3: "Martie",
+    4: "Aprilie",
+    5: "Mai",
+    6: "Iunie",
+    7: "Iulie",
+    8: "August",
+    9: "Septembrie",
+    10: "Octombrie",
+    11: "Noiembrie",
+    12: "Decembrie",
+}
+
 
 class ScheduleGenerationError(ValueError):
     def __init__(self, unscheduled_courses: dict[int, list[str]]):
         self.unscheduled_courses = unscheduled_courses
         month_messages = [
-            f"{calendar.month_name[month]}: {', '.join(courses)}"
+            f"{MONTH_NAMES_RO[month]}: {', '.join(courses)}"
             for month, courses in unscheduled_courses.items()
         ]
         message = (
