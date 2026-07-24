@@ -1,6 +1,6 @@
 import calendar
 import random
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, Sequence
 
 from .files import CourseInput
@@ -22,9 +22,9 @@ class ScheduleGenerationError(ValueError):
         super().__init__(message)
 
 
-def parse_holidays(values: Sequence[str]) -> tuple[list[str], list[datetime.date]]:
+def parse_holidays(values: Sequence[str]) -> tuple[list[str], list[date]]:
     normalized: list[str] = []
-    parsed_dates: list[datetime.date] = []
+    parsed_dates: list[date] = []
 
     for value in values:
         clean_value = value.strip()
@@ -83,7 +83,7 @@ def generate_schedule(
     *,
     year: int,
     months: Sequence[int],
-    holidays: list[datetime.date],
+    holidays: list[date],
     randomness: int,
     random_source: random.Random | None = None,
 ) -> list[dict[str, Any]]:
