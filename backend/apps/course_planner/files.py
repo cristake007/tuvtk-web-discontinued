@@ -99,7 +99,21 @@ def _has_complete_header(rows: list[list[Any]]) -> bool:
 
 
 def _parse_csv_rows(decoded: str, delimiter: str) -> list[list[Any]]:
-    return [list(row) for row in csv.reader(io.StringIO(decoded), delimiter=delimiter)]
+    rows = [list(row) for row in csv.reader(io.StringIO(decoded), delimiter=delimiter)]
+    parsed_rows: list[list[Any]] = []
+
+    for row in rows:
+        # Some legacy exports quote the complete record instead of individual fields,
+        # for example: "Title@""Durata Curs""@investitie@Permalink".
+        # The first CSV pass correctly removes the outer quotes but leaves one cell,
+        # so parse that cell once more with the same delimiter.
+        if len(row) == 1 and delimiter in str(row[0]):
+            nested_row = next(csv.reader([str(row[0])], delimiter=delimiter))
+            if len(nested_row) > 1:
+                row = list(nested_row)
+        parsed_rows.append(row)
+
+    return parsed_rows
 
 
 def _read_csv(data: bytes) -> list[list[Any]]:
@@ -133,12 +147,12 @@ def _read_csv(data: bytes) -> list[list[Any]]:
     delimiters: list[str] = []
     sample = decoded[:8192]
     try:
-        detected = csv.Sniffer().sniff(sample, delimiters=",;\t|").delimiter
+        detected = csv.Sniffer().sniff(sample, delimiters=",;\t|@").delimiter
         delimiters.append(detected)
     except csv.Error:
         pass
 
-    for delimiter in (";", ",", "\t", "|"):
+    for delimiter in (";", ",", "\t", "|", "@"):
         if delimiter not in delimiters:
             delimiters.append(delimiter)
 
