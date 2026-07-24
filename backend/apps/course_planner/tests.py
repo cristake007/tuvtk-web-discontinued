@@ -106,6 +106,22 @@ class CoursePlannerApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["schedule"][0]["title"], "Auditor ISO 9001")
 
+    def test_generate_quoted_at_delimited_csv(self):
+        response = self.generate_request(
+            self.course_file(
+                b'\xef\xbb\xbf"Title@""Durata Curs""@investitie@Permalink"\r\n'
+                b'"Auditor ISO 9001@""2 zile""@""350 EUR""@'
+                b'https://example.com/curs/auditor-iso-9001"\r\n'
+            )
+        )
+
+        self.assertEqual(response.status_code, 200)
+        payload = response.json()
+        self.assertEqual(payload["course_count"], 1)
+        self.assertEqual(payload["schedule"][0]["title"], "Auditor ISO 9001")
+        self.assertEqual(payload["schedule"][0]["duration_label"], "2 zile")
+        self.assertEqual(payload["schedule"][0]["investment"], "350 EUR")
+
     def test_invalid_input_columns_are_rejected(self):
         response = self.generate_request(self.course_file(b"Nume;Durata\nCurs;2\n"))
 
