@@ -4,7 +4,9 @@ import process from "node:process";
 import { spawnSync } from "node:child_process";
 
 const root = process.cwd();
-const outputRoot = path.join(root, "node_modules", ".tmp", "tuvtk-tests");
+const temporaryRoot = path.join(root, "node_modules", ".tmp");
+const outputRoot = path.join(temporaryRoot, "tuvtk-tests");
+const buildInfoPath = path.join(temporaryRoot, "tsconfig.test.tsbuildinfo");
 const tscPath = path.join(root, "node_modules", "typescript", "bin", "tsc");
 
 async function collectCompiledTests(directory) {
@@ -24,6 +26,7 @@ async function collectCompiledTests(directory) {
 }
 
 await rm(outputRoot, { force: true, recursive: true });
+await rm(buildInfoPath, { force: true });
 await mkdir(outputRoot, { recursive: true });
 
 const compileResult = spawnSync(
