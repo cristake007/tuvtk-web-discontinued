@@ -9,6 +9,7 @@ import type { AuthenticationSession } from "@/api/types";
 import { ApplicationState } from "@/components/ApplicationState";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { logout } from "@/features/auth/api";
 import { authQueryKeys } from "@/features/auth/queryKeys";
 
@@ -84,39 +85,40 @@ export function AppShell() {
   const pageTitle = currentItem?.label ?? "Workspace";
 
   return (
-    <SidebarProvider>
-      <AppSidebar
-        configuration={bootstrap.configuration}
-        navigation={navigation}
-      />
-
-      <SidebarInset className="min-h-svh overflow-hidden">
-        <AppHeader
-          logoutPending={logoutMutation.isPending}
-          onLogout={() => logoutMutation.mutate()}
-          organizationName={bootstrap.configuration.organization_name}
-          pageTitle={pageTitle}
-          user={bootstrap.user}
+    <TooltipProvider delay={250}>
+      <SidebarProvider>
+        <AppSidebar
+          configuration={bootstrap.configuration}
+          navigation={navigation}
         />
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-auto">
-          <div className="mx-auto flex w-full max-w-screen-2xl flex-1 flex-col p-4 sm:p-6 lg:p-8">
-            {logoutMutation.isError ? (
-              <Alert className="mb-4 border-warning/40 bg-warning/10">
-                <AlertTriangle aria-hidden="true" />
-                <AlertTitle>Sign out failed</AlertTitle>
-                <AlertDescription>
-                  {logoutMutation.error instanceof ApiError
-                    ? logoutMutation.error.message
-                    : "The server could not complete the request. Please try again."}
-                </AlertDescription>
-              </Alert>
-            ) : null}
+        <SidebarInset className="min-h-svh overflow-hidden">
+          <AppHeader
+            logoutPending={logoutMutation.isPending}
+            onLogout={() => logoutMutation.mutate()}
+            pageTitle={pageTitle}
+            user={bootstrap.user}
+          />
 
-            <Outlet />
+          <div className="flex min-h-0 flex-1 flex-col overflow-auto">
+            <div className="mx-auto flex w-full max-w-screen-2xl flex-1 flex-col p-4 sm:p-6 lg:p-8">
+              {logoutMutation.isError ? (
+                <Alert className="mb-4 border-warning/40 bg-warning/10">
+                  <AlertTriangle aria-hidden="true" />
+                  <AlertTitle>Sign out failed</AlertTitle>
+                  <AlertDescription>
+                    {logoutMutation.error instanceof ApiError
+                      ? logoutMutation.error.message
+                      : "The server could not complete the request. Please try again."}
+                  </AlertDescription>
+                </Alert>
+              ) : null}
+
+              <Outlet />
+            </div>
           </div>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </SidebarInset>
+      </SidebarProvider>
+    </TooltipProvider>
   );
 }
