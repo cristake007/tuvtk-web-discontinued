@@ -40,7 +40,7 @@ class GenerateScheduleSerializer(serializers.Serializer):
     year = serializers.IntegerField(min_value=2024, max_value=2100)
     months = serializers.CharField(max_length=64)
     randomness = serializers.IntegerField(min_value=1, max_value=10)
-    holidays = serializers.CharField(allow_blank=True, default="", required=False)
+    holidays = serializers.CharField(allow_blank=True, required=False)
 
     def validate_input_file(self, value):
         extension = Path(value.name).suffix.casefold()
