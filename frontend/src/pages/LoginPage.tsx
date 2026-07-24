@@ -74,7 +74,7 @@ export function LoginPage() {
 
   return (
     <main className="min-h-svh bg-background">
-      <div className="mx-auto grid min-h-svh w-full max-w-[96rem] lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+      <div className="grid min-h-svh w-full lg:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
         <section className="flex min-h-[44svh] items-center justify-center px-6 py-12 sm:px-10 lg:min-h-svh lg:px-14 xl:px-20">
           <div className="w-full max-w-lg">
             <PublicBrandMark branding={branding} />
