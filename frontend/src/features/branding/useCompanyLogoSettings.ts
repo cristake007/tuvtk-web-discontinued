@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   type QueryClient,
   useMutation,
@@ -29,12 +29,11 @@ function formatMutationError(error: Error | null): string | null {
 
   return error instanceof ApiError
     ? error.message
-    : "The company logo could not be updated. Please try again.";
+    : "Sigla companiei nu a putut fi actualizată. Încearcă din nou.";
 }
 
 export function useCompanyLogoSettings() {
   const queryClient = useQueryClient();
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectionError, setSelectionError] = useState<string | null>(null);
@@ -46,16 +45,9 @@ export function useCompanyLogoSettings() {
     staleTime: 60_000,
   });
 
-  function clearFileInput() {
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  }
-
   function resetSelection() {
     setSelectedFile(null);
     setSelectionError(null);
-    clearFileInput();
   }
 
   const uploadMutation = useMutation({
@@ -100,7 +92,6 @@ export function useCompanyLogoSettings() {
     setSelectionError(error);
 
     if (!file || error) {
-      clearFileInput();
       setSelectedFile(null);
       return;
     }
@@ -126,7 +117,6 @@ export function useCompanyLogoSettings() {
     bootstrapQuery,
     configuredLogoUrl,
     displayedLogoUrl: previewUrl ?? configuredLogoUrl,
-    fileInputRef,
     isSaving: uploadMutation.isPending || removeMutation.isPending,
     mutationError:
       formatMutationError(uploadMutation.error) ??
