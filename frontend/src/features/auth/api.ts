@@ -1,8 +1,6 @@
-import { apiRequest, ensureCsrfCookie } from "../../api/http";
-import type {
-  AuthenticationSession,
-  LoginCredentials,
-} from "../../api/types";
+import { apiRequest, ensureCsrfCookie } from "@/api/http";
+
+import type { AuthenticationSession, LoginCredentials } from "./types";
 
 export function fetchAuthenticationSession(): Promise<AuthenticationSession> {
   return apiRequest<AuthenticationSession>("/api/v1/auth/session", {
