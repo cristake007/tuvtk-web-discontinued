@@ -2,7 +2,7 @@
 
 Internal operations platform with a React frontend, a Django REST Framework API, and two independent PostgreSQL databases.
 
-- `db_core` stores users, sessions, permissions, application configuration, navigation, and operational data.
+- `db_core` stores Django users, sessions, permissions, application configuration, navigation, and operational data.
 - `db_registry` is reserved for the large ONRC registry and related reference data.
 
 ## Stack
@@ -12,8 +12,10 @@ Internal operations platform with a React frontend, a Django REST Framework API,
 - Python 3.14
 - Django 6
 - Django REST Framework
-- drf-spectacular with locally served Swagger UI and ReDoc assets
+- django-filter
+- drf-spectacular with local Swagger UI and ReDoc assets
 - Django sessions and CSRF protection
+- Celery, prepared for future background jobs
 - PostgreSQL 18
 - Gunicorn outside the development override
 
@@ -30,6 +32,28 @@ Internal operations platform with a React frontend, a Django REST Framework API,
 - Lucide icons
 
 Exact frontend versions are pinned in `frontend/package.json` and locked in `frontend/package-lock.json`.
+
+## Frontend language
+
+All user-facing frontend copy must be written in Romanian unless a specific feature explicitly requires another language.
+
+This includes:
+
+- navigation labels;
+- page titles and descriptions;
+- buttons, form labels, placeholders, validation messages, alerts, empty states, loading states, tooltips, and accessibility labels;
+- text rendered from database-backed frontend configuration.
+
+Technical identifiers remain in English where appropriate: route paths, API fields, TypeScript names, Django model fields, database columns, and code comments.
+
+Current primary navigation labels are:
+
+```text
+Dashboard
+Companii
+Documente
+Setări
+```
 
 ## Development architecture
 
@@ -48,7 +72,7 @@ Django :8000
   └── registry database ──> db_registry
 ```
 
-`compose.override.yaml` starts Django `runserver` and Vite for development. The backend and frontend source directories are bind-mounted for automatic reload.
+`compose.override.yaml` starts Django `runserver` and Vite for development. Backend and frontend source directories are bind-mounted for automatic reload.
 
 ## Initial setup
 
@@ -79,7 +103,7 @@ ReDoc:             http://localhost:5173/api/redoc
 OpenAPI schema:    http://localhost:5173/api/schema
 ```
 
-The API documentation is restricted to staff users.
+API documentation is restricted to staff users.
 
 ## Project structure
 
@@ -91,24 +115,13 @@ The API documentation is restricted to staff users.
 ├── dev
 ├── backend/
 │   ├── apps/
-│   │   ├── accounts/
-│   │   │   ├── authentication.py
-│   │   │   ├── serializers.py
-│   │   │   ├── services.py
-│   │   │   ├── urls.py
-│   │   │   ├── views.py
-│   │   │   └── tests.py
-│   │   ├── core/
-│   │   │   ├── models.py
-│   │   │   ├── serializers.py
-│   │   │   ├── services.py
-│   │   │   ├── urls.py
-│   │   │   ├── views.py
-│   │   │   └── tests.py
-│   │   └── <domain>/
+│   │   ├── authentication/          Browser session authentication
+│   │   ├── core/                    Shell configuration and navigation
+│   │   └── <domain>/                Domain applications
 │   ├── config/
 │   │   ├── api_urls.py
 │   │   ├── api_views.py
+│   │   ├── celery.py
 │   │   ├── settings.py
 │   │   └── urls.py
 │   ├── pyproject.toml
@@ -116,20 +129,16 @@ The API documentation is restricted to staff users.
 │   └── requirements-dev.txt
 └── frontend/
     ├── scripts/
-    │   ├── check-react-conventions.mjs
-    │   ├── check-theme-tokens.mjs
-    │   ├── run-tests.mjs
-    │   └── sync-dependencies.sh
     ├── src/
-    │   ├── api/                  Shared HTTP transport
-    │   ├── app/                  Router configuration
-    │   ├── components/ui/        Generated shadcn primitives
+    │   ├── api/                     Shared HTTP transport
+    │   ├── app/                     Router configuration
+    │   ├── components/ui/           Generated shadcn primitives
     │   ├── features/
-    │   │   ├── auth/             Session authentication
-    │   │   ├── branding/         Company branding settings
-    │   │   └── core/             Shared shell contracts
-    │   ├── layout/               Application shell
-    │   ├── pages/                Route-level composition
+    │   │   ├── auth/                Session authentication
+    │   │   ├── branding/            Company branding settings
+    │   │   └── core/                Shared shell contracts
+    │   ├── layout/                  Application shell
+    │   ├── pages/                   Route-level composition
     │   └── styles/globals.css
     ├── package.json
     ├── package-lock.json
@@ -138,7 +147,7 @@ The API documentation is restricted to staff users.
 
 ## Backend conventions
 
-The public API is mounted under `/api/v1/`. Each domain app owns its HTTP contract:
+The public API is mounted under `/api/v1/`. Each domain app owns its HTTP contract.
 
 ```text
 backend/apps/<domain>/
@@ -156,7 +165,7 @@ Responsibilities:
 - `views.py` handles HTTP input, authentication, permissions, status codes, and response mapping.
 - `services.py` contains reusable business workflows and database queries.
 - `models.py` owns persistence and database constraints.
-- `tests.py` verifies authentication, permissions, CSRF, validation, success paths, and important failures.
+- `tests.py` verifies authentication, permissions, CSRF, validation, filtering, success paths, and important failures.
 
 Keep API views thin. Django remains authoritative for validation, permissions, and business rules.
 
@@ -175,6 +184,8 @@ This generates and validates `/tmp/tuvtk-openapi.yaml` inside the backend contai
 React uses Django users, permissions, server-side sessions, and CSRF protection.
 
 ```text
+GET  /api/v1/auth
+GET  /api/v1/auth/
 GET  /api/v1/auth/csrf
 GET  /api/v1/auth/session
 POST /api/v1/auth/login
@@ -204,6 +215,7 @@ frontend/src/pages/<Domain>Page.tsx
 
 Rules:
 
+- Use Romanian for all visible frontend copy.
 - Use React Router for routes and TanStack Query for server state.
 - Feature components do not call `fetch` directly; use `frontend/src/api/http.ts`.
 - Keep feature API calls, types, queries, validation, and components in the owning feature folder.
@@ -212,7 +224,7 @@ Rules:
 - Use the `@/` alias for application imports.
 - Lazy-load substantial pages and optional heavy capabilities, not the small initial shell.
 
-The branding implementation is an example: `SettingsPage` composes `CompanyLogoSettings`, while upload logic and validation remain under `features/branding/`.
+The shared content background is owned by `AppShell`. Route pages should render their own content surfaces over it rather than recreating the background grid.
 
 ## UI system
 
@@ -267,25 +279,13 @@ The sidebar uses shadcn's native `SidebarProvider`, `Sidebar`, `SidebarMenuButto
 ./dev frontend npm <arguments>
 ./dev frontend shell
 
-# Tests and complete validation
+# Complete validation
 ./dev test backend [arguments]
 ./dev test frontend
 ./dev validate
 ```
 
-`./dev validate` runs:
-
-1. Django system checks.
-2. Ruff backend checks.
-3. drf-spectacular schema generation and validation.
-4. Django tests.
-5. Frontend dependency synchronization.
-6. React and TypeScript convention checks.
-7. TypeScript validation.
-8. Frontend unit tests.
-9. Theme-token validation and the Vite production build.
-
-Development builds use `/tmp/tuvtk-frontend-dist` inside the frontend container and do not write generated bundles into the bind-mounted source tree.
+`./dev validate` runs Django checks, Ruff, OpenAPI validation, Django tests, frontend dependency synchronization, React convention checks, TypeScript validation, frontend tests, theme-token validation, and the Vite build.
 
 ## Dependency workflow
 
