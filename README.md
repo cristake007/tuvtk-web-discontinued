@@ -16,6 +16,7 @@ Internal operations platform with a React frontend, a Django REST Framework API,
 - drf-spectacular with local Swagger UI and ReDoc assets
 - Django sessions and CSRF protection
 - Celery, prepared for future background jobs
+- openpyxl and xlrd for spreadsheet workflows
 - PostgreSQL 18
 - Gunicorn outside the development override
 
@@ -52,6 +53,7 @@ Current primary navigation labels are:
 Dashboard
 Companii
 Documente
+Planificator cursuri
 Setări
 ```
 
@@ -117,6 +119,7 @@ API documentation is restricted to staff users.
 │   ├── apps/
 │   │   ├── authentication/          Browser session authentication
 │   │   ├── core/                    Shell configuration and navigation
+│   │   ├── course_planner/          Course-period generation and Excel export
 │   │   └── <domain>/                Domain applications
 │   ├── config/
 │   │   ├── api_urls.py
@@ -136,7 +139,8 @@ API documentation is restricted to staff users.
     │   ├── features/
     │   │   ├── auth/                Session authentication
     │   │   ├── branding/            Company branding settings
-    │   │   └── core/                Shared shell contracts
+    │   │   ├── core/                Shared shell contracts
+    │   │   └── course-planner/      Course planner feature
     │   ├── layout/                  Application shell
     │   ├── pages/                   Route-level composition
     │   └── styles/globals.css
@@ -197,6 +201,27 @@ POST /api/v1/auth/logout
 - Logout is CSRF-protected, idempotent, and returns `204`.
 - Protected API endpoints return `401` without a valid session.
 - Permission checks belong in Django, not in hidden frontend controls.
+
+## Planificator cursuri
+
+The first workflow migrated from `cristake007/planificator` is available at:
+
+```text
+/planificator-cursuri
+```
+
+API contract:
+
+```text
+GET  /api/v1/course-planner/settings
+PUT  /api/v1/course-planner/settings
+POST /api/v1/course-planner/generate
+POST /api/v1/course-planner/export
+```
+
+The module accepts CSV, XLSX, and XLS course lists, calculates periods around weekends and configured holidays, stores planner settings, and exports the legacy-compatible Excel structure required by later Word and XML workflows.
+
+Only business logic and file contracts are migrated from the legacy project. Its Django templates, DaisyUI shell, page CSS, and browser JavaScript are not reused. See `docs/planificator-migration.md` for the staged migration plan.
 
 ## Frontend conventions
 
