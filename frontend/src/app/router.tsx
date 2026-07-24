@@ -8,10 +8,31 @@ import { WorkspaceCardPage } from "@/pages/WorkspaceCardPage";
 
 import { AuthenticationGate } from "./AuthenticationGate";
 
+const CoursePlannerPage = lazy(async () => {
+  const module = await import("@/pages/CoursePlannerPage");
+  return { default: module.CoursePlannerPage };
+});
+
 const SettingsPage = lazy(async () => {
   const module = await import("@/pages/SettingsPage");
   return { default: module.SettingsPage };
 });
+
+function CoursePlannerRoute() {
+  return (
+    <Suspense
+      fallback={
+        <ApplicationState
+          description="Se încarcă instrumentele pentru generarea perioadelor."
+          loading
+          title="Se încarcă planificatorul"
+        />
+      }
+    >
+      <CoursePlannerPage />
+    </Suspense>
+  );
+}
 
 function SettingsRoute() {
   return (
@@ -45,6 +66,10 @@ export const router = createBrowserRouter([
       {
         path: "documents",
         element: <WorkspaceCardPage ariaLabel="Conținut documente" />,
+      },
+      {
+        path: "planificator-cursuri",
+        element: <CoursePlannerRoute />,
       },
       {
         path: "settings",
