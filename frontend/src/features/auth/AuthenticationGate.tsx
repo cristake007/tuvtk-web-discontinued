@@ -1,11 +1,38 @@
+import { lazy, Suspense } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 import { ApplicationState } from "@/components/ApplicationState";
-import { AppShell } from "@/layout/AppShell";
-import { LoginPage } from "@/pages/LoginPage";
 
 import { fetchAuthenticationSession } from "./api";
 import { authQueryKeys } from "./queryKeys";
+
+const AppShell = lazy(async () => {
+  const module = await import("@/layout/AppShell");
+  return { default: module.AppShell };
+});
+
+const LoginPage = lazy(async () => {
+  const module = await import("@/pages/LoginPage");
+  return { default: module.LoginPage };
+});
+
+function DeferredView({
+  children,
+  description,
+  title,
+}: {
+  children: React.ReactNode;
+  description: string;
+  title: string;
+}) {
+  return (
+    <Suspense
+      fallback={<ApplicationState description={description} loading title={title} />}
+    >
+      {children}
+    </Suspense>
+  );
+}
 
 export function AuthenticationGate() {
   const sessionQuery = useQuery({
@@ -37,8 +64,22 @@ export function AuthenticationGate() {
   }
 
   if (!sessionQuery.data.authenticated || !sessionQuery.data.user) {
-    return <LoginPage />;
+    return (
+      <DeferredView
+        description="Loading the secure sign-in page."
+        title="Preparing sign in"
+      >
+        <LoginPage />
+      </DeferredView>
+    );
   }
 
-  return <AppShell />;
+  return (
+    <DeferredView
+      description="Loading your application shell and navigation."
+      title="Preparing the workspace"
+    >
+      <AppShell />
+    </DeferredView>
+  );
 }
