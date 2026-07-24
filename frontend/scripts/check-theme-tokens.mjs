@@ -4,7 +4,37 @@ import { fileURLToPath } from "node:url";
 
 const frontendRoot = fileURLToPath(new URL("..", import.meta.url));
 const sourceDirectory = join(frontendRoot, "src");
-const themePath = join(sourceDirectory, "styles", "theme.css");
+const globalsPath = join(sourceDirectory, "styles", "globals.css");
+
+const requiredTokens = [
+  "--background",
+  "--foreground",
+  "--card",
+  "--card-foreground",
+  "--popover",
+  "--popover-foreground",
+  "--primary",
+  "--primary-foreground",
+  "--secondary",
+  "--secondary-foreground",
+  "--muted",
+  "--muted-foreground",
+  "--accent",
+  "--accent-foreground",
+  "--destructive",
+  "--border",
+  "--input",
+  "--ring",
+  "--sidebar",
+  "--sidebar-foreground",
+  "--sidebar-primary",
+  "--sidebar-primary-foreground",
+  "--sidebar-accent",
+  "--sidebar-accent-foreground",
+  "--sidebar-border",
+  "--sidebar-ring",
+  "--brand-red",
+];
 
 async function collectCssFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -26,35 +56,54 @@ async function collectCssFiles(directory) {
   return paths;
 }
 
-const themeSource = await readFile(themePath, "utf8");
-const definedTokens = new Set(
-  [...themeSource.matchAll(/(--[a-z0-9-]+)\s*:/gi)].map((match) => match[1]),
-);
+const cssPaths = await collectCssFiles(sourceDirectory);
+const cssSources = new Map();
+const definedTokens = new Set();
 
-const componentStylePaths = (await collectCssFiles(sourceDirectory)).filter(
-  (path) => path !== themePath,
-);
-const errors = [];
-
-for (const path of componentStylePaths) {
+for (const path of cssPaths) {
   const source = await readFile(path, "utf8");
+  cssSources.set(path, source);
+
+  for (const match of source.matchAll(/(--[a-z0-9-]+)\s*:/gi)) {
+    definedTokens.add(match[1]);
+  }
+}
+
+const errors = [];
+const globalsSource = cssSources.get(globalsPath) ?? "";
+
+for (const token of requiredTokens) {
+  if (!definedTokens.has(token)) {
+    errors.push(`src/styles/globals.css: required shadcn token ${token} is missing`);
+  }
+}
+
+for (const requiredImport of [
+  '@import "tailwindcss";',
+  '@import "tw-animate-css";',
+  '@import "shadcn/tailwind.css";',
+]) {
+  if (!globalsSource.includes(requiredImport)) {
+    errors.push(`src/styles/globals.css: missing ${requiredImport}`);
+  }
+}
+
+for (const [path, source] of cssSources) {
   const displayPath = relative(frontendRoot, path);
 
   for (const match of source.matchAll(/var\(\s*(--[a-z0-9-]+)/gi)) {
-    const token = match[1];
-
-    if (!definedTokens.has(token)) {
-      errors.push(`${displayPath}: undefined design token ${token}`);
-    }
-
-    if (token.startsWith("--palette-")) {
-      errors.push(`${displayPath}: raw palette token ${token} must remain inside theme.css`);
+    if (!definedTokens.has(match[1])) {
+      errors.push(`${displayPath}: undefined design token ${match[1]}`);
     }
   }
 
-  for (const match of source.matchAll(/#[0-9a-f]{3,8}\b|\b(?:rgb|rgba|hsl|hsla)\(/gi)) {
+  if (path === globalsPath) {
+    continue;
+  }
+
+  for (const match of source.matchAll(/#[0-9a-f]{3,8}\b|\b(?:rgb|rgba|hsl|hsla|oklch)\(/gi)) {
     errors.push(
-      `${displayPath}: raw color value ${match[0]} must be represented by a semantic token`,
+      `${displayPath}: raw color value ${match[0]} must be represented by a theme token`,
     );
   }
 }
@@ -68,5 +117,5 @@ if (errors.length > 0) {
 }
 
 console.log(
-  `Theme token validation passed (${definedTokens.size} tokens, ${componentStylePaths.length} stylesheets).`,
+  `Theme token validation passed (${definedTokens.size} tokens, ${cssPaths.length} stylesheets).`,
 );
