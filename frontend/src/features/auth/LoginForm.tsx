@@ -34,7 +34,7 @@ function getLoginError(error: Error | null): string | null {
   return "Autentificarea nu a putut fi finalizată. Încearcă din nou.";
 }
 
-export function LoginForm({ siteName }: { siteName: string }) {
+export function LoginForm() {
   const queryClient = useQueryClient();
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -116,10 +116,6 @@ export function LoginForm({ siteName }: { siteName: string }) {
   return (
     <div className="w-full max-w-md">
       <div className="mb-9">
-        <div className="mb-5 flex items-center gap-3">
-          <span className="h-px w-8 bg-brand-red" />
-          <span className="text-sm font-semibold text-primary">{siteName}</span>
-        </div>
         <h1 className="text-3xl font-semibold tracking-tight text-foreground">
           Autentificare
         </h1>
