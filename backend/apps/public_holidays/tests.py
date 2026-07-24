@@ -14,6 +14,7 @@ from .services import (
     get_integration_settings,
     sync_public_holidays_if_due,
     synchronize_public_holidays_now,
+    update_integration_settings,
 )
 
 
@@ -82,6 +83,19 @@ class PublicHolidaySynchronizationTests(TestCase):
             subdivision_codes=(),
             holiday_types=("Public",),
         )
+
+    def test_first_automatic_sync_is_due_after_settings_are_saved(self):
+        before_save = timezone.now()
+
+        settings = update_integration_settings(
+            enabled=True,
+            automatic_sync=True,
+            frequency=PublicHolidaySettings.Frequency.SIX_MONTHS,
+        )
+
+        self.assertIsNotNone(settings.next_sync_at)
+        self.assertGreaterEqual(settings.next_sync_at, before_save)
+        self.assertLess(settings.next_sync_at, before_save + timedelta(minutes=1))
 
     @patch("apps.public_holidays.services.fetch_romanian_holidays")
     def test_manual_sync_preserves_internal_holidays(self, fetch_mock):
