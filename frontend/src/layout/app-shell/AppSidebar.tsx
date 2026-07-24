@@ -41,12 +41,15 @@ const tooltipClassName =
 const navigationLinkClassName = [
   "relative h-10! cursor-pointer rounded-none! px-4! text-primary!",
   "transition-[padding,color,background-color] duration-200 ease-out",
-  "before:absolute before:inset-y-2 before:left-0 before:w-0.5",
+  "before:absolute before:inset-y-0 before:left-0 before:w-[3px]",
   "before:origin-center before:scale-y-0 before:bg-brand-red",
   "before:transition-transform before:duration-200 before:ease-out",
   "hover:bg-primary/5! hover:pl-5! hover:text-brand-red! hover:before:scale-y-100",
   "data-active:bg-primary/5! data-active:pl-5! data-active:font-semibold",
   "data-active:text-brand-red! data-active:before:scale-y-100",
+  "group-data-[collapsible=icon]:mx-auto! group-data-[collapsible=icon]:justify-center!",
+  "group-data-[collapsible=icon]:px-0! group-data-[collapsible=icon]:before:hidden",
+  "group-data-[collapsible=icon]:hover:pl-0! group-data-[collapsible=icon]:data-active:pl-0!",
   "[&_svg]:text-current",
 ].join(" ");
 
@@ -103,12 +106,13 @@ function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) 
 
 function NavigationEntry({ item }: { item: NavigationNode }) {
   const location = useLocation();
-  const { setOpenMobile } = useSidebar();
+  const { isMobile, setOpenMobile, state } = useSidebar();
   const Icon = getNavigationIcon(item.icon);
   const active = isNodeActive(item, location.pathname);
+  const collapsed = state === "collapsed" && !isMobile;
 
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem className="w-full">
       <SidebarMenuButton
         className={navigationLinkClassName}
         isActive={active}
@@ -119,11 +123,16 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
             to={item.path}
           />
         }
-        tooltip={{
-          children: item.label,
-          className: tooltipClassName,
-          sideOffset: 8,
-        }}
+        tooltip={
+          collapsed
+            ? {
+                children: item.label,
+                className: tooltipClassName,
+                side: "right",
+                sideOffset: 8,
+              }
+            : undefined
+        }
       >
         <Icon aria-hidden="true" />
         <span>{item.label}</span>
