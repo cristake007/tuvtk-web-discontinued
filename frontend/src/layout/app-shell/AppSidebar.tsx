@@ -18,6 +18,11 @@ import {
   SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 import {
   getNavigationIcon,
@@ -30,10 +35,51 @@ type AppSidebarProps = {
   navigation: NavigationNode[];
 };
 
+const navigationLinkClassName =
+  "cursor-pointer hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-active:bg-sidebar-accent data-active:text-sidebar-accent-foreground";
+
 function isNodeActive(node: NavigationNode, pathname: string): boolean {
   return (
     isNavigationPathActive(pathname, node.path) ||
     node.children.some((child) => isNodeActive(child, pathname))
+  );
+}
+
+function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) {
+  const { isMobile, setOpenMobile, state } = useSidebar();
+
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <NavLink
+            aria-label={`${configuration.site_name} dashboard`}
+            className="flex h-full cursor-pointer items-center gap-3 rounded-md px-2 outline-none transition-colors hover:bg-sidebar-accent/10 focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
+            onClick={() => setOpenMobile(false)}
+            to="/"
+          />
+        }
+      >
+        <span className="grid size-8 shrink-0 place-items-center rounded-md bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">
+          T
+        </span>
+        <span className="min-w-0 leading-tight group-data-[collapsible=icon]:hidden">
+          <span className="block truncate text-sm font-semibold">
+            {configuration.site_name}
+          </span>
+          <span className="block truncate text-xs text-sidebar-foreground/60">
+            {configuration.sidebar_title}
+          </span>
+        </span>
+      </TooltipTrigger>
+      <TooltipContent
+        hidden={state !== "collapsed" || isMobile}
+        side="right"
+        sideOffset={8}
+      >
+        {configuration.site_name}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -46,7 +92,7 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
-        className="cursor-pointer"
+        className={navigationLinkClassName}
         isActive={active}
         render={
           <NavLink
@@ -55,8 +101,7 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
             to={item.path}
           />
         }
-        size="default"
-        tooltip={item.label}
+        tooltip={{ children: item.label, sideOffset: 8 }}
       >
         <Icon aria-hidden="true" />
         <span>{item.label}</span>
@@ -67,7 +112,7 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
           {item.children.map((child) => (
             <SidebarMenuSubItem key={child.key}>
               <SidebarMenuSubButton
-                className="cursor-pointer"
+                className={navigationLinkClassName}
                 isActive={isNavigationPathActive(location.pathname, child.path)}
                 render={
                   <NavLink
@@ -89,24 +134,8 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
 export function AppSidebar({ configuration, navigation }: AppSidebarProps) {
   return (
     <Sidebar collapsible="icon" variant="sidebar">
-      <SidebarHeader className="border-b border-sidebar-border p-2">
-        <NavLink
-          aria-label={`${configuration.site_name} dashboard`}
-          className="flex min-h-12 cursor-pointer items-center gap-3 rounded-md px-2 outline-none transition-colors hover:bg-sidebar-accent focus-visible:ring-2 focus-visible:ring-sidebar-ring group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0"
-          to="/"
-        >
-          <span className="grid size-8 shrink-0 place-items-center rounded-md bg-sidebar-primary text-sm font-bold text-sidebar-primary-foreground">
-            T
-          </span>
-          <span className="min-w-0 leading-tight group-data-[collapsible=icon]:hidden">
-            <span className="block truncate text-sm font-semibold">
-              {configuration.site_name}
-            </span>
-            <span className="block truncate text-xs text-sidebar-foreground/60">
-              {configuration.sidebar_title}
-            </span>
-          </span>
-        </NavLink>
+      <SidebarHeader className="h-16 border-b border-sidebar-border p-2">
+        <SidebarBrand configuration={configuration} />
       </SidebarHeader>
 
       <SidebarContent>
@@ -124,13 +153,8 @@ export function AppSidebar({ configuration, navigation }: AppSidebarProps) {
 
       <SidebarFooter className="border-t border-sidebar-border">
         <div className="flex min-h-9 items-center gap-2 px-2 text-xs text-sidebar-foreground/60 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-          <span
-            aria-hidden="true"
-            className="size-2 shrink-0 rounded-full bg-success"
-          />
-          <span className="truncate group-data-[collapsible=icon]:hidden">
-            Connected
-          </span>
+          <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-success" />
+          <span className="truncate group-data-[collapsible=icon]:hidden">Connected</span>
         </div>
       </SidebarFooter>
 
