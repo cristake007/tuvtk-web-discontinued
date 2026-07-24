@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/sonner";
 
 import { router } from "./app/router";
 import "./styles/globals.css";
+import "./styles/interactions.css";
 
 const queryClient = new QueryClient({
   defaultOptions: {
