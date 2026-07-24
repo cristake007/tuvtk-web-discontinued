@@ -29,6 +29,10 @@ const appContentGridStyle = {
   backgroundSize: "40px 40px",
 } as const;
 
+type AppShellStyle = CSSProperties & {
+  "--app-header-height": string;
+};
+
 export function AppShell() {
   const queryClient = useQueryClient();
   const [headerCompact, setHeaderCompact] = useState(false);
@@ -82,9 +86,9 @@ export function AppShell() {
   }
 
   const bootstrap = bootstrapQuery.data;
-  const shellStyle = {
+  const shellStyle: AppShellStyle = {
     "--app-header-height": headerCompact ? "4rem" : "5rem",
-  } as CSSProperties;
+  };
 
   return (
     <TooltipProvider delay={0}>
