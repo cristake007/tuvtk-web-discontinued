@@ -88,9 +88,9 @@ export function LoginPage() {
   const branding = brandingQuery.data ?? fallbackBranding;
 
   return (
-    <main className="min-h-svh bg-background px-4 sm:px-6">
-      <div className="mx-auto grid min-h-svh w-full max-w-6xl lg:grid-cols-[minmax(0,1fr)_auto_minmax(22rem,0.82fr)]">
-        <section className="flex min-h-[44svh] items-center justify-center px-4 py-10 sm:px-8 lg:min-h-svh lg:px-10 xl:px-12">
+    <main className="relative min-h-svh bg-background">
+      <div className="grid min-h-svh w-full lg:grid-cols-2">
+        <section className="flex min-h-[44svh] items-center justify-center px-6 py-10 sm:px-10 lg:min-h-svh lg:px-12 xl:px-16">
           <div className="w-full max-w-md text-center">
             <PublicBrandMark branding={branding} className="mx-auto" compact />
             <p className="mt-3 text-xl font-semibold tracking-tight text-foreground">
@@ -103,7 +103,7 @@ export function LoginPage() {
           </div>
         </section>
 
-        <div className="mx-auto w-full max-w-xl px-4 lg:hidden">
+        <div className="mx-auto w-full max-w-xl px-6 lg:hidden">
           <Separator
             className="bg-transparent"
             style={{
@@ -113,26 +113,26 @@ export function LoginPage() {
           />
         </div>
 
-        <div className="relative hidden items-center justify-center px-5 lg:flex">
-          <div className="h-[60vh] min-h-[26rem] max-h-[38rem] w-[3px]">
-            <Separator
-              className="h-full w-[3px] bg-transparent"
-              orientation="vertical"
-              style={{
-                background:
-                  "linear-gradient(to bottom, transparent 0%, rgb(22 65 148 / 0.34) 12%, #164194 30%, #164194 70%, rgb(22 65 148 / 0.34) 88%, transparent 100%)",
-                clipPath:
-                  "polygon(50% 0%, 100% 14%, 100% 86%, 50% 100%, 0% 86%, 0% 14%)",
-                filter:
-                  "drop-shadow(0 0 3px rgb(22 65 148 / 0.24)) drop-shadow(0 0 8px rgb(22 65 148 / 0.12))",
-              }}
-            />
-          </div>
-        </div>
-
-        <section className="flex min-h-[56svh] items-center justify-center px-4 py-10 sm:px-8 lg:min-h-svh lg:px-10 xl:px-12">
+        <section className="flex min-h-[56svh] items-center justify-center px-6 py-10 sm:px-10 lg:min-h-svh lg:px-12 xl:px-16">
           <LoginForm />
         </section>
+      </div>
+
+      <div className="pointer-events-none absolute inset-y-0 left-1/2 hidden -translate-x-1/2 items-center lg:flex">
+        <div className="h-[60vh] min-h-[26rem] max-h-[38rem] w-[3px]">
+          <Separator
+            className="h-full w-[3px] bg-transparent"
+            orientation="vertical"
+            style={{
+              background:
+                "linear-gradient(to bottom, transparent 0%, rgb(22 65 148 / 0.34) 12%, #164194 30%, #164194 70%, rgb(22 65 148 / 0.34) 88%, transparent 100%)",
+              clipPath:
+                "polygon(50% 0%, 100% 14%, 100% 86%, 50% 100%, 0% 86%, 0% 14%)",
+              filter:
+                "drop-shadow(0 0 3px rgb(22 65 148 / 0.24)) drop-shadow(0 0 8px rgb(22 65 148 / 0.12))",
+            }}
+          />
+        </div>
       </div>
     </main>
   );
