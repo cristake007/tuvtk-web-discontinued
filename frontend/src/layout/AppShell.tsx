@@ -29,6 +29,7 @@ type AppShellStyle = CSSProperties & {
 export function AppShell() {
   const queryClient = useQueryClient();
   const [headerCompact, setHeaderCompact] = useState(false);
+  const headerHeight = headerCompact ? "4rem" : "5rem";
 
   const bootstrapQuery = useQuery({
     queryKey: coreBootstrapQueryKey,
@@ -51,6 +52,14 @@ export function AppShell() {
       queryClient.setQueryData(authQueryKeys.session, unauthenticatedSession);
     }
   }, [bootstrapQuery.error, queryClient]);
+
+  useEffect(() => {
+    document.documentElement.style.setProperty("--app-header-height", headerHeight);
+
+    return () => {
+      document.documentElement.style.removeProperty("--app-header-height");
+    };
+  }, [headerHeight]);
 
   const navigation = useMemo(
     () => buildNavigationTree(bootstrapQuery.data?.navigation ?? []),
@@ -80,7 +89,7 @@ export function AppShell() {
 
   const bootstrap = bootstrapQuery.data;
   const shellStyle: AppShellStyle = {
-    "--app-header-height": headerCompact ? "4rem" : "5rem",
+    "--app-header-height": headerHeight,
   };
 
   return (
