@@ -1,5 +1,8 @@
 services:
   backend:
+    build:
+      target: development
+
     command:
       - python
       - manage.py
