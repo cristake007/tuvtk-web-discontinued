@@ -1,17 +1,22 @@
+from django.http import HttpRequest, JsonResponse
 from django.urls import include, path
-from django.views.generic import RedirectView
+from django.views.decorators.cache import never_cache
+
+from apps.authentication.services import get_authentication_endpoints
 
 from .api_views import HealthView
 
 app_name = "api-v1"
 
+
+@never_cache
+def authentication_root(request: HttpRequest) -> JsonResponse:
+    return JsonResponse(get_authentication_endpoints())
+
+
 urlpatterns = [
     path("health", HealthView.as_view(), name="health"),
-    path(
-        "auth",
-        RedirectView.as_view(url="/api/v1/auth/", permanent=False),
-        name="authentication-root-redirect",
-    ),
+    path("auth", authentication_root, name="authentication-root-no-slash"),
     path("auth/", include("apps.authentication.urls")),
     path("core/", include("apps.core.urls")),
 ]
