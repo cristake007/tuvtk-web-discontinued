@@ -36,7 +36,6 @@ class CsrfCookieView(APIView):
 
 @method_decorator(never_cache, name="dispatch")
 class SessionView(APIView):
-    authentication_classes = []
     permission_classes = [AllowAny]
 
     @extend_schema(
@@ -95,6 +94,7 @@ class LogoutView(APIView):
 
     @extend_schema(
         operation_id="authentication_logout",
+        request=None,
         responses={204: None},
         summary="End the current Django login session",
         tags=["authentication"],
