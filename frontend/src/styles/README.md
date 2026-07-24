@@ -1,63 +1,73 @@
 # Frontend styling
 
-The frontend uses a layered styling foundation loaded in this order from `src/main.tsx`:
+The frontend uses Tailwind CSS v4 and shadcn/ui with the `base-nova` Base UI style.
 
-1. `modern-normalize` — modern browser normalization.
-2. `theme.css` — primitive scales and semantic design tokens.
-3. `reset.css` — project reset and accessibility defaults.
-4. `base.css` — document-level typography and surfaces.
-5. `index.css` and feature styles — components that consume semantic tokens.
+`src/main.tsx` loads styles in this order:
 
-## Token rules
+1. `globals.css` — Tailwind, shadcn utilities, the TUV theme, Preflight, and document defaults.
+2. `index.css` — temporary legacy shell styles during the shell migration.
+3. `auth.css` — temporary legacy authentication styles during the shell migration.
 
-Components use semantic tokens such as:
+The legacy component styles will be removed after the shell and login page are rebuilt with shadcn components and Tailwind utilities.
 
-```css
-color: var(--color-text-muted);
-background: var(--color-surface-raised);
-border-color: var(--color-border);
+## Theme contract
+
+`globals.css` is the single theme source. It defines the standard shadcn semantic roles:
+
+```text
+background / foreground
+card / card-foreground
+popover / popover-foreground
+primary / primary-foreground
+secondary / secondary-foreground
+muted / muted-foreground
+accent / accent-foreground
+destructive
+border / input / ring
+sidebar roles
+chart roles
 ```
 
-Components must not use palette tokens such as `--palette-brand-500` directly. Palette tokens are implementation details used to define semantic roles in `theme.css`.
+TUV-specific additions include `brand-red`, `success`, and `warning`.
 
-Do not place component selectors in `theme.css`. Do not hard-code reusable brand, text, surface, border, status, radius, shadow, or motion values in component styles.
+Components should use Tailwind semantic utilities such as:
 
-## Token groups
-
-- `--palette-*`: raw color primitives; only `theme.css` consumes them.
-- `--color-*`: semantic UI roles used by components.
-- `--font-*`, `--line-height-*`, `--letter-spacing-*`: typography.
-- `--space-*`: spacing scale.
-- `--radius-*`, `--border-*`, `--shadow-*`: shape and elevation.
-- `--duration-*`, `--easing-*`: motion.
-- `--layout-*`: global shell dimensions.
-
-## Theme scope
-
-The default theme is declared on the document:
-
-```html
-<html data-theme="tuvtk">
+```tsx
+<div className="border-border bg-card text-card-foreground" />
+<Button className="bg-primary text-primary-foreground" />
 ```
 
-`:root` receives the same values so the application remains usable before or without an explicit theme attribute. Future themes override semantic tokens under another `data-theme` selector rather than duplicating component rules.
+Do not hard-code reusable colors in components. Change the semantic variables in `globals.css` instead.
 
-## Reset policy
+## Normalization and reset
 
-`modern-normalize` handles modern browser inconsistencies. `reset.css` contains application-level behavior that normalization intentionally does not provide, including consistent box sizing, margin removal, media defaults, focus visibility, and reduced-motion handling.
+Tailwind Preflight is the only browser reset. It is built into `@import "tailwindcss"`, so a separate normalize package or reset stylesheet is intentionally not used.
+
+## shadcn registry
+
+`frontend/components.json` configures:
+
+- Base UI primitives;
+- the compact `base-nova` style;
+- TypeScript components;
+- CSS-variable theming;
+- Lucide icons;
+- the `@/*` source alias.
+
+Add the complete standard registry with:
+
+```bash
+npm run shadcn:add-all
+```
+
+Generated component source belongs in `src/components/ui/` and is owned by this repository.
 
 ## Validation
 
-Run the token contract check directly with:
+Run:
 
 ```bash
 npm run theme:check
 ```
 
-It also runs automatically during `npm run build` and therefore during `./dev frontend-build` and `./dev validate`.
-
-The check fails when a component stylesheet:
-
-- references an undefined custom property;
-- consumes a raw `--palette-*` token;
-- contains a raw hex, RGB, or HSL color instead of a semantic token.
+The check verifies required shadcn tokens, required Tailwind imports, undefined local custom properties, and direct color literals outside `globals.css`. It runs automatically during `npm run build`.
