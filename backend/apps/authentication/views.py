@@ -16,7 +16,7 @@ from .serializers import (
     ErrorDetailSerializer,
     LoginRequestSerializer,
 )
-from .services import serialize_authentication_session
+from .services import get_authentication_endpoints, serialize_authentication_session
 
 
 @method_decorator(never_cache, name="dispatch")
@@ -31,12 +31,7 @@ class AuthenticationRootView(APIView):
         tags=["authentication"],
     )
     def get(self, request):
-        payload = {
-            "csrf": "/api/v1/auth/csrf",
-            "session": "/api/v1/auth/session",
-            "login": "/api/v1/auth/login",
-            "logout": "/api/v1/auth/logout",
-        }
+        payload = get_authentication_endpoints()
         return Response(AuthenticationEndpointsSerializer(payload).data)
 
 
