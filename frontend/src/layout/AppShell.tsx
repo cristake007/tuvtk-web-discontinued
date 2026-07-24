@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
 import { Outlet } from "react-router-dom";
@@ -31,6 +31,7 @@ const appContentGridStyle = {
 
 export function AppShell() {
   const queryClient = useQueryClient();
+  const [headerCompact, setHeaderCompact] = useState(false);
 
   const bootstrapQuery = useQuery({
     queryKey: coreBootstrapQueryKey,
@@ -62,9 +63,9 @@ export function AppShell() {
   if (bootstrapQuery.isPending) {
     return (
       <ApplicationState
-        description="Loading your navigation, permissions, and workspace configuration."
+        description="Se încarcă navigația, permisiunile și configurația aplicației."
         loading
-        title="Preparing the application"
+        title="Se pregătește aplicația"
       />
     );
   }
@@ -72,53 +73,66 @@ export function AppShell() {
   if (bootstrapQuery.isError || !bootstrapQuery.data) {
     return (
       <ApplicationState
-        actionLabel="Try again"
-        description="The application configuration could not be loaded from Django."
+        actionLabel="Încearcă din nou"
+        description="Configurația aplicației nu a putut fi încărcată din Django."
         onAction={() => void bootstrapQuery.refetch()}
-        title="The workspace is unavailable"
+        title="Aplicația nu este disponibilă"
       />
     );
   }
 
   const bootstrap = bootstrapQuery.data;
+  const shellStyle = {
+    "--app-header-height": headerCompact ? "4rem" : "5rem",
+  } as CSSProperties;
 
   return (
     <TooltipProvider delay={0}>
-      <SidebarProvider>
-        <AppSidebar
+      <SidebarProvider
+        className="h-svh min-h-svh flex-col overflow-hidden"
+        style={shellStyle}
+      >
+        <AppHeader
+          compact={headerCompact}
           configuration={bootstrap.configuration}
-          navigation={navigation}
+          logoutPending={logoutMutation.isPending}
+          navigation={bootstrap.navigation}
+          onLogout={() => logoutMutation.mutate()}
+          user={bootstrap.user}
         />
 
-        <SidebarInset className="min-h-svh overflow-hidden bg-white">
-          <AppHeader
-            logoutPending={logoutMutation.isPending}
-            navigation={bootstrap.navigation}
-            onLogout={() => logoutMutation.mutate()}
-            user={bootstrap.user}
-          />
+        <div className="flex min-h-0 w-full flex-1">
+          <AppSidebar navigation={navigation} />
 
-          <div
-            className="flex min-h-0 flex-1 flex-col overflow-auto"
-            style={appContentGridStyle}
-          >
-            <div className="flex w-full flex-1 flex-col">
-              {logoutMutation.isError ? (
-                <Alert className="m-4 mb-0 border-warning/40 bg-warning/10 sm:m-6 sm:mb-0 lg:m-8 lg:mb-0">
-                  <AlertTriangle aria-hidden="true" />
-                  <AlertTitle>Sign out failed</AlertTitle>
-                  <AlertDescription>
-                    {logoutMutation.error instanceof ApiError
-                      ? logoutMutation.error.message
-                      : "The server could not complete the request. Please try again."}
-                  </AlertDescription>
-                </Alert>
-              ) : null}
+          <SidebarInset className="min-h-0 overflow-hidden bg-white">
+            <div
+              className="flex min-h-0 flex-1 flex-col overflow-auto"
+              onScroll={(event) => {
+                const compact = event.currentTarget.scrollTop > 24;
+                setHeaderCompact((current) =>
+                  current === compact ? current : compact,
+                );
+              }}
+              style={appContentGridStyle}
+            >
+              <div className="flex w-full flex-1 flex-col">
+                {logoutMutation.isError ? (
+                  <Alert className="m-4 mb-0 border-warning/40 bg-warning/10 sm:m-6 sm:mb-0 lg:m-8 lg:mb-0">
+                    <AlertTriangle aria-hidden="true" />
+                    <AlertTitle>Deconectarea nu a reușit</AlertTitle>
+                    <AlertDescription>
+                      {logoutMutation.error instanceof ApiError
+                        ? logoutMutation.error.message
+                        : "Serverul nu a putut finaliza cererea. Încearcă din nou."}
+                    </AlertDescription>
+                  </Alert>
+                ) : null}
 
-              <Outlet />
+                <Outlet />
+              </div>
             </div>
-          </div>
-        </SidebarInset>
+          </SidebarInset>
+        </div>
       </SidebarProvider>
     </TooltipProvider>
   );
