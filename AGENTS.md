@@ -2,9 +2,9 @@
 
 ## Purpose
 
-This repository contains a Dockerized React frontend and Django REST Framework backend. Make focused, testable changes that are easy to review and compatible with the root `./dev` harness.
+This repository contains a Dockerized React frontend, Django REST Framework backend, Celery worker, Celery Beat scheduler, Redis broker, and two PostgreSQL databases. Make focused, testable changes that are easy to review and compatible with the root `./dev` harness.
 
-Reuse the existing authentication, CSRF handling, application bootstrap, database-backed navigation, shadcn shell, semantic theme, shared content grid, and validation tooling instead of rebuilding them.
+Reuse the existing authentication, CSRF handling, application bootstrap, database-backed navigation, shadcn shell, semantic theme, shared HTTP client, Celery configuration, and validation tooling instead of rebuilding them.
 
 ## Working approach
 
@@ -38,7 +38,8 @@ git log -1 --oneline
 - `db_core` stores Django system tables and operational data.
 - `db_registry` stores ONRC registry and reference data.
 - Django aliases are `default` for core and `registry` for ONRC data.
-- Celery is available for future background tasks but must not be introduced into a workflow without a concrete need and broker plan.
+- Redis is the private Celery broker and result backend; PostgreSQL remains the source of truth.
+- Celery workers execute asynchronous tasks. Celery Beat owns periodic delivery and exactly one Beat instance must run per environment.
 - django-filter is the default DRF filtering backend for endpoints that need structured filters.
 
 Do not create Django authentication, administration, session, or content-type tables in the registry database. Do not create cross-database foreign keys. Reference registry records through stable identifiers such as CUI.
@@ -49,7 +50,8 @@ Do not create Django authentication, administration, session, or content-type ta
 backend/config/                     Django settings, API URLs, Celery, schema, system views
 backend/apps/authentication/        Browser session authentication
 backend/apps/core/                  Shell configuration and navigation
-backend/apps/course_planner/        Course-period generation and Excel export
+backend/apps/course_planner/        Course planning, history, and generated files
+backend/apps/public_holidays/       Nager.Date, internal holidays, and central calendar
 backend/apps/<domain>/              Domain models, serializers, services, views, URLs, tests
 backend/tests/                      Cross-application integration tests
 
@@ -61,6 +63,7 @@ frontend/src/features/auth/         Authentication feature
 frontend/src/features/branding/     Branding feature
 frontend/src/features/core/         Shared shell API contracts
 frontend/src/features/course-planner/ Course planner API, state, and interface
+frontend/src/features/integrations/ External service settings and interfaces
 frontend/src/features/<domain>/     Domain API, types, queries, hooks, components
 frontend/src/layout/                Shared application shell
 frontend/src/pages/                 Route-level composition
@@ -76,6 +79,7 @@ backend/apps/<domain>/
 ├── models.py
 ├── serializers.py
 ├── services.py
+├── tasks.py          optional thin Celery boundary
 ├── urls.py
 ├── views.py
 └── tests.py
@@ -92,11 +96,11 @@ frontend/src/pages/<Domain>Page.tsx
 
 Implementation order:
 
-1. Confirm workflow, ownership, permissions, filters, and scale.
+1. Confirm workflow, ownership, permissions, filters, scale, and synchronous/asynchronous boundaries.
 2. Define backend models and constraints.
 3. Define DRF serializers and explicit OpenAPI contracts.
-4. Keep API views thin and move reusable workflows into services.
-5. Test authentication, permissions, CSRF, validation, filtering, pagination, and failures.
+4. Keep API views and Celery tasks thin; move reusable workflows into services.
+5. Test authentication, permissions, CSRF, validation, filtering, concurrency, success paths, and failures.
 6. Add typed frontend API functions through the shared HTTP client.
 7. Add stable TanStack Query keys in the feature folder.
 8. Build focused feature components and a route-level page.
@@ -115,6 +119,20 @@ Implementation order:
 
 See `docs/planificator-migration.md` for the staged migration scope.
 
+## Public holidays integration
+
+`backend/apps/public_holidays/` owns the central Romanian non-working-day calendar.
+
+- Nager.Date synchronization reads localized `localName` values and stores national `Public` holidays only.
+- API dates are exposed as `ZZ.LL.AAAA`; database fields remain real `DateField` values.
+- Nager.Date-managed rows and internal company days are separate sources.
+- Reconciliation must never modify or remove internal days.
+- Other Django applications use `apps.public_holidays.calendar`, not Nager.Date and not the application's own HTTP endpoints.
+- Scheduled and manual synchronization must call the same reusable service.
+- Celery Beat sends the due-check task daily. The service checks `next_sync_at` before contacting Nager.Date.
+- Keep the database-backed synchronization lock and stale-lock recovery intact.
+- Network, validation, or transactional failures must preserve previously stored holiday data.
+
 ## Backend conventions
 
 The public API prefix is `/api/v1/`. Each domain app owns its endpoints.
@@ -122,11 +140,11 @@ The public API prefix is `/api/v1/`. Each domain app owns its endpoints.
 - `serializers.py`: request and response contracts.
 - `views.py`: HTTP handling, authentication, permissions, statuses, response mapping.
 - `urls.py`: domain URL declarations.
-- `services.py`: workflows, queries, and transaction boundaries.
+- `services.py`: workflows, queries, transaction boundaries, and reusable business logic.
 - `models.py`: persistence and database constraints.
 - `filters.py`: django-filter definitions when an endpoint needs filtering.
-- `tasks.py`: Celery tasks only when asynchronous execution is justified.
-- `tests.py`: success, authentication, permissions, CSRF, validation, and important errors.
+- `tasks.py`: thin Celery entry points only; do not duplicate service logic.
+- `tests.py`: success, authentication, permissions, CSRF, validation, concurrency, and important errors.
 
 Use Django REST Framework and drf-spectacular. Do not reintroduce Django Ninja or create a second API framework.
 
@@ -137,6 +155,26 @@ Use `extend_schema` where automatic schema generation is incomplete. Keep `/api/
 ```
 
 Protected endpoints use the configured browser session authentication and return `401` without a valid session. Unsafe browser requests must retain Django CSRF protection.
+
+## Celery conventions
+
+- Redis URLs come from `CELERY_BROKER_URL` and `CELERY_RESULT_BACKEND`.
+- Periodic schedules belong in Django settings until database-managed schedules are explicitly required.
+- Run exactly one `celery_beat` service per environment.
+- Workers may scale horizontally only when tasks are idempotent or protected by a reliable lock.
+- Task names must be stable and explicit.
+- Task code must call application services; HTTP views and tasks must not contain parallel business implementations.
+- Do not treat Redis results or queues as authoritative business storage.
+- After task-source changes, restart `celery_worker` and `celery_beat`; they do not reload Python code automatically.
+
+Diagnostics:
+
+```bash
+./dev status
+./dev logs celery_worker
+./dev logs celery_beat
+./dev logs redis
+```
 
 ## Authentication contract
 
@@ -167,7 +205,7 @@ This applies to:
 
 Keep technical identifiers in English where appropriate: route paths, API fields, TypeScript names, Django fields, database columns, and internal code symbols.
 
-Approved navigation labels:
+Approved primary navigation labels:
 
 ```text
 Dashboard
@@ -177,7 +215,7 @@ Planificator cursuri
 Setări
 ```
 
-Do not rename `Dashboard` to `Spațiu de lucru` or `Panou de control` unless explicitly requested.
+`Integrări` is an approved submenu under `Setări`. Do not rename `Dashboard` to `Spațiu de lucru` or `Panou de control` unless explicitly requested.
 
 ## Frontend conventions
 
@@ -193,8 +231,9 @@ Do not rename `Dashboard` to `Spațiu de lucru` or `Panou de control` unless exp
 - Keep TypeScript strict and do not use `@ts-ignore`.
 - Effects in application-owned code must declare explicit dependency arrays.
 - Images must include meaningful `alt` text or an explicit empty `alt` when decorative.
+- Use Sonner for transient operation feedback.
 
-The shared diagonal content grid belongs to `AppShell`. Do not recreate it in individual pages. Dashboard, Companii, Documente, and Planificator cursuri render their content surfaces over that grid.
+The shell owns the plain content background and outer gutter. Do not recreate shell backgrounds in route pages and do not use a `Card` solely as a wrapper for an entire route. Cards remain appropriate for real interface sections.
 
 Run:
 
@@ -226,7 +265,7 @@ Brand tokens:
 
 The current sidebar implementation is approved and should not be changed unless the task explicitly targets it.
 
-It relies on shadcn's `SidebarProvider`, `Sidebar`, `SidebarMenuButton`, `collapsible="icon"`, and tooltip behavior. Preserve desktop expanded, desktop collapsed, and mobile drawer behavior. Do not broadly override collapsed dimensions, padding, label state, or tooltip behavior.
+It relies on shadcn's `SidebarProvider`, `Sidebar`, `SidebarMenuButton`, `collapsible="icon"`, and tooltip behavior. Preserve desktop expanded, desktop collapsed, and mobile drawer behavior. The mobile drawer and portal-based overlays must remain positioned relative to the global header.
 
 ## Performance
 
@@ -244,7 +283,7 @@ It relies on shadcn's `SidebarProvider`, `Sidebar`, `SidebarMenuButton`, `collap
 - Do not commit `node_modules` or generated build output.
 - Runtime Python dependencies belong in `backend/requirements.txt`.
 - Development-only Python tooling belongs in `backend/requirements-dev.txt`.
-- Rebuild the relevant image after dependency changes and report installed package changes.
+- Recreate all Python services after dependency changes; a plain restart does not install packages.
 
 ## Development harness
 
@@ -282,4 +321,4 @@ Keep final implementation reports short:
 - commands the user must run locally;
 - unresolved failures or unverified behavior.
 
-Do not claim complete validation when Docker, browser, database, or runtime checks were not actually run.
+Do not claim complete validation when Docker, browser, database, Celery, network, or runtime checks were not actually run.
