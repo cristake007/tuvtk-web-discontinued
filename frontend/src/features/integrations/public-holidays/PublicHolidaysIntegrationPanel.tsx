@@ -1,11 +1,23 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { PlugZap } from "lucide-react";
+import { PlugZap, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { ApiError } from "@/api/http";
 import { ApplicationState } from "@/components/ApplicationState";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogMedia,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Spinner } from "@/components/ui/spinner";
 
 import {
   createInternalHoliday,
@@ -58,6 +70,7 @@ export function PublicHolidaysIntegrationPanel() {
   const [holidayDraft, setHolidayDraft] =
     useState<InternalHolidayInput>(emptyHoliday);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteCandidate, setDeleteCandidate] = useState<PublicHoliday | null>(null);
 
   const settingsQuery = useQuery({
     queryKey: publicHolidayQueryKeys.settings,
@@ -155,6 +168,7 @@ export function PublicHolidaysIntegrationPanel() {
         description: getErrorMessage(error),
       }),
     onSuccess: () => {
+      setDeleteCandidate(null);
       void queryClient.invalidateQueries({ queryKey: publicHolidayQueryKeys.root });
       toast.success("Ziua internă a fost ștearsă.");
     },
@@ -185,15 +199,9 @@ export function PublicHolidaysIntegrationPanel() {
     });
   }
 
-  function handleDelete(holiday: PublicHoliday) {
-    if (!holiday.is_internal) {
-      return;
-    }
-    const confirmed = window.confirm(
-      `Ștergi ziua internă „${holiday.local_name}” din ${holiday.date}?`,
-    );
-    if (confirmed) {
-      deleteMutation.mutate(holiday.id);
+  function requestDelete(holiday: PublicHoliday) {
+    if (holiday.is_internal) {
+      setDeleteCandidate(holiday);
     }
   }
 
@@ -267,12 +275,52 @@ export function PublicHolidaysIntegrationPanel() {
           deletePendingId={deleteMutation.isPending ? deleteMutation.variables ?? null : null}
           holidays={holidaysQuery.data ?? []}
           loading={holidaysQuery.isPending || holidaysQuery.isFetching}
-          onDelete={handleDelete}
+          onDelete={requestDelete}
           onEdit={startEditing}
           onYearChange={setYear}
           year={year}
         />
       </div>
+
+      <AlertDialog
+        onOpenChange={(open) => {
+          if (!open && !deleteMutation.isPending) {
+            setDeleteCandidate(null);
+          }
+        }}
+        open={deleteCandidate !== null}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogMedia className="bg-destructive/10 text-destructive">
+              <Trash2 aria-hidden="true" />
+            </AlertDialogMedia>
+            <AlertDialogTitle>Ștergi ziua internă?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteCandidate
+                ? `„${deleteCandidate.local_name}” din ${deleteCandidate.date} va fi eliminată definitiv din calendarul intern.`
+                : "Ziua internă va fi eliminată definitiv."}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>
+              Renunță
+            </AlertDialogCancel>
+            <AlertDialogAction
+              disabled={!deleteCandidate || deleteMutation.isPending}
+              onClick={() => {
+                if (deleteCandidate) {
+                  deleteMutation.mutate(deleteCandidate.id);
+                }
+              }}
+              variant="destructive"
+            >
+              {deleteMutation.isPending ? <Spinner /> : <Trash2 aria-hidden="true" />}
+              Șterge ziua
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }
