@@ -11,11 +11,11 @@ export function validateCompanyLogo(file: LogoFileMetadata | undefined): string 
     file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg");
 
   if (!isSvg) {
-    return "Select an SVG file.";
+    return "Selectează un fișier SVG.";
   }
 
   if (file.size > MAX_COMPANY_LOGO_BYTES) {
-    return "The SVG file must be 256 KB or smaller.";
+    return "Fișierul SVG trebuie să aibă cel mult 256 KB.";
   }
 
   return null;
