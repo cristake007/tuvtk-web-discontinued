@@ -4,10 +4,12 @@ import re
 import unicodedata
 from dataclasses import dataclass
 from typing import Any, Iterable
+from zipfile import BadZipFile
 
 import xlrd
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
+from openpyxl.utils.exceptions import InvalidFileException
 
 MAX_COURSES = 10_000
 
@@ -55,11 +57,11 @@ def _read_csv(data: bytes) -> list[list[Any]]:
     sample = decoded[:8192]
     try:
         dialect = csv.Sniffer().sniff(sample, delimiters=",;\t|")
+        reader = csv.reader(io.StringIO(decoded), dialect)
     except csv.Error:
-        dialect = csv.excel
-        dialect.delimiter = ";"
+        reader = csv.reader(io.StringIO(decoded), delimiter=";")
 
-    return [list(row) for row in csv.reader(io.StringIO(decoded), dialect)]
+    return [list(row) for row in reader]
 
 
 def _read_xlsx(data: bytes) -> list[list[Any]]:
@@ -89,7 +91,16 @@ def parse_course_file(data: bytes, extension: str) -> list[CourseInput]:
 
     try:
         rows = reader(data)
-    except (csv.Error, OSError, ValueError, xlrd.XLRDError) as exc:
+    except (
+        BadZipFile,
+        InvalidFileException,
+        KeyError,
+        OSError,
+        UnicodeError,
+        ValueError,
+        csv.Error,
+        xlrd.XLRDError,
+    ) as exc:
         raise CourseFileError("Fișierul încărcat nu poate fi citit.") from exc
 
     if not rows:
