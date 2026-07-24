@@ -12,10 +12,6 @@ type ApiRequestOptions = RequestInit & {
   includeCsrf?: boolean;
 };
 
-type ApiDownloadOptions = ApiRequestOptions & {
-  accept?: string;
-};
-
 function readCookie(name: string): string | null {
   const prefix = `${name}=`;
 
@@ -114,11 +110,15 @@ export async function apiRequest<T>(
 
 export async function apiDownload(
   path: string,
-  options: ApiDownloadOptions = {},
+  options: ApiRequestOptions = {},
 ): Promise<Blob> {
-  const { accept = "application/octet-stream", ...apiOptions } = options;
-  const { headers, requestOptions } = buildRequestHeaders(apiOptions);
-  headers.set("Accept", accept);
+  const { headers, requestOptions } = buildRequestHeaders(options);
+
+  // DRF performs renderer negotiation before the view returns FileResponse.
+  // A wildcard allows the authenticated endpoint to return its real file MIME
+  // while JSON error responses remain readable by the client.
+  headers.set("Accept", "*/*");
+
   const response = await fetch(path, {
     ...requestOptions,
     credentials: "same-origin",
