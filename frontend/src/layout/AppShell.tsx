@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
 import { Outlet, useLocation } from "react-router-dom";
 
-import { fetchCoreBootstrap } from "@/api/core";
+import { coreBootstrapQueryKey, fetchCoreBootstrap } from "@/api/core";
 import { ApiError } from "@/api/http";
 import type { AuthenticationSession } from "@/api/types";
 import { ApplicationState } from "@/components/ApplicationState";
@@ -30,7 +30,7 @@ export function AppShell() {
   const queryClient = useQueryClient();
 
   const bootstrapQuery = useQuery({
-    queryKey: ["core-bootstrap"],
+    queryKey: coreBootstrapQueryKey,
     queryFn: fetchCoreBootstrap,
     retry: false,
     staleTime: 60_000,
@@ -39,14 +39,14 @@ export function AppShell() {
   const logoutMutation = useMutation({
     mutationFn: logout,
     onSuccess: () => {
-      queryClient.removeQueries({ queryKey: ["core-bootstrap"] });
+      queryClient.removeQueries({ queryKey: coreBootstrapQueryKey });
       queryClient.setQueryData(authQueryKeys.session, unauthenticatedSession);
     },
   });
 
   useEffect(() => {
     if (bootstrapQuery.error instanceof ApiError && bootstrapQuery.error.status === 401) {
-      queryClient.removeQueries({ queryKey: ["core-bootstrap"] });
+      queryClient.removeQueries({ queryKey: coreBootstrapQueryKey });
       queryClient.setQueryData(authQueryKeys.session, unauthenticatedSession);
     }
   }, [bootstrapQuery.error, queryClient]);
