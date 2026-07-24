@@ -6,7 +6,6 @@ from dataclasses import dataclass
 from typing import Any, Iterable
 from zipfile import BadZipFile
 
-import xlrd
 from openpyxl import Workbook, load_workbook
 from openpyxl.utils import get_column_letter
 from openpyxl.utils.exceptions import InvalidFileException
@@ -74,7 +73,19 @@ def _read_xlsx(data: bytes) -> list[list[Any]]:
 
 
 def _read_xls(data: bytes) -> list[list[Any]]:
-    workbook = xlrd.open_workbook(file_contents=data)
+    try:
+        import xlrd
+    except ModuleNotFoundError as exc:
+        raise CourseFileError(
+            "Suportul pentru fișiere .xls nu este instalat în backend. "
+            "Reconstruiește imaginea backend sau folosește CSV/XLSX."
+        ) from exc
+
+    try:
+        workbook = xlrd.open_workbook(file_contents=data)
+    except xlrd.XLRDError as exc:
+        raise CourseFileError("Fișierul .xls încărcat nu poate fi citit.") from exc
+
     sheet = workbook.sheet_by_index(0)
     return [sheet.row_values(index) for index in range(sheet.nrows)]
 
@@ -91,6 +102,8 @@ def parse_course_file(data: bytes, extension: str) -> list[CourseInput]:
 
     try:
         rows = reader(data)
+    except CourseFileError:
+        raise
     except (
         BadZipFile,
         InvalidFileException,
@@ -99,7 +112,6 @@ def parse_course_file(data: bytes, extension: str) -> list[CourseInput]:
         UnicodeError,
         ValueError,
         csv.Error,
-        xlrd.XLRDError,
     ) as exc:
         raise CourseFileError("Fișierul încărcat nu poate fi citit.") from exc
 
