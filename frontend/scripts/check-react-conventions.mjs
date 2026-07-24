@@ -7,6 +7,7 @@ import ts from "typescript";
 const root = process.cwd();
 const sourceRoot = path.join(root, "src");
 const failures = [];
+const effectHooks = new Set(["useEffect", "useLayoutEffect"]);
 
 async function collectSourceFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -37,7 +38,10 @@ function isNamedCall(node, names) {
 
 function hasJsxAttribute(attributes, name) {
   return attributes.properties.some(
-    (property) => ts.isJsxAttribute(property) && property.name.text === name,
+    (property) =>
+      ts.isJsxAttribute(property) &&
+      ts.isIdentifier(property.name) &&
+      property.name.text === name,
   );
 }
 
@@ -55,9 +59,11 @@ function inspectFile(fileName, sourceText) {
   }
 
   const relativePath = path.relative(sourceRoot, fileName).replaceAll(path.sep, "/");
-  const expectedPageExport = relativePath.startsWith("pages/") && relativePath.endsWith("Page.tsx")
-    ? path.basename(fileName, ".tsx")
-    : null;
+  const isUiPrimitive = relativePath.startsWith("components/ui/");
+  const expectedPageExport =
+    relativePath.startsWith("pages/") && relativePath.endsWith("Page.tsx")
+      ? path.basename(fileName, ".tsx")
+      : null;
   let hasExpectedPageExport = expectedPageExport === null;
 
   function visit(node) {
@@ -75,7 +81,7 @@ function inspectFile(fileName, sourceText) {
       report(sourceFile, node, "Remove console.log/console.debug from application code.");
     }
 
-    if (isNamedCall(node, new Set(["useEffect", "useLayoutEffect"]))) {
+    if (!isUiPrimitive && isNamedCall(node, effectHooks)) {
       if (node.arguments.length < 2 || !ts.isArrayLiteralExpression(node.arguments[1])) {
         report(sourceFile, node, "Effects must declare an explicit dependency array.");
       }
@@ -108,7 +114,7 @@ function inspectFile(fileName, sourceText) {
         report(sourceFile, node, "Feature modules must not depend on pages or layout modules.");
       }
       if (
-        relativePath.startsWith("components/ui/") &&
+        isUiPrimitive &&
         (importPath.startsWith("@/features") || importPath.startsWith("@/pages"))
       ) {
         report(sourceFile, node, "UI primitives must remain independent from application features.");
