@@ -78,7 +78,9 @@ class UtilizatoriApiTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.json()["code"], "csrf_failed")
+        payload = response.json()
+        self.assertEqual(payload["code"], "permission_denied")
+        self.assertIn("CSRF", payload["detail"])
         self.assertFalse(get_user_model().objects.filter(username="csrf-test").exists())
 
     def test_superuser_can_create_user_with_hashed_password(self):
