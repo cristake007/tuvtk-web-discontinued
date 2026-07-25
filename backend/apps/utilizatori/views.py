@@ -1,8 +1,8 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.exceptions import ValidationError
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import IsAdminUser
 from rest_framework.response import Response
@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 
 from config.error_serializers import ApiErrorSerializer
 
+from .filters import UtilizatorFilter
 from .serializers import (
     UserAccountSerializer,
     UserListResponseSerializer,
@@ -30,38 +31,24 @@ class UserCollectionView(APIView):
     @extend_schema(
         operation_id="utilizatori_list",
         parameters=[UserQuerySerializer],
-        responses={200: UserListResponseSerializer, 403: ApiErrorSerializer},
+        responses={200: UserListResponseSerializer, 400: ApiErrorSerializer, 403: ApiErrorSerializer},
         summary="List and filter platform users",
         tags=["utilizatori"],
     )
     def get(self, request):
-        query_serializer = UserQuerySerializer(data=request.query_params)
-        query_serializer.is_valid(raise_exception=True)
-        values = query_serializer.validated_data
+        filterset = UtilizatorFilter(
+            request.query_params,
+            queryset=get_user_model().objects.all(),
+        )
+        if not filterset.is_valid():
+            raise ValidationError(filterset.errors)
 
-        queryset = get_user_model().objects.all()
-        search = values.get("search", "").strip()
-        if search:
-            queryset = queryset.filter(
-                Q(username__icontains=search)
-                | Q(first_name__icontains=search)
-                | Q(last_name__icontains=search)
-                | Q(email__icontains=search)
-            )
-
-        status_filter = values.get("status", "all")
-        if status_filter == "active":
-            queryset = queryset.filter(is_active=True)
-        elif status_filter == "inactive":
-            queryset = queryset.filter(is_active=False)
-
-        role_filter = values.get("role", "all")
-        if role_filter == "staff":
-            queryset = queryset.filter(is_staff=True)
-        elif role_filter == "user":
-            queryset = queryset.filter(is_staff=False)
-
-        queryset = queryset.order_by("-is_active", "last_name", "first_name", "username")
+        queryset = filterset.qs.order_by(
+            "-is_active",
+            "last_name",
+            "first_name",
+            "username",
+        )
         paginator = UserPagination()
         page = paginator.paginate_queryset(queryset, request, view=self)
         serializer = UserAccountSerializer(page, many=True)
