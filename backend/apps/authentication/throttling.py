@@ -3,6 +3,7 @@ import ipaddress
 
 from django.conf import settings
 from django.core.cache import cache
+from redis.exceptions import RedisError
 
 
 def _client_ip(request) -> str:
@@ -33,19 +34,28 @@ class LoginFailureThrottle:
         return f"authentication:login-failures:{kind}:{digest}"
 
     def is_blocked(self) -> bool:
-        return any(int(cache.get(key, 0)) >= self.limit for key in self._keys)
+        try:
+            return any(int(cache.get(key, 0)) >= self.limit for key in self._keys)
+        except (OSError, RedisError, ValueError):
+            return False
 
     def record_failure(self) -> None:
-        for key in self._keys:
-            if cache.add(key, 1, timeout=self.window_seconds):
-                continue
-            try:
-                cache.incr(key)
-            except ValueError:
-                cache.set(key, 1, timeout=self.window_seconds)
+        try:
+            for key in self._keys:
+                if cache.add(key, 1, timeout=self.window_seconds):
+                    continue
+                try:
+                    cache.incr(key)
+                except ValueError:
+                    cache.set(key, 1, timeout=self.window_seconds)
+        except (OSError, RedisError):
+            return
 
     def clear_username(self) -> None:
-        cache.delete(self.username_key)
+        try:
+            cache.delete(self.username_key)
+        except (OSError, RedisError):
+            return
 
     @property
     def _keys(self) -> tuple[str, str]:
