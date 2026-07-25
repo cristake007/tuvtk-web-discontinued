@@ -75,13 +75,11 @@ def update_course_planner_settings(
     year: int,
     months: list[int],
     randomness: int,
-    holidays: list[str],
 ) -> CoursePlannerSettings:
     settings = get_course_planner_settings()
     settings.year = year
     settings.months = list(dict.fromkeys(months))
     settings.randomness = randomness
-    settings.holidays = holidays
     settings.full_clean()
     settings.save()
     return settings
@@ -92,7 +90,6 @@ def serialize_settings(settings: CoursePlannerSettings) -> dict[str, Any]:
         "year": settings.year,
         "months": settings.months,
         "randomness": settings.randomness,
-        "holidays": settings.holidays,
     }
 
 
