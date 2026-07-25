@@ -1,17 +1,29 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import {
-  ChevronLeft,
-  ChevronRight,
-  FileCode,
-  FileSpreadsheet,
-  FileText,
-} from "lucide-react";
+import { FileCode, FileSpreadsheet, FileText } from "lucide-react";
 
-import { ApiError } from "@/api/http";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { formatApiError } from "@/lib/api-errors";
+import { formatRomanianDateTime } from "@/lib/dates";
+import { saveBlob } from "@/lib/download";
+import { cn } from "@/lib/utils";
 
 import {
   coursePlannerHistoryQueryKey,
@@ -56,34 +68,6 @@ type DownloadRequest = {
   fileType: CoursePlanFileType;
   filename: string;
 };
-
-function getErrorMessage(error: Error | null): string | null {
-  if (!error) {
-    return null;
-  }
-  if (error instanceof ApiError) {
-    return error.message;
-  }
-  return "Istoricul nu a putut fi încărcat.";
-}
-
-function saveBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.append(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-}
-
-function formatCreatedAt(value: string): string {
-  return new Intl.DateTimeFormat("ro-RO", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
 
 function formatMonths(months: number[]): string {
   return months
@@ -156,9 +140,9 @@ export function CoursePlanHistoryTable() {
     1,
     Math.ceil((historyQuery.data?.count ?? 0) / pageSize),
   );
-  const error =
-    getErrorMessage(historyQuery.error) ??
-    getErrorMessage(downloadMutation.error);
+  const error = historyQuery.error ?? downloadMutation.error;
+  const previousDisabled = page <= 1 || historyQuery.isFetching;
+  const nextDisabled = page >= pageCount || historyQuery.isFetching;
 
   return (
     <div className="flex min-w-0 flex-col gap-5">
@@ -174,7 +158,9 @@ export function CoursePlanHistoryTable() {
 
       {error ? (
         <Alert aria-live="polite" variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
+          <AlertDescription>
+            {formatApiError(error, "Istoricul nu a putut fi încărcat.")}
+          </AlertDescription>
         </Alert>
       ) : null}
 
@@ -184,60 +170,59 @@ export function CoursePlanHistoryTable() {
             <Spinner className="size-7 text-primary" />
           </div>
         ) : historyQuery.data?.results.length ? (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[58rem] border-collapse text-sm">
-              <thead className="bg-muted/70 text-left">
-                <tr>
-                  <th className="border-b px-4 py-3 font-medium">Generat la</th>
-                  <th className="border-b px-4 py-3 font-medium">Fișier sursă</th>
-                  <th className="border-b px-4 py-3 font-medium">An</th>
-                  <th className="border-b px-4 py-3 font-medium">Luni</th>
-                  <th className="border-b px-4 py-3 text-right font-medium">Cursuri</th>
-                  <th className="border-b px-4 py-3 font-medium">Generat de</th>
-                  <th className="border-b px-4 py-3 text-right font-medium">Fișiere</th>
-                </tr>
-              </thead>
-              <tbody>
-                {historyQuery.data.results.map((generation) => (
-                  <tr className="odd:bg-background even:bg-muted/25" key={generation.id}>
-                    <td className="whitespace-nowrap border-b px-4 py-3">
-                      {formatCreatedAt(generation.created_at)}
-                    </td>
-                    <td className="max-w-80 truncate border-b px-4 py-3 font-medium" title={generation.source_filename}>
-                      {generation.source_filename}
-                    </td>
-                    <td className="border-b px-4 py-3">{generation.year}</td>
-                    <td className="border-b px-4 py-3">
-                      {formatMonths(generation.months)}
-                    </td>
-                    <td className="border-b px-4 py-3 text-right tabular-nums">
-                      {generation.course_count}
-                    </td>
-                    <td className="border-b px-4 py-3">
-                      {generation.created_by ?? "Utilizator șters"}
-                    </td>
-                    <td className="border-b px-4 py-3">
-                      <div className="flex justify-end gap-2">
-                        {(["excel", "word", "xml"] as const).map((fileType) => (
-                          <FileDownloadButton
-                            fileType={fileType}
-                            generation={generation}
-                            key={fileType}
-                            onDownload={(request) => downloadMutation.mutate(request)}
-                            pending={
-                              downloadMutation.isPending &&
-                              downloadMutation.variables?.generationId === generation.id &&
-                              downloadMutation.variables?.fileType === fileType
-                            }
-                          />
-                        ))}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table className="min-w-[58rem]">
+            <TableHeader className="bg-muted/70">
+              <TableRow className="hover:bg-transparent">
+                <TableHead>Generat la</TableHead>
+                <TableHead>Fișier sursă</TableHead>
+                <TableHead>An</TableHead>
+                <TableHead>Luni</TableHead>
+                <TableHead className="text-right">Cursuri</TableHead>
+                <TableHead>Generat de</TableHead>
+                <TableHead className="text-right">Fișiere</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {historyQuery.data.results.map((generation) => (
+                <TableRow className="even:bg-muted/25" key={generation.id}>
+                  <TableCell className="whitespace-nowrap">
+                    {formatRomanianDateTime(generation.created_at)}
+                  </TableCell>
+                  <TableCell
+                    className="max-w-80 truncate font-medium"
+                    title={generation.source_filename}
+                  >
+                    {generation.source_filename}
+                  </TableCell>
+                  <TableCell>{generation.year}</TableCell>
+                  <TableCell>{formatMonths(generation.months)}</TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {generation.course_count}
+                  </TableCell>
+                  <TableCell>
+                    {generation.created_by ?? "Utilizator șters"}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex justify-end gap-2">
+                      {(["excel", "word", "xml"] as const).map((fileType) => (
+                        <FileDownloadButton
+                          fileType={fileType}
+                          generation={generation}
+                          key={fileType}
+                          onDownload={(request) => downloadMutation.mutate(request)}
+                          pending={
+                            downloadMutation.isPending &&
+                            downloadMutation.variables?.generationId === generation.id &&
+                            downloadMutation.variables?.fileType === fileType
+                          }
+                        />
+                      ))}
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         ) : (
           <div className="flex min-h-64 flex-col items-center justify-center px-6 text-center">
             <FileSpreadsheet aria-hidden="true" className="size-8 text-muted-foreground" />
@@ -249,32 +234,42 @@ export function CoursePlanHistoryTable() {
         )}
       </section>
 
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <p className="text-sm text-muted-foreground">
           {historyQuery.data?.count ?? 0} generări · pagina {page} din {pageCount}
         </p>
-        <div className="flex gap-2">
-          <Button
-            disabled={page <= 1 || historyQuery.isFetching}
-            onClick={() => setPage((current) => Math.max(1, current - 1))}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            <ChevronLeft aria-hidden="true" />
-            Anterior
-          </Button>
-          <Button
-            disabled={page >= pageCount || historyQuery.isFetching}
-            onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            Următor
-            <ChevronRight aria-hidden="true" />
-          </Button>
-        </div>
+        <Pagination className="mx-0 w-auto justify-end">
+          <PaginationContent>
+            <PaginationItem>
+              <PaginationPrevious
+                aria-disabled={previousDisabled}
+                className={cn(previousDisabled && "pointer-events-none opacity-50")}
+                href="#"
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (!previousDisabled) {
+                    setPage((current) => Math.max(1, current - 1));
+                  }
+                }}
+                text="Anterior"
+              />
+            </PaginationItem>
+            <PaginationItem>
+              <PaginationNext
+                aria-disabled={nextDisabled}
+                className={cn(nextDisabled && "pointer-events-none opacity-50")}
+                href="#"
+                onClick={(event) => {
+                  event.preventDefault();
+                  if (!nextDisabled) {
+                    setPage((current) => Math.min(pageCount, current + 1));
+                  }
+                }}
+                text="Următor"
+              />
+            </PaginationItem>
+          </PaginationContent>
+        </Pagination>
       </div>
     </div>
   );
