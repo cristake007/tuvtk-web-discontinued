@@ -89,17 +89,22 @@ DATABASES = {
         "CONN_MAX_AGE": 60,
         "CONN_HEALTH_CHECKS": True,
     },
-    "registry": {
+}
+
+registry_database = {
+    "NAME": os.environ.get("REGISTRY_DB_NAME"),
+    "USER": os.environ.get("REGISTRY_DB_USER"),
+    "PASSWORD": os.environ.get("REGISTRY_DB_PASSWORD"),
+}
+if env_bool("REGISTRY_DB_ENABLED", default=True) and all(registry_database.values()):
+    DATABASES["registry"] = {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ["REGISTRY_DB_NAME"],
-        "USER": os.environ["REGISTRY_DB_USER"],
-        "PASSWORD": os.environ["REGISTRY_DB_PASSWORD"],
+        **registry_database,
         "HOST": os.environ.get("REGISTRY_DB_HOST", "db_registry"),
         "PORT": os.environ.get("REGISTRY_DB_PORT", "5432"),
         "CONN_MAX_AGE": 60,
         "CONN_HEALTH_CHECKS": True,
-    },
-}
+    }
 
 
 AUTH_PASSWORD_VALIDATORS = [
