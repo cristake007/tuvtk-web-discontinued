@@ -1,6 +1,8 @@
 import calendar
 from datetime import date, timedelta
 
+from config.formats import ROMANIAN_DATE_FORMAT
+
 
 class CourseScheduler:
     def __init__(self, year: int, holidays: list[date]):
@@ -50,7 +52,7 @@ class CourseScheduler:
 
     def format_date_range(self, start_date: date, duration: int) -> str:
         if duration == 1:
-            return start_date.strftime("%d.%m.%Y")
+            return start_date.strftime(ROMANIAN_DATE_FORMAT)
 
         end_date = self.calculate_end_date(start_date, duration)
         if start_date.month == end_date.month and start_date.year == end_date.year:
