@@ -4,8 +4,19 @@ from django.contrib.auth import get_user_model
 from django.core.cache import cache
 from django.test import Client, TestCase, override_settings
 
+TEST_CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "login-throttling-tests",
+    }
+}
 
-@override_settings(LOGIN_THROTTLE_LIMIT=2, LOGIN_THROTTLE_WINDOW_SECONDS=60)
+
+@override_settings(
+    CACHES=TEST_CACHES,
+    LOGIN_THROTTLE_LIMIT=2,
+    LOGIN_THROTTLE_WINDOW_SECONDS=60,
+)
 class LoginThrottlingTests(TestCase):
     def setUp(self):
         cache.clear()
@@ -31,7 +42,8 @@ class LoginThrottlingTests(TestCase):
             ),
             content_type="application/json",
             HTTP_X_CSRFTOKEN=self.client.cookies["csrftoken"].value,
-            REMOTE_ADDR="192.0.2.10",
+            HTTP_X_FORWARDED_FOR="192.0.2.10",
+            REMOTE_ADDR="172.18.0.2",
         )
 
     def test_repeated_invalid_logins_are_throttled_by_user_and_ip(self):
