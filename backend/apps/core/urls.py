@@ -1,10 +1,10 @@
 from django.urls import path
 
 from .views import (
-    CompanyLogoAdministrationView,
     CompanyLogoView,
     CoreBootstrapView,
     PublicBrandingView,
+    UserInterfaceCompanyLogoView,
 )
 
 app_name = "core-api"
@@ -14,8 +14,8 @@ urlpatterns = [
     path("bootstrap", CoreBootstrapView.as_view(), name="bootstrap"),
     path("company-logo", CompanyLogoView.as_view(), name="company-logo"),
     path(
-        "administration/company-logo",
-        CompanyLogoAdministrationView.as_view(),
-        name="administration-company-logo",
+        "administration/user-interface/company-logo",
+        UserInterfaceCompanyLogoView.as_view(),
+        name="administration-user-interface-company-logo",
     ),
 ]
