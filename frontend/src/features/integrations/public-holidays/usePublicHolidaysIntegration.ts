@@ -65,9 +65,10 @@ export function usePublicHolidaysIntegration() {
       return;
     }
     setSettingsDraft({
-      enabled: settingsQuery.data.enabled,
-      automatic_sync: settingsQuery.data.automatic_sync,
-      frequency: settingsQuery.data.frequency,
+      enabled: settingsQuery.data.enabled ?? defaultSettings.enabled,
+      automatic_sync:
+        settingsQuery.data.automatic_sync ?? defaultSettings.automatic_sync,
+      frequency: settingsQuery.data.frequency ?? defaultSettings.frequency,
     });
   }, [settingsQuery.data]);
 
@@ -119,15 +120,10 @@ export function usePublicHolidaysIntegration() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({
-      holidayId,
-      values,
-    }: {
-      holidayId: string;
-      values: InternalHolidayInput;
-    }) => updateInternalHoliday(holidayId, values),
+    mutationFn: ({ id, values }: { id: string; values: InternalHolidayInput }) =>
+      updateInternalHoliday(id, values),
     onError: (error) =>
-      toast.error("Ziua internă nu a putut fi modificată", {
+      toast.error("Ziua internă nu a putut fi actualizată", {
         description: formatApiError(error, operationErrorFallback),
       }),
     onSuccess: () => {
@@ -141,87 +137,59 @@ export function usePublicHolidaysIntegration() {
   const deleteMutation = useMutation({
     mutationFn: deleteInternalHoliday,
     onError: (error) =>
-      toast.error("Ziua internă nu a putut fi ștearsă", {
+      toast.error("Ziua internă nu a putut fi eliminată", {
         description: formatApiError(error, operationErrorFallback),
       }),
     onSuccess: () => {
       setDeleteCandidate(null);
       void queryClient.invalidateQueries({ queryKey: publicHolidayQueryKeys.all });
-      toast.success("Ziua internă a fost ștearsă.");
+      toast.success("Ziua internă a fost eliminată.");
     },
   });
 
-  function handleHolidaySubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!holidayDraft.date || !holidayDraft.local_name.trim()) {
-      toast.warning("Completează data și denumirea zilei interne.");
-      return;
-    }
-    if (editingId) {
-      updateMutation.mutate({ holidayId: editingId, values: holidayDraft });
-      return;
-    }
-    createMutation.mutate(holidayDraft);
-  }
-
-  function startEditing(holiday: PublicHoliday) {
-    if (!holiday.is_internal) {
-      return;
-    }
+  function beginEdit(holiday: PublicHoliday) {
     setEditingId(holiday.id);
     setHolidayDraft({
-      date: romanianDateToIso(holiday.date),
+      date: holiday.date,
       local_name: holiday.local_name,
       description: holiday.description,
     });
   }
 
-  function cancelEditing() {
+  function cancelEdit() {
     setEditingId(null);
     setHolidayDraft(emptyHoliday);
   }
 
-  function requestDelete(holiday: PublicHoliday) {
-    if (holiday.is_internal) {
-      setDeleteCandidate(holiday);
+  function submitHoliday(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (editingId) {
+      updateMutation.mutate({ id: editingId, values: holidayDraft });
+      return;
     }
-  }
-
-  function closeDeleteDialog() {
-    if (!deleteMutation.isPending) {
-      setDeleteCandidate(null);
-    }
-  }
-
-  function confirmDelete() {
-    if (deleteCandidate) {
-      deleteMutation.mutate(deleteCandidate.id);
-    }
+    createMutation.mutate(holidayDraft);
   }
 
   return {
-    cancelEditing,
-    closeDeleteDialog,
-    confirmDelete,
-    createOrUpdatePending: createMutation.isPending || updateMutation.isPending,
+    beginEdit,
+    cancelEdit,
+    createMutation,
     deleteCandidate,
-    deletePending: deleteMutation.isPending,
-    deletePendingId: deleteMutation.isPending ? deleteMutation.variables ?? null : null,
-    editing: editingId !== null,
-    handleHolidaySubmit,
+    deleteMutation,
+    editingId,
     holidayDraft,
     holidaysQuery,
-    requestDelete,
-    saveSettings: () => saveSettingsMutation.mutate(settingsDraft),
-    saveSettingsPending: saveSettingsMutation.isPending,
-    settingsDraft,
-    settingsQuery,
+    romanianDateToIso,
+    saveSettingsMutation,
+    setDeleteCandidate,
     setHolidayDraft,
     setSettingsDraft,
     setYear,
-    startEditing,
-    synchronize: () => syncMutation.mutate(),
-    syncPending: syncMutation.isPending,
+    settingsDraft,
+    settingsQuery,
+    submitHoliday,
+    syncMutation,
+    updateMutation,
     year,
   };
 }
