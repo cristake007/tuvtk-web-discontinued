@@ -16,6 +16,7 @@ class SessionUserSerializer(serializers.Serializer):
     display_name = serializers.CharField()
     email = serializers.EmailField(allow_blank=True)
     is_staff = serializers.BooleanField()
+    is_superuser = serializers.BooleanField()
 
 
 class AuthenticationSessionSerializer(serializers.Serializer):
