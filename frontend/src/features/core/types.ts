@@ -1,4 +1,4 @@
-import type { components } from "@/api/generated";
+import type { components } from "../../api/generated.js";
 
 export type ShellConfiguration = components["schemas"]["ShellConfiguration"];
 export type NavigationItem = components["schemas"]["NavigationItem"];
