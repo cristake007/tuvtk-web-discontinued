@@ -6,11 +6,9 @@ import type {
   CoursePlannerInput,
   CoursePlannerSettings,
   GenerateScheduleResponse,
-  ScheduledCourse,
 } from "./types";
 
 const coursePlannerPath = "/api/v1/course-planner";
-const publicHolidaysPath = "/api/v1/integrations/public-holidays";
 
 export const coursePlannerQueryKey = ["course-planner", "settings"] as const;
 export const coursePlannerHistoryQueryKey = ["course-planner", "history"] as const;
@@ -41,33 +39,12 @@ export async function generateCourseSchedule(
   formData.append("year", String(input.year));
   formData.append("months", input.months.join(","));
   formData.append("randomness", String(input.randomness));
-  formData.append("holidays", input.holidays.join(","));
 
   return apiRequest<GenerateScheduleResponse>(`${coursePlannerPath}/generate`, {
     method: "POST",
     body: formData,
     includeCsrf: true,
   });
-}
-
-type PublicHolidayListItem = {
-  date: string;
-};
-
-export async function fetchPlannerPublicHolidays(input: {
-  year: number;
-  months: number[];
-}): Promise<string[]> {
-  const search = new URLSearchParams({
-    year: String(input.year),
-    months: input.months.join(","),
-  });
-  const holidays = await apiRequest<PublicHolidayListItem[]>(
-    `${publicHolidaysPath}/holidays?${search}`,
-    { cache: "no-store" },
-  );
-
-  return [...new Set(holidays.map((holiday) => holiday.date))];
 }
 
 export function fetchCoursePlanHistory(page: number): Promise<CoursePlanHistoryResponse> {
@@ -86,15 +63,11 @@ export function downloadCoursePlanFile(input: {
   );
 }
 
-export async function exportCourseSchedule(input: {
-  year: number;
-  holidays: string[];
-  schedule: ScheduledCourse[];
-}): Promise<Blob> {
+export async function exportCourseSchedule(generationId: string): Promise<Blob> {
   await ensureCsrfCookie();
   return apiDownload(`${coursePlannerPath}/export`, {
     method: "POST",
-    body: JSON.stringify(input),
+    body: JSON.stringify({ generation_id: generationId }),
     includeCsrf: true,
   });
 }
