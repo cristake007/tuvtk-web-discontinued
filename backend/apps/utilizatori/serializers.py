@@ -28,6 +28,20 @@ class UserAccountSerializer(serializers.ModelSerializer):
         return obj.get_full_name().strip() or obj.get_username()
 
 
+class UserQuerySerializer(serializers.Serializer):
+    search = serializers.CharField(allow_blank=True, max_length=150, required=False)
+    status = serializers.ChoiceField(
+        choices=("all", "active", "inactive"),
+        default="all",
+        required=False,
+    )
+    role = serializers.ChoiceField(
+        choices=("all", "staff", "user"),
+        default="all",
+        required=False,
+    )
+
+
 class UserWriteSerializer(serializers.ModelSerializer):
     password = serializers.CharField(
         allow_blank=True,
@@ -69,8 +83,6 @@ class UserWriteSerializer(serializers.ModelSerializer):
 
     def validate_password(self, value: str) -> str:
         if not value:
-            if self.instance is None:
-                raise serializers.ValidationError("Parola este obligatorie.")
             return value
 
         user = self.instance or get_user_model()()
@@ -84,6 +96,9 @@ class UserWriteSerializer(serializers.ModelSerializer):
         request = self.context["request"]
         target = self.instance
         requested_staff = attrs.get("is_staff")
+
+        if target is None and not attrs.get("password"):
+            raise serializers.ValidationError({"password": "Parola este obligatorie."})
 
         if requested_staff is not None and requested_staff != getattr(target, "is_staff", False):
             if not request.user.is_superuser:
