@@ -134,10 +134,14 @@ class ExportScheduleSerializer(serializers.Serializer):
     generation_id = serializers.UUIDField()
 
 
-class UnscheduledCoursesSerializer(ApiErrorSerializer):
-    fields = serializers.DictField(
+class UnscheduledCourseFieldsSerializer(serializers.Serializer):
+    unscheduled_courses = serializers.DictField(
         child=serializers.ListField(child=serializers.CharField())
     )
+
+
+class UnscheduledCoursesSerializer(ApiErrorSerializer):
+    fields = UnscheduledCourseFieldsSerializer()
 
 
 class CoursePlannerErrorDetailSerializer(ApiErrorSerializer):
