@@ -22,7 +22,6 @@ type AdministrationEntry = {
 };
 
 type AdministrationGroup = {
-  description: string;
   entries: AdministrationEntry[];
   icon: LucideIcon;
   name: string;
@@ -30,7 +29,6 @@ type AdministrationGroup = {
 
 const administrationGroups: AdministrationGroup[] = [
   {
-    description: "Setările generale și identitatea platformei.",
     entries: [
       {
         description:
@@ -55,7 +53,6 @@ const administrationGroups: AdministrationGroup[] = [
     name: "Sistem",
   },
   {
-    description: "Conturi, echipe, roluri și drepturi de acces.",
     entries: [
       {
         description: "Gestionarea conturilor utilizatorilor platformei.",
@@ -78,7 +75,6 @@ const administrationGroups: AdministrationGroup[] = [
     name: "Utilizatori",
   },
   {
-    description: "Canalele de comunicare și mesajele platformei.",
     entries: [
       {
         description: "Serviciul utilizat pentru trimiterea e-mailurilor.",
@@ -97,7 +93,6 @@ const administrationGroups: AdministrationGroup[] = [
     name: "Mesagerie",
   },
   {
-    description: "Structura aplicației și procesele administrative.",
     entries: [
       {
         description: "Elementele, ordinea și accesul în meniul aplicației.",
@@ -116,7 +111,6 @@ const administrationGroups: AdministrationGroup[] = [
     name: "Configurare",
   },
   {
-    description: "Importuri, fișiere și operațiuni asupra datelor.",
     entries: [
       {
         description: "Importul controlat al datelor în platformă.",
@@ -135,7 +129,6 @@ const administrationGroups: AdministrationGroup[] = [
     name: "Date",
   },
   {
-    description: "Servicii externe și sincronizări cu alte sisteme.",
     entries: [
       {
         description:
@@ -211,9 +204,7 @@ export function AdministrationPage() {
     }
 
     return administrationGroups.reduce<AdministrationGroup[]>((groups, group) => {
-      const groupMatches = [group.name, group.description].some((value) =>
-        normalizeSearchValue(value).includes(normalizedQuery),
-      );
+      const groupMatches = normalizeSearchValue(group.name).includes(normalizedQuery);
       const matchingEntries = groupMatches
         ? group.entries
         : group.entries.filter((entry) =>
@@ -257,23 +248,20 @@ export function AdministrationPage() {
         />
       </div>
 
-      <div className="grid min-w-0 gap-7">
+      <div className="grid min-w-0 gap-10">
         {filteredGroups.map((group) => {
           const Icon = group.icon;
 
           return (
-            <section className="grid min-w-0 gap-2" key={group.name}>
-              <div className="flex items-start gap-2 px-1">
-                <Icon
-                  aria-hidden="true"
-                  className="mt-0.5 size-4 shrink-0 text-muted-foreground"
-                />
-                <div className="min-w-0">
-                  <h2 className="font-semibold text-foreground">{group.name}</h2>
-                  <p className="mt-0.5 text-sm text-muted-foreground">
-                    {group.description}
-                  </p>
-                </div>
+            <section className="grid min-w-0 gap-3" key={group.name}>
+              <div className="flex items-center gap-3 px-1">
+                <span className="grid size-8 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
+                  <Icon aria-hidden="true" className="size-4" />
+                </span>
+                <h2 className="text-lg font-semibold tracking-tight text-primary">
+                  {group.name}
+                </h2>
+                <span aria-hidden="true" className="h-px flex-1 bg-border" />
               </div>
 
               <Card className="gap-0 rounded-md py-0">
