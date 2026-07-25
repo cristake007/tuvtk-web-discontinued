@@ -127,6 +127,7 @@ export interface components {
       display_name: string;
       email: string;
       is_staff: boolean;
+      is_superuser: boolean;
     };
     ShellConfiguration: {
       site_name: string;
@@ -141,6 +142,34 @@ export interface components {
       created: number;
       updated: number;
       removed: number;
+    };
+    UserAccount: {
+      id: number;
+      username: string;
+      first_name: string;
+      last_name: string;
+      full_name: string;
+      email: string;
+      is_active: boolean;
+      is_staff: boolean;
+      is_superuser: boolean;
+      date_joined: string;
+      last_login: string | null;
+    };
+    UserListResponse: {
+      count: number;
+      next: string | null;
+      previous: string | null;
+      results: Array<components["schemas"]["UserAccount"]>;
+    };
+    UserWrite: {
+      username: string;
+      first_name?: string;
+      last_name?: string;
+      email?: string;
+      password?: string;
+      is_active?: boolean;
+      is_staff?: boolean;
     };
   };
 }
