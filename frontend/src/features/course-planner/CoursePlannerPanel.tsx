@@ -10,6 +10,7 @@ import {
   coursePlannerQueryKey,
   downloadCoursePlanFile,
   fetchCoursePlannerSettings,
+  fetchPlannerPublicHolidays,
   generateCourseSchedule,
   saveCoursePlannerSettings,
 } from "./api";
@@ -87,6 +88,25 @@ export function CoursePlannerPanel() {
     },
   });
 
+  const publicHolidaysMutation = useMutation({
+    mutationFn: fetchPlannerPublicHolidays,
+    onError: (error) =>
+      toast.error("Zilele libere nu au putut fi preluate", {
+        description: getErrorMessage(error),
+      }),
+    onSuccess: (holidays) => {
+      setHolidaysText(holidays.join("\n"));
+      clearResult();
+      if (holidays.length === 0) {
+        toast.info("Nu există zile libere salvate pentru lunile selectate.");
+        return;
+      }
+      toast.success("Zilele libere au fost preluate", {
+        description: `${holidays.length} date au fost încărcate pentru lunile selectate.`,
+      });
+    },
+  });
+
   const generateMutation = useMutation({
     mutationFn: generateCourseSchedule,
     onError: (error) =>
@@ -131,6 +151,17 @@ export function CoursePlannerPanel() {
 
   function clearResult() {
     setResult(null);
+  }
+
+  function handleFetchPublicHolidays() {
+    if (settings.months.length === 0) {
+      toast.warning("Selectează cel puțin o lună înainte de preluarea zilelor libere.");
+      return;
+    }
+    publicHolidaysMutation.mutate({
+      year: settings.year,
+      months: settings.months,
+    });
   }
 
   function handleGenerate(event: FormEvent<HTMLFormElement>) {
@@ -194,11 +225,13 @@ export function CoursePlannerPanel() {
         <PlannerConfigurationCard
           file={inputFile}
           generatePending={generateMutation.isPending}
+          holidaysPending={publicHolidaysMutation.isPending}
           holidaysText={holidaysText}
           onClearMonths={() => {
             setSettings((current) => ({ ...current, months: [] }));
             clearResult();
           }}
+          onFetchHolidays={handleFetchPublicHolidays}
           onFileChange={(file) => {
             setInputFile(file ?? null);
             clearResult();
