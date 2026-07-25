@@ -26,7 +26,6 @@ import type { GenerateScheduleResponse } from "../types";
 type PlannerSummaryCardProps = {
   downloadPending: boolean;
   file: File | null;
-  holidayCount: number;
   onDownload: () => void;
   result: GenerateScheduleResponse | null;
   selectedMonths: number[];
@@ -76,7 +75,6 @@ function ArtifactStatus({
 export function PlannerSummaryCard({
   downloadPending,
   file,
-  holidayCount,
   onDownload,
   result,
   selectedMonths,
@@ -99,7 +97,7 @@ export function PlannerSummaryCard({
           <SummaryRow label="Fișier" value={file?.name ?? "Neselectat"} />
           <SummaryRow label="An" value={String(year)} />
           <SummaryRow label="Luni" value={formatSelectedMonths(selectedMonths)} />
-          <SummaryRow label="Zile libere" value={String(holidayCount)} />
+          <SummaryRow label="Zile libere" value="Preluate automat" />
           <SummaryRow
             label="Cursuri procesate"
             value={result ? String(result.course_count) : "—"}
