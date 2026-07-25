@@ -11,9 +11,9 @@ import {
 
 const items: NavigationItem[] = [
   {
-    key: "settings",
-    label: "Settings",
-    path: "/settings",
+    key: "administration",
+    label: "Administrare",
+    path: "/administrare",
     icon: "settings",
     position: 30,
     parent_key: null,
@@ -53,7 +53,7 @@ describe("isNavigationPathActive", () => {
     assert.equal(isNavigationPathActive("/companies", "/companies"), true);
     assert.equal(isNavigationPathActive("/companies/42", "/companies"), true);
     assert.equal(isNavigationPathActive("/company", "/companies"), false);
-    assert.equal(isNavigationPathActive("/settings", "/"), false);
+    assert.equal(isNavigationPathActive("/administrare", "/"), false);
   });
 });
 
@@ -63,7 +63,7 @@ describe("buildNavigationTree", () => {
 
     assert.deepEqual(
       tree.map((item) => item.key),
-      ["dashboard", "companies", "settings"],
+      ["dashboard", "companies", "administration"],
     );
     assert.deepEqual(
       tree[1]?.children.map((item) => item.key),
