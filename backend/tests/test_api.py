@@ -26,13 +26,13 @@ class ApiTests(TestCase):
         )
 
     @patch("config.api_views.database_status", side_effect=["ok", "error"])
-    def test_health_endpoint_is_degraded_when_a_database_is_unavailable(
+    def test_health_endpoint_is_degraded_but_available_when_registry_is_offline(
         self,
         database_status,
     ):
         response = self.client.get("/api/v1/health")
 
-        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.status_code, 200)
         self.assertEqual(
             response.json(),
             {
@@ -46,6 +46,34 @@ class ApiTests(TestCase):
         self.assertEqual(
             database_status.call_args_list,
             [call("default"), call("registry")],
+        )
+
+    @patch("config.api_views.database_status", side_effect=["ok", "disabled"])
+    def test_health_endpoint_is_available_when_registry_is_disabled(
+        self,
+        database_status,
+    ):
+        response = self.client.get("/api/v1/health")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["status"], "degraded")
+        self.assertEqual(
+            response.json()["databases"]["registry"],
+            {"alias": "registry", "status": "disabled"},
+        )
+
+    @patch("config.api_views.database_status", side_effect=["error", "ok"])
+    def test_health_endpoint_returns_unavailable_when_core_is_offline(
+        self,
+        database_status,
+    ):
+        response = self.client.get("/api/v1/health")
+
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json()["status"], "degraded")
+        self.assertEqual(
+            response.json()["databases"]["core"],
+            {"alias": "default", "status": "error"},
         )
 
     def test_openapi_schema_requires_staff_access(self):
