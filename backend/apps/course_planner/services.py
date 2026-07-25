@@ -143,13 +143,19 @@ def generate_schedule(
     randomizer = random_source or random.Random()
     schedule: list[dict[str, Any]] = []
     unscheduled_courses: dict[int, list[str]] = {}
+    available_dates_cache: dict[tuple[int, int], tuple[date, ...]] = {}
 
     for month in months:
         scheduled_dates = set()
         month_unscheduled: set[str] = set()
 
         for course in courses:
-            available_dates = scheduler.get_available_start_days(month, course.duration)
+            cache_key = (month, course.duration)
+            if cache_key not in available_dates_cache:
+                available_dates_cache[cache_key] = tuple(
+                    scheduler.get_available_start_days(month, course.duration)
+                )
+            available_dates = available_dates_cache[cache_key]
             if not available_dates:
                 month_unscheduled.add(course.title)
                 continue
