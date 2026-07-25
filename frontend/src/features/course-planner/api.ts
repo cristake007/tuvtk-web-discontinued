@@ -10,7 +10,7 @@ import type {
 } from "./types";
 
 const coursePlannerPath = "/api/v1/course-planner";
-const publicHolidaysPath = "/api/v1/public-holidays";
+const publicHolidaysPath = "/api/v1/integrations/public-holidays";
 
 export const coursePlannerQueryKey = ["course-planner", "settings"] as const;
 export const coursePlannerHistoryQueryKey = ["course-planner", "history"] as const;
