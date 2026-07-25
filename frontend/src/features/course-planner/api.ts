@@ -10,6 +10,7 @@ import type {
 } from "./types";
 
 const coursePlannerPath = "/api/v1/course-planner";
+const publicHolidaysPath = "/api/v1/public-holidays";
 
 export const coursePlannerQueryKey = ["course-planner", "settings"] as const;
 export const coursePlannerHistoryQueryKey = ["course-planner", "history"] as const;
@@ -47,6 +48,26 @@ export async function generateCourseSchedule(
     body: formData,
     includeCsrf: true,
   });
+}
+
+type PublicHolidayListItem = {
+  date: string;
+};
+
+export async function fetchPlannerPublicHolidays(input: {
+  year: number;
+  months: number[];
+}): Promise<string[]> {
+  const search = new URLSearchParams({
+    year: String(input.year),
+    months: input.months.join(","),
+  });
+  const holidays = await apiRequest<PublicHolidayListItem[]>(
+    `${publicHolidaysPath}/?${search}`,
+    { cache: "no-store" },
+  );
+
+  return [...new Set(holidays.map((holiday) => holiday.date))];
 }
 
 export function fetchCoursePlanHistory(page: number): Promise<CoursePlanHistoryResponse> {
