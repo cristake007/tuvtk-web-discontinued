@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { FileSpreadsheet } from "lucide-react";
 
 import {
@@ -19,6 +19,8 @@ import {
 
 import { monthNames } from "../constants";
 import type { ScheduledCourse } from "../types";
+
+const previewRowLimit = 100;
 
 type ScheduleRow = {
   duration: string;
@@ -48,7 +50,9 @@ function buildRows(schedule: ScheduledCourse[]): ScheduleRow[] {
 }
 
 export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] }) {
-  const rows = buildRows(schedule);
+  const rows = useMemo(() => buildRows(schedule), [schedule]);
+  const previewRows = rows.slice(0, previewRowLimit);
+  const hiddenRowCount = Math.max(0, rows.length - previewRows.length);
   const topScrollRef = useRef<HTMLDivElement>(null);
   const topScrollContentRef = useRef<HTMLDivElement>(null);
   const tableScrollRef = useRef<HTMLDivElement>(null);
@@ -75,7 +79,7 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
     }
 
     return () => observer.disconnect();
-  }, [rows.length]);
+  }, [previewRows.length]);
 
   function syncScroll(source: HTMLDivElement, target: HTMLDivElement | null) {
     if (!target || target.scrollLeft === source.scrollLeft) {
@@ -94,6 +98,9 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
         </CardTitle>
         <CardDescription>
           {rows.length} cursuri distincte distribuite în lunile selectate.
+          {hiddenRowCount > 0
+            ? ` Previzualizarea afișează primele ${previewRowLimit}; exportul conține toate cursurile.`
+            : ""}
         </CardDescription>
       </CardHeader>
       <CardContent className="px-0">
@@ -131,7 +138,7 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((row, rowIndex) => {
+            {previewRows.map((row, rowIndex) => {
               const stickyBackground = rowIndex % 2 === 0 ? "bg-background" : "bg-muted";
 
               return (
@@ -161,6 +168,11 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
             })}
           </TableBody>
         </Table>
+        {hiddenRowCount > 0 ? (
+          <div className="border-t bg-muted/20 px-4 py-3 text-sm text-muted-foreground">
+            {hiddenRowCount} cursuri suplimentare nu sunt randate în browser pentru a menține pagina rapidă.
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );
