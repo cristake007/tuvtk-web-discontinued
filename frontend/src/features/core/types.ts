@@ -25,7 +25,7 @@ export type CoreBootstrap = {
 
 export type DatabaseHealth = {
   alias: string;
-  status: "ok" | "error";
+  status: "ok" | "error" | "disabled";
 };
 
 export type HealthResponse = {
