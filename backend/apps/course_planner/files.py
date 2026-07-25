@@ -12,6 +12,7 @@ from openpyxl.utils.exceptions import InvalidFileException
 
 MAX_COURSES = 10_000
 MAX_HEADER_SCAN_ROWS = 25
+EXCEL_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
 
 HEADER_ALIASES = {
     "title": ("title", "titlu", "nume curs"),
@@ -48,6 +49,16 @@ def _display_value(value: Any) -> str:
     if isinstance(value, float) and value.is_integer():
         return str(int(value))
     return str(value).strip()
+
+
+def _neutralize_excel_formula(value: Any) -> Any:
+    if not isinstance(value, str) or not value:
+        return value
+
+    first_non_space = value.lstrip(" ")[:1]
+    if value.startswith(("\t", "\r")) or first_non_space in EXCEL_FORMULA_PREFIXES:
+        return f"'{value}"
+    return value
 
 
 def _header_map(row: list[Any]) -> dict[str, int]:
@@ -317,17 +328,21 @@ def create_excel_export(
                 **{month: "" for month in month_names},
             }
             order.append(course_order)
-        rows_by_order[course_order][month_names[int(item["month"]) - 1]] = item["date_range"]
+        rows_by_order[course_order][month_names[int(item["month"]) - 1]] = item[
+            "date_range"
+        ]
 
     for course_order in order:
         row = rows_by_order[course_order]
-        schedule_sheet.append([row[header] for header in headers])
+        schedule_sheet.append(
+            [_neutralize_excel_formula(row[header]) for header in headers]
+        )
 
     if holidays:
         holidays_sheet = workbook.create_sheet("Holidays")
         holidays_sheet.append(["Holiday Date"])
         for holiday in holidays:
-            holidays_sheet.append([holiday])
+            holidays_sheet.append([_neutralize_excel_formula(holiday)])
 
     for sheet in workbook.worksheets:
         for column_index, column in enumerate(sheet.iter_cols(), start=1):
