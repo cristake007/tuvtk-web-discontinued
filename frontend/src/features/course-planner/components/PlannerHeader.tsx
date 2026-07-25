@@ -1,4 +1,4 @@
-import { CalendarRange, History } from "lucide-react";
+import { CalendarRange, History, LayoutGrid } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
@@ -22,14 +22,24 @@ export function PlannerHeader() {
         </div>
       </div>
 
-      <Button
-        nativeButton={false}
-        render={<Link to="/planificator-cursuri/istoric" />}
-        variant="outline"
-      >
-        <History aria-hidden="true" />
-        Istoric generări
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        <Button
+          nativeButton={false}
+          render={<Link to="/planificator-cursuri" />}
+          variant="outline"
+        >
+          <LayoutGrid aria-hidden="true" />
+          Toate modulele
+        </Button>
+        <Button
+          nativeButton={false}
+          render={<Link to="/planificator-cursuri/istoric" />}
+          variant="outline"
+        >
+          <History aria-hidden="true" />
+          Istoric generări
+        </Button>
+      </div>
     </header>
   );
 }
