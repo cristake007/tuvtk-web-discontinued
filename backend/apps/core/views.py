@@ -4,7 +4,7 @@ from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.permissions import AllowAny, IsAdminUser, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -45,12 +45,12 @@ class PublicBrandingView(APIView):
 
 
 class CoreBootstrapView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     @extend_schema(
         operation_id="core_bootstrap",
         responses=CoreBootstrapSerializer,
-        summary="Return application shell configuration and navigation",
+        summary="Return authentication state, shell configuration and navigation",
         tags=["core"],
     )
     def get(self, request):
