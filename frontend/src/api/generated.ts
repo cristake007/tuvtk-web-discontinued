@@ -75,6 +75,11 @@ export interface components {
       parent_key: string | null;
       application_key: string;
     };
+    PublicBranding: {
+      site_name: string;
+      organization_name: string;
+      logo_url: string | null;
+    };
     PublicHoliday: {
       id: string;
       date: string;
