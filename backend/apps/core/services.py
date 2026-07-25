@@ -54,39 +54,41 @@ def serialize_shell_configuration(
 
 def get_core_bootstrap(request: HttpRequest) -> dict[str, object]:
     configuration_payload = serialize_shell_configuration(get_active_configuration())
-
     user = request.user
+    authenticated = user.is_authenticated
     navigation_payload: list[dict[str, object]] = []
 
-    items = (
-        NavigationItem.objects.filter(
-            is_enabled=True,
-            application__is_enabled=True,
+    if authenticated:
+        items = (
+            NavigationItem.objects.filter(
+                is_enabled=True,
+                application__is_enabled=True,
+            )
+            .select_related("application", "parent")
         )
-        .select_related("application", "parent")
-    )
 
-    for item in items:
-        if item.requires_staff and not user.is_staff:
-            continue
+        for item in items:
+            if item.requires_staff and not user.is_staff:
+                continue
 
-        if item.permission_code and not user.has_perm(item.permission_code):
-            continue
+            if item.permission_code and not user.has_perm(item.permission_code):
+                continue
 
-        navigation_payload.append(
-            {
-                "key": item.key,
-                "label": item.label,
-                "path": item.path,
-                "icon": item.icon,
-                "position": item.position,
-                "parent_key": item.parent.key if item.parent else None,
-                "application_key": item.application.key,
-            }
-        )
+            navigation_payload.append(
+                {
+                    "key": item.key,
+                    "label": item.label,
+                    "path": item.path,
+                    "icon": item.icon,
+                    "position": item.position,
+                    "parent_key": item.parent.key if item.parent else None,
+                    "application_key": item.application.key,
+                }
+            )
 
     return {
+        "authenticated": authenticated,
         "configuration": configuration_payload,
-        "user": serialize_session_user(user),
+        "user": serialize_session_user(user) if authenticated else None,
         "navigation": navigation_payload,
     }
