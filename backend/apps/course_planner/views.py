@@ -11,6 +11,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.public_holidays.calendar import get_holiday_dates
+from config.error_serializers import first_serializer_error
+from config.formats import ROMANIAN_DATE_FORMAT
 
 from .files import CourseFileError, create_excel_export, parse_course_file
 from .models import CoursePlanGeneration
@@ -41,15 +43,6 @@ class CoursePlanHistoryPagination(PageNumberPagination):
     max_page_size = 100
 
 
-def _first_error(errors) -> str:
-    if isinstance(errors, dict):
-        for value in errors.values():
-            return _first_error(value)
-    if isinstance(errors, list) and errors:
-        return _first_error(errors[0])
-    return str(errors)
-
-
 class CoursePlannerSettingsView(APIView):
     permission_classes = [CanUseCoursePlanner]
 
@@ -77,7 +70,7 @@ class CoursePlannerSettingsView(APIView):
         serializer = CoursePlannerSettingsSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(
-                {"detail": _first_error(serializer.errors)},
+                {"detail": first_serializer_error(serializer.errors)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -104,7 +97,7 @@ class GenerateScheduleView(APIView):
         serializer = GenerateScheduleSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(
-                {"detail": _first_error(serializer.errors)},
+                {"detail": first_serializer_error(serializer.errors)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -118,7 +111,9 @@ class GenerateScheduleView(APIView):
                 year=values["year"],
                 months=values["months"],
             )
-            normalized_holidays = [value.strftime("%d.%m.%Y") for value in holiday_dates]
+            normalized_holidays = [
+                value.strftime(ROMANIAN_DATE_FORMAT) for value in holiday_dates
+            ]
             schedule = generate_schedule(
                 courses,
                 year=values["year"],
@@ -270,7 +265,7 @@ class ExportScheduleView(APIView):
         serializer = ExportScheduleSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(
-                {"detail": _first_error(serializer.errors)},
+                {"detail": first_serializer_error(serializer.errors)},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
