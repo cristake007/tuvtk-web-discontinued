@@ -2,7 +2,6 @@ export type CoursePlannerSettings = {
   year: number;
   months: number[];
   randomness: number;
-  holidays: string[];
 };
 
 export type ScheduledCourse = {
