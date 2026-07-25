@@ -24,8 +24,6 @@ services:
     depends_on:
       db_core:
         condition: service_healthy
-      db_registry:
-        condition: service_healthy
 
     command:
       - /bin/sh
@@ -62,8 +60,6 @@ services:
 
     depends_on:
       db_core:
-        condition: service_healthy
-      db_registry:
         condition: service_healthy
       redis:
         condition: service_healthy
