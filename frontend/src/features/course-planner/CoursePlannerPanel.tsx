@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -10,7 +10,6 @@ import {
   coursePlannerQueryKey,
   downloadCoursePlanFile,
   fetchCoursePlannerSettings,
-  fetchPlannerPublicHolidays,
   generateCourseSchedule,
   saveCoursePlannerSettings,
 } from "./api";
@@ -24,7 +23,6 @@ const defaultSettings: CoursePlannerSettings = {
   year: new Date().getFullYear(),
   months: [],
   randomness: 5,
-  holidays: [],
 };
 
 type ExcelDownloadRequest = {
@@ -60,15 +58,12 @@ export function CoursePlannerPanel() {
   });
   const [settings, setSettings] = useState<CoursePlannerSettings>(defaultSettings);
   const [inputFile, setInputFile] = useState<File | null>(null);
-  const [holidaysText, setHolidaysText] = useState("");
   const [result, setResult] = useState<GenerateScheduleResponse | null>(null);
 
   useEffect(() => {
-    if (!settingsQuery.data) {
-      return;
+    if (settingsQuery.data) {
+      setSettings(settingsQuery.data);
     }
-    setSettings(settingsQuery.data);
-    setHolidaysText(settingsQuery.data.holidays.join("\n"));
   }, [settingsQuery.data]);
 
   useEffect(() => {
@@ -86,12 +81,6 @@ export function CoursePlannerPanel() {
     return () => window.cancelAnimationFrame(frame);
   }, [result]);
 
-  const normalizedHolidays = useMemo(
-    () =>
-      [...new Set(holidaysText.split(/[\n,;]+/).map((value) => value.trim()).filter(Boolean))],
-    [holidaysText],
-  );
-
   const saveMutation = useMutation({
     mutationFn: saveCoursePlannerSettings,
     onError: (error) =>
@@ -104,25 +93,6 @@ export function CoursePlannerPanel() {
     },
   });
 
-  const publicHolidaysMutation = useMutation({
-    mutationFn: fetchPlannerPublicHolidays,
-    onError: (error) =>
-      toast.error("Zilele libere nu au putut fi preluate", {
-        description: getErrorMessage(error),
-      }),
-    onSuccess: (holidays) => {
-      setHolidaysText(holidays.join("\n"));
-      clearResult();
-      if (holidays.length === 0) {
-        toast.info("Nu există zile libere salvate pentru lunile selectate.");
-        return;
-      }
-      toast.success("Zilele libere au fost preluate", {
-        description: `${holidays.length} date au fost încărcate pentru lunile selectate.`,
-      });
-    },
-  });
-
   const generateMutation = useMutation({
     mutationFn: generateCourseSchedule,
     onError: (error) =>
@@ -131,10 +101,7 @@ export function CoursePlannerPanel() {
       }),
     onSuccess: (response) => {
       setResult(response);
-      queryClient.setQueryData(coursePlannerQueryKey, {
-        ...settings,
-        holidays: normalizedHolidays,
-      });
+      queryClient.setQueryData(coursePlannerQueryKey, settings);
       void queryClient.invalidateQueries({ queryKey: coursePlannerHistoryQueryKey });
       toast.success("Planificarea a fost generată", {
         description: `${response.course_count} cursuri au fost procesate și salvate în istoric.`,
@@ -158,26 +125,8 @@ export function CoursePlannerPanel() {
     },
   });
 
-  function currentSettings(): CoursePlannerSettings {
-    return {
-      ...settings,
-      holidays: normalizedHolidays,
-    };
-  }
-
   function clearResult() {
     setResult(null);
-  }
-
-  function handleFetchPublicHolidays() {
-    if (settings.months.length === 0) {
-      toast.warning("Selectează cel puțin o lună înainte de preluarea zilelor libere.");
-      return;
-    }
-    publicHolidaysMutation.mutate({
-      year: settings.year,
-      months: settings.months,
-    });
   }
 
   function handleGenerate(event: FormEvent<HTMLFormElement>) {
@@ -193,7 +142,7 @@ export function CoursePlannerPanel() {
     }
 
     generateMutation.mutate({
-      ...currentSettings(),
+      ...settings,
       inputFile,
     });
   }
@@ -241,27 +190,20 @@ export function CoursePlannerPanel() {
         <PlannerConfigurationCard
           file={inputFile}
           generatePending={generateMutation.isPending}
-          holidaysPending={publicHolidaysMutation.isPending}
-          holidaysText={holidaysText}
           onClearMonths={() => {
             setSettings((current) => ({ ...current, months: [] }));
             clearResult();
           }}
-          onFetchHolidays={handleFetchPublicHolidays}
           onFileChange={(file) => {
             setInputFile(file ?? null);
             clearResult();
           }}
           onGenerate={handleGenerate}
-          onHolidaysChange={(value) => {
-            setHolidaysText(value);
-            clearResult();
-          }}
           onRandomnessChange={(randomness) => {
             setSettings((current) => ({ ...current, randomness }));
             clearResult();
           }}
-          onSave={() => saveMutation.mutate(currentSettings())}
+          onSave={() => saveMutation.mutate(settings)}
           onSelectAllMonths={() => {
             setSettings((current) => ({
               ...current,
@@ -289,7 +231,6 @@ export function CoursePlannerPanel() {
         <PlannerSummaryCard
           downloadPending={downloadMutation.isPending}
           file={inputFile}
-          holidayCount={normalizedHolidays.length}
           onDownload={handleDownload}
           result={result}
           selectedMonths={settings.months}
