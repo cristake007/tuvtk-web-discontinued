@@ -37,12 +37,8 @@ import { formatApiError } from "@/lib/api-errors";
 import { formatRomanianDateTime } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 
-import {
-  createUtilizator,
-  fetchUtilizatori,
-  updateUtilizator,
-  utilizatoriQueryKey,
-} from "./api";
+import { createUtilizator, fetchUtilizatori, updateUtilizator } from "./api";
+import { utilizatoriQueryKeys } from "./queryKeys";
 import type {
   Utilizator,
   UtilizatorRoleFilter,
@@ -97,21 +93,15 @@ export function UtilizatoriPanel() {
     staleTime: 60_000,
   });
 
+  const listQueryInput = {
+    page,
+    role: roleFilter,
+    search: debouncedSearch,
+    status: statusFilter,
+  };
   const usersQuery = useQuery({
-    queryKey: [
-      ...utilizatoriQueryKey,
-      page,
-      debouncedSearch,
-      statusFilter,
-      roleFilter,
-    ],
-    queryFn: () =>
-      fetchUtilizatori({
-        page,
-        role: roleFilter,
-        search: debouncedSearch,
-        status: statusFilter,
-      }),
+    queryKey: utilizatoriQueryKeys.list(listQueryInput),
+    queryFn: () => fetchUtilizatori(listQueryInput),
     placeholderData: (previous) => previous,
   });
 
@@ -126,7 +116,7 @@ export function UtilizatoriPanel() {
     onSuccess: (savedUser, variables) => {
       setDialogOpen(false);
       setSelectedUser(null);
-      void queryClient.invalidateQueries({ queryKey: utilizatoriQueryKey });
+      void queryClient.invalidateQueries({ queryKey: utilizatoriQueryKeys.all });
       toast.success(
         variables.user ? "Utilizatorul a fost actualizat." : "Utilizatorul a fost creat.",
         { description: savedUser.full_name },
@@ -219,7 +209,7 @@ export function UtilizatoriPanel() {
             }}
             value={statusFilter}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full cursor-pointer">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -236,7 +226,7 @@ export function UtilizatoriPanel() {
             }}
             value={roleFilter}
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger className="w-full cursor-pointer">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -266,57 +256,65 @@ export function UtilizatoriPanel() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {usersQuery.data.results.map((user) => (
-                <TableRow className="even:bg-muted/25" key={user.id}>
-                  <TableCell>
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
-                        {initials(user)}
-                      </span>
-                      <div className="min-w-0">
-                        <p className="truncate font-medium">{user.full_name}</p>
-                        <p className="truncate text-xs text-muted-foreground">
-                          @{user.username}
-                          {currentUser?.id === user.id ? " · contul tău" : ""}
-                        </p>
+              {usersQuery.data.results.map((user) => {
+                const editDisabled = user.is_superuser && !currentUser?.is_superuser;
+                return (
+                  <TableRow className="even:bg-muted/25" key={user.id}>
+                    <TableCell>
+                      <div className="flex min-w-0 items-center gap-3">
+                        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                          {initials(user)}
+                        </span>
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{user.full_name}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            @{user.username}
+                            {currentUser?.id === user.id ? " · contul tău" : ""}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  </TableCell>
-                  <TableCell className="max-w-64 truncate">
-                    {user.email || "—"}
-                  </TableCell>
-                  <TableCell>
-                    <RoleBadge user={user} />
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant={user.is_active ? "secondary" : "destructive"}>
-                      {user.is_active ? "Activ" : "Inactiv"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap text-muted-foreground">
-                    {user.last_login
-                      ? formatRomanianDateTime(user.last_login)
-                      : "Niciodată"}
-                  </TableCell>
-                  <TableCell className="whitespace-nowrap text-muted-foreground">
-                    {formatRomanianDateTime(user.date_joined)}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex justify-end">
-                      <Button
-                        aria-label={`Editează utilizatorul ${user.full_name}`}
-                        onClick={() => openEditDialog(user)}
-                        size="icon-sm"
-                        title="Editează utilizatorul"
-                        type="button"
-                        variant="outline"
-                      >
-                        <Pencil aria-hidden="true" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
+                    </TableCell>
+                    <TableCell className="max-w-64 truncate">
+                      {user.email || "—"}
+                    </TableCell>
+                    <TableCell>
+                      <RoleBadge user={user} />
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={user.is_active ? "secondary" : "destructive"}>
+                        {user.is_active ? "Activ" : "Inactiv"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground">
+                      {user.last_login
+                        ? formatRomanianDateTime(user.last_login)
+                        : "Niciodată"}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap text-muted-foreground">
+                      {formatRomanianDateTime(user.date_joined)}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex justify-end">
+                        <Button
+                          aria-label={`Editează utilizatorul ${user.full_name}`}
+                          disabled={editDisabled}
+                          onClick={() => openEditDialog(user)}
+                          size="icon-sm"
+                          title={
+                            editDisabled
+                              ? "Doar un superutilizator poate modifica acest cont"
+                              : "Editează utilizatorul"
+                          }
+                          type="button"
+                          variant="outline"
+                        >
+                          <Pencil aria-hidden="true" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         ) : (
