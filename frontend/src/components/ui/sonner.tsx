@@ -20,7 +20,7 @@ function Toaster(props: ComponentProps<typeof Sonner>) {
         error: <OctagonXIcon className="size-4" />,
         loading: <Loader2Icon className="size-4 animate-spin" />,
       }}
-      position="top-right"
+      position="top-center"
       richColors
       style={
         {
