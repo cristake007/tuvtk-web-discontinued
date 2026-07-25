@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from config.error_serializers import ApiErrorSerializer
+
 
 class AuthenticationEndpointsSerializer(serializers.Serializer):
     csrf = serializers.CharField()
@@ -26,5 +28,5 @@ class LoginRequestSerializer(serializers.Serializer):
     password = serializers.CharField(trim_whitespace=False, write_only=True)
 
 
-class ErrorDetailSerializer(serializers.Serializer):
-    detail = serializers.CharField()
+class ErrorDetailSerializer(ApiErrorSerializer):
+    pass
