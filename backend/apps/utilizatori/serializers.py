@@ -6,7 +6,17 @@ from rest_framework.exceptions import PermissionDenied
 
 
 class UserAccountSerializer(serializers.ModelSerializer):
+    id = serializers.IntegerField(read_only=True)
+    username = serializers.CharField(read_only=True)
+    first_name = serializers.CharField(read_only=True)
+    last_name = serializers.CharField(read_only=True)
     full_name = serializers.SerializerMethodField()
+    email = serializers.EmailField(allow_blank=True, read_only=True)
+    is_active = serializers.BooleanField(read_only=True)
+    is_staff = serializers.BooleanField(read_only=True)
+    is_superuser = serializers.BooleanField(read_only=True)
+    date_joined = serializers.DateTimeField(read_only=True)
+    last_login = serializers.DateTimeField(allow_null=True, read_only=True)
 
     class Meta:
         model = get_user_model()
