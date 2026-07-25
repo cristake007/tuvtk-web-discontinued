@@ -8,18 +8,8 @@ import {
   fallbackLoginQuotes,
   fetchRomanianLoginQuotes,
 } from "@/features/auth/loginQuotes";
-import {
-  fetchPublicBranding,
-  publicBrandingQueryKey,
-} from "@/features/branding/api";
 import { PublicBrandMark } from "@/features/branding/PublicBrandMark";
 import type { PublicBranding } from "@/features/branding/types";
-
-const fallbackBranding: PublicBranding = {
-  site_name: "TUVTK",
-  organization_name: "TÜV Thüringen Karpat",
-  logo_url: null,
-};
 
 function RotatingQuote() {
   const quotesQuery = useQuery({
@@ -77,16 +67,7 @@ function RotatingQuote() {
   );
 }
 
-export function LoginPage() {
-  const brandingQuery = useQuery({
-    queryKey: publicBrandingQueryKey,
-    queryFn: fetchPublicBranding,
-    retry: 1,
-    staleTime: 5 * 60_000,
-  });
-
-  const branding = brandingQuery.data ?? fallbackBranding;
-
+export function LoginPage({ branding }: { branding: PublicBranding }) {
   return (
     <main className="relative min-h-svh bg-background">
       <div className="grid min-h-svh w-full lg:grid-cols-2">
