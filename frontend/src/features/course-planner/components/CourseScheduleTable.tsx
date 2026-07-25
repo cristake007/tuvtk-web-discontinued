@@ -52,7 +52,6 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
   const topScrollRef = useRef<HTMLDivElement>(null);
   const topScrollContentRef = useRef<HTMLDivElement>(null);
   const tableScrollRef = useRef<HTMLDivElement>(null);
-  const syncingRef = useRef(false);
 
   useEffect(() => {
     const tableScroll = tableScrollRef.current;
@@ -69,6 +68,7 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
     updateWidth();
     const observer = new ResizeObserver(updateWidth);
     observer.observe(tableScroll);
+
     const table = tableScroll.querySelector("table");
     if (table) {
       observer.observe(table);
@@ -78,15 +78,11 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
   }, [rows.length]);
 
   function syncScroll(source: HTMLDivElement, target: HTMLDivElement | null) {
-    if (!target || syncingRef.current) {
+    if (!target || target.scrollLeft === source.scrollLeft) {
       return;
     }
 
-    syncingRef.current = true;
     target.scrollLeft = source.scrollLeft;
-    requestAnimationFrame(() => {
-      syncingRef.current = false;
-    });
   }
 
   return (
@@ -104,7 +100,7 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
         <div
           ref={topScrollRef}
           aria-label="Derulare orizontală tabel"
-          className="h-4 overflow-x-auto overflow-y-hidden border-b bg-muted/20"
+          className="h-5 overflow-x-auto overflow-y-hidden border-b bg-muted/20"
           onScroll={(event) => syncScroll(event.currentTarget, tableScrollRef.current)}
           role="region"
         >
@@ -114,7 +110,6 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
         <Table
           containerRef={tableScrollRef}
           className="isolate min-w-[118rem] table-fixed border-separate border-spacing-0"
-          containerClassName="scroll-smooth"
           onContainerScroll={(event) => syncScroll(event.currentTarget, topScrollRef.current)}
         >
           <TableHeader className="bg-muted/70">
