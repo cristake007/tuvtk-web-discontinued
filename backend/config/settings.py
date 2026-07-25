@@ -61,7 +61,7 @@ ROOT_URLCONF = "config.urls"
 
 TEMPLATES = [
     {
-        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "BACKEND": "django.db.backends.django.DjangoTemplates",
         "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
@@ -105,6 +105,13 @@ if env_bool("REGISTRY_DB_ENABLED", default=True) and all(registry_database.value
         "CONN_MAX_AGE": 60,
         "CONN_HEALTH_CHECKS": True,
     }
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": os.environ.get("DJANGO_CACHE_URL", "redis://redis:6379/2"),
+    }
+}
 
 
 AUTH_PASSWORD_VALIDATORS = [
