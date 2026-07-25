@@ -11,12 +11,28 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 
 import { monthNames } from "../constants";
 import type { CoursePlannerSettings } from "../types";
+
+const firstPlannerYear = 2024;
+const lastPlannerYear = new Date().getFullYear() + 10;
+
+function getPlannerYears(selectedYear: number): number[] {
+  const start = Math.min(firstPlannerYear, selectedYear);
+  const end = Math.max(lastPlannerYear, selectedYear);
+
+  return Array.from({ length: end - start + 1 }, (_, index) => end - index);
+}
 
 type PlannerConfigurationCardProps = {
   file: File | null;
@@ -56,6 +72,7 @@ export function PlannerConfigurationCard({
   settings,
 }: PlannerConfigurationCardProps) {
   const busy = generatePending || savePending;
+  const plannerYears = getPlannerYears(settings.year);
 
   return (
     <form noValidate onSubmit={onGenerate}>
@@ -85,21 +102,28 @@ export function PlannerConfigurationCard({
           />
 
           <div className="grid gap-5 sm:grid-cols-2">
-            <label className="grid content-start gap-2 text-sm font-medium" htmlFor="planner-year">
-              Anul planificării
-              <Input
+            <div className="grid content-start gap-2 text-sm font-medium">
+              <label htmlFor="planner-year">Anul planificării</label>
+              <Select
                 disabled={busy}
-                id="planner-year"
-                max={2100}
-                min={2024}
-                onChange={(event) => onYearChange(Number(event.target.value))}
-                type="number"
-                value={settings.year}
-              />
+                onValueChange={(value) => onYearChange(Number(value))}
+                value={String(settings.year)}
+              >
+                <SelectTrigger className="w-full cursor-pointer" id="planner-year">
+                  <SelectValue>{settings.year}</SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {plannerYears.map((year) => (
+                    <SelectItem className="cursor-pointer" key={year} value={String(year)}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <span className="text-xs font-normal leading-5 text-muted-foreground">
                 Anul folosit pentru toate perioadele generate.
               </span>
-            </label>
+            </div>
 
             <label className="grid content-start gap-2 text-sm font-medium" htmlFor="randomness">
               Nivel de distribuție
