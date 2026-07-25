@@ -92,19 +92,19 @@ class CompanyLogoView(APIView):
         return response
 
 
-class CompanyLogoAdministrationView(APIView):
+class UserInterfaceCompanyLogoView(APIView):
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [IsAdminUser]
 
     @extend_schema(
-        operation_id="core_administration_company_logo_upload",
+        operation_id="core_administration_user_interface_company_logo_upload",
         request=CompanyLogoUploadSerializer,
         responses={
             200: ShellConfigurationSerializer,
             400: ErrorDetailSerializer,
             403: ErrorDetailSerializer,
         },
-        summary="Upload the company SVG logo",
+        summary="Upload the company SVG logo for the user interface",
         tags=["administration"],
     )
     def post(self, request):
@@ -135,10 +135,10 @@ class CompanyLogoAdministrationView(APIView):
         return Response(ShellConfigurationSerializer(payload).data)
 
     @extend_schema(
-        operation_id="core_administration_company_logo_remove",
+        operation_id="core_administration_user_interface_company_logo_remove",
         request=None,
         responses={204: None, 403: ErrorDetailSerializer},
-        summary="Remove the company SVG logo",
+        summary="Remove the company SVG logo from the user interface",
         tags=["administration"],
     )
     def delete(self, request):
