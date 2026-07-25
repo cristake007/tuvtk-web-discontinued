@@ -1,4 +1,4 @@
-import { ArrowRight, CalendarDays, PlugZap } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, PlugZap } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
@@ -17,7 +17,7 @@ const integrations = [
   {
     description:
       "Sincronizează sărbătorile legale din România și gestionează zilele interne folosite în întreaga platformă.",
-    href: "/settings/integrations/public-holidays",
+    href: "/administrare/integrari/zile-libere",
     icon: CalendarDays,
     name: "Zile libere și sărbători",
     provider: "Nager.Date",
@@ -28,17 +28,31 @@ const integrations = [
 export function IntegrationsPage() {
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6">
-      <header className="flex items-start gap-4">
-        <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-          <PlugZap aria-hidden="true" className="size-6" />
-        </span>
-        <div>
-          <p className="text-sm font-medium text-primary">Setări</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Integrări</h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Alege serviciul pe care vrei să îl configurezi. Fiecare integrare are propria pagină de setări și sincronizare.
-          </p>
+      <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="flex min-w-0 items-start gap-4">
+          <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
+            <PlugZap aria-hidden="true" className="size-6" />
+          </span>
+          <div>
+            <p className="text-sm font-medium text-primary">Administrare · Integrări</p>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+              Integrări
+            </h1>
+            <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+              Alege serviciul pe care vrei să îl configurezi. Fiecare integrare are
+              propria pagină de configurare și sincronizare.
+            </p>
+          </div>
         </div>
+
+        <Button
+          nativeButton={false}
+          render={<Link to="/administrare" />}
+          variant="outline"
+        >
+          <ArrowLeft aria-hidden="true" />
+          Administrare
+        </Button>
       </header>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -54,7 +68,9 @@ export function IntegrationsPage() {
                   </span>
                   <div className="min-w-0">
                     <CardTitle>{integration.name}</CardTitle>
-                    <CardDescription className="mt-1">{integration.provider}</CardDescription>
+                    <CardDescription className="mt-1">
+                      {integration.provider}
+                    </CardDescription>
                   </div>
                 </div>
                 <CardAction>
@@ -62,7 +78,9 @@ export function IntegrationsPage() {
                 </CardAction>
               </CardHeader>
               <CardContent>
-                <p className="text-sm leading-6 text-muted-foreground">{integration.description}</p>
+                <p className="text-sm leading-6 text-muted-foreground">
+                  {integration.description}
+                </p>
               </CardContent>
               <CardFooter className="mt-auto justify-end">
                 <Button
