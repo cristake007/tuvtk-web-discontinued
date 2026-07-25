@@ -3,6 +3,8 @@ from pathlib import Path
 from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
+from config.error_serializers import ApiErrorSerializer
+
 from .files import MAX_COURSES
 from .models import CoursePlanGeneration
 
@@ -132,12 +134,11 @@ class ExportScheduleSerializer(serializers.Serializer):
     generation_id = serializers.UUIDField()
 
 
-class UnscheduledCoursesSerializer(serializers.Serializer):
-    detail = serializers.CharField()
-    unscheduled_courses = serializers.DictField(
+class UnscheduledCoursesSerializer(ApiErrorSerializer):
+    fields = serializers.DictField(
         child=serializers.ListField(child=serializers.CharField())
     )
 
 
-class CoursePlannerErrorDetailSerializer(serializers.Serializer):
-    detail = serializers.CharField()
+class CoursePlannerErrorDetailSerializer(ApiErrorSerializer):
+    pass
