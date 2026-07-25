@@ -7,12 +7,14 @@ from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.parsers import FormParser, MultiPartParser
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.public_holidays.calendar import get_holiday_dates
+
 from .files import CourseFileError, create_excel_export, parse_course_file
 from .models import CoursePlanGeneration
+from .permissions import CanUseCoursePlanner
 from .serializers import (
     CoursePlanGenerationSerializer,
     CoursePlanHistoryResponseSerializer,
@@ -28,7 +30,6 @@ from .services import (
     create_course_plan_generation,
     generate_schedule,
     get_course_planner_settings,
-    parse_holidays,
     serialize_settings,
     update_course_planner_settings,
 )
@@ -50,7 +51,7 @@ def _first_error(errors) -> str:
 
 
 class CoursePlannerSettingsView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CanUseCoursePlanner]
 
     @extend_schema(
         operation_id="course_planner_settings_read",
@@ -86,7 +87,7 @@ class CoursePlannerSettingsView(APIView):
 
 class GenerateScheduleView(APIView):
     parser_classes = [MultiPartParser, FormParser]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CanUseCoursePlanner]
 
     @extend_schema(
         operation_id="course_planner_generate",
@@ -113,14 +114,16 @@ class GenerateScheduleView(APIView):
 
         try:
             courses = parse_course_file(upload.read(), extension)
-            normalized_holidays, parsed_holidays = parse_holidays(
-                values.get("holidays", [])
+            holiday_dates = get_holiday_dates(
+                year=values["year"],
+                months=values["months"],
             )
+            normalized_holidays = [value.strftime("%d.%m.%Y") for value in holiday_dates]
             schedule = generate_schedule(
                 courses,
                 year=values["year"],
                 months=values["months"],
-                holidays=parsed_holidays,
+                holidays=holiday_dates,
                 randomness=values["randomness"],
             )
         except CourseFileError as exc:
@@ -163,7 +166,6 @@ class GenerateScheduleView(APIView):
             year=values["year"],
             months=values["months"],
             randomness=values["randomness"],
-            holidays=normalized_holidays,
         )
         payload = {
             "schedule": schedule,
@@ -174,7 +176,7 @@ class GenerateScheduleView(APIView):
 
 
 class CoursePlanHistoryView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CanUseCoursePlanner]
 
     @extend_schema(
         operation_id="course_planner_history_list",
@@ -191,7 +193,7 @@ class CoursePlanHistoryView(APIView):
 
 
 class CoursePlanFileDownloadView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CanUseCoursePlanner]
 
     file_types = {
         "excel": (
@@ -248,7 +250,7 @@ class CoursePlanFileDownloadView(APIView):
 
 
 class ExportScheduleView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [CanUseCoursePlanner]
 
     @extend_schema(
         operation_id="course_planner_export",
@@ -259,8 +261,9 @@ class ExportScheduleView(APIView):
                 "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             ): OpenApiTypes.BINARY,
             400: CoursePlannerErrorDetailSerializer,
+            404: CoursePlannerErrorDetailSerializer,
         },
-        summary="Export the generated course schedule to Excel",
+        summary="Export a saved course plan generation to Excel",
         tags=["course-planner"],
     )
     def post(self, request):
@@ -271,9 +274,12 @@ class ExportScheduleView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        values = serializer.validated_data
+        generation = get_object_or_404(
+            CoursePlanGeneration,
+            pk=serializer.validated_data["generation_id"],
+        )
         try:
-            excel_data = create_excel_export(values["schedule"], values["holidays"])
+            excel_data = create_excel_export(generation.schedule, generation.holidays)
         except (KeyError, OSError, TypeError, ValueError):
             return Response(
                 {"detail": "Fișierul Excel nu a putut fi generat."},
@@ -285,7 +291,7 @@ class ExportScheduleView(APIView):
             content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
         response["Content-Disposition"] = (
-            f'attachment; filename="planificare_cursuri_{values["year"]}.xlsx"'
+            f'attachment; filename="planificare_cursuri_{generation.year}.xlsx"'
         )
         response["X-Content-Type-Options"] = "nosniff"
         return response
