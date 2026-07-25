@@ -36,6 +36,13 @@ class PublicHolidaySerializer(serializers.ModelSerializer):
 
 
 class PublicHolidaySettingsSerializer(serializers.ModelSerializer):
+    enabled = serializers.BooleanField(read_only=True)
+    automatic_sync = serializers.BooleanField(read_only=True)
+    frequency = serializers.ChoiceField(
+        choices=PublicHolidaySettings.Frequency.choices,
+        read_only=True,
+    )
+
     class Meta:
         model = PublicHolidaySettings
         fields = (
