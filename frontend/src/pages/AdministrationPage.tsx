@@ -165,24 +165,25 @@ function AdministrationEntryRow({ entry }: { entry: AdministrationEntry }) {
   const content = (
     <>
       <p
-        className={
-          entry.href
-            ? "font-medium text-primary"
-            : "font-medium text-foreground"
-        }
+        className={`col-start-1 row-start-1 font-medium ${
+          entry.href ? "text-primary" : "text-foreground"
+        }`}
       >
         {entry.name}
       </p>
-      <p className="text-sm leading-5 text-muted-foreground">
+      <p className="col-start-1 row-start-2 text-sm leading-5 text-muted-foreground sm:col-start-2 sm:row-start-1">
         {entry.description}
       </p>
       {entry.href ? (
         <ArrowRight
           aria-hidden="true"
-          className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
+          className="col-start-2 row-span-2 row-start-1 size-4 shrink-0 self-center text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary sm:col-start-3 sm:row-span-1"
         />
       ) : (
-        <span aria-hidden="true" className="size-4" />
+        <span
+          aria-hidden="true"
+          className="col-start-2 row-span-2 row-start-1 size-4 sm:col-start-3 sm:row-span-1"
+        />
       )}
     </>
   );
