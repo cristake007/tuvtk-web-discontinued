@@ -23,9 +23,14 @@ const CoursePlannerHistoryPage = lazy(async () => {
   return { default: module.CoursePlannerHistoryPage };
 });
 
-const SettingsPage = lazy(async () => {
-  const module = await import("@/pages/SettingsPage");
-  return { default: module.SettingsPage };
+const AdministrationPage = lazy(async () => {
+  const module = await import("@/pages/AdministrationPage");
+  return { default: module.AdministrationPage };
+});
+
+const AdministrationSystemPage = lazy(async () => {
+  const module = await import("@/pages/AdministrationSystemPage");
+  return { default: module.AdministrationSystemPage };
 });
 
 const IntegrationsPage = lazy(async () => {
@@ -86,18 +91,34 @@ function CoursePlannerHistoryRoute() {
   );
 }
 
-function SettingsRoute() {
+function AdministrationRoute() {
   return (
     <Suspense
       fallback={
         <ApplicationState
-          description="Se încarcă identitatea vizuală și configurarea aplicației."
+          description="Se încarcă opțiunile de administrare ale platformei."
           loading
-          title="Se încarcă setările"
+          title="Se încarcă administrarea"
         />
       }
     >
-      <SettingsPage />
+      <AdministrationPage />
+    </Suspense>
+  );
+}
+
+function AdministrationSystemRoute() {
+  return (
+    <Suspense
+      fallback={
+        <ApplicationState
+          description="Se încarcă configurarea sistemului."
+          loading
+          title="Se încarcă sistemul"
+        />
+      }
+    >
+      <AdministrationSystemPage />
     </Suspense>
   );
 }
@@ -182,15 +203,19 @@ export const router = createBrowserRouter([
         ),
       },
       {
-        path: "settings",
-        element: <SettingsRoute />,
+        path: "administrare",
+        element: <AdministrationRoute />,
       },
       {
-        path: "settings/integrations",
+        path: "administrare/sistem",
+        element: <AdministrationSystemRoute />,
+      },
+      {
+        path: "administrare/integrari",
         element: <IntegrationsRoute />,
       },
       {
-        path: "settings/integrations/public-holidays",
+        path: "administrare/integrari/zile-libere",
         element: <PublicHolidaysIntegrationRoute />,
       },
       {
