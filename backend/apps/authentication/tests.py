@@ -1,9 +1,17 @@
 import json
 
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
+
+TEST_CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "authentication-api-tests",
+    }
+}
 
 
+@override_settings(CACHES=TEST_CACHES)
 class SessionAuthenticationApiTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
