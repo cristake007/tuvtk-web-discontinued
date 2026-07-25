@@ -1,10 +1,6 @@
-import { useEffect, useState, type FormEvent } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, CalendarDays, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { toast } from "sonner";
 
-import { ApiError } from "@/api/http";
 import { ApplicationState } from "@/components/ApplicationState";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -20,192 +16,41 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
+import { formatApiError } from "@/lib/api-errors";
 
-import {
-  createInternalHoliday,
-  deleteInternalHoliday,
-  fetchPublicHolidays,
-  fetchPublicHolidaySettings,
-  publicHolidayQueryKeys,
-  synchronizePublicHolidays,
-  updateInternalHoliday,
-  updatePublicHolidaySettings,
-} from "./api";
 import { InternalHolidayForm } from "./components/InternalHolidayForm";
 import { NagerDateSettingsCard } from "./components/NagerDateSettingsCard";
 import { PublicHolidayTable } from "./components/PublicHolidayTable";
-import type {
-  InternalHolidayInput,
-  PublicHoliday,
-  PublicHolidaySettingsUpdate,
-} from "./types";
+import { usePublicHolidaysIntegration } from "./usePublicHolidaysIntegration";
 
-const emptyHoliday: InternalHolidayInput = {
-  date: "",
-  local_name: "",
-  description: "",
-};
-
-const defaultSettings: PublicHolidaySettingsUpdate = {
-  enabled: true,
-  automatic_sync: true,
-  frequency: "6_months",
-};
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof ApiError || error instanceof Error) {
-    return error.message;
-  }
-  return "Operațiunea nu a putut fi finalizată.";
-}
-
-function romanianDateToIso(value: string): string {
-  const [day, month, year] = value.split(".");
-  return day && month && year ? `${year}-${month}-${day}` : value;
-}
+const operationErrorFallback = "Operațiunea nu a putut fi finalizată.";
 
 export function PublicHolidaysIntegrationPanel() {
-  const queryClient = useQueryClient();
-  const [year, setYear] = useState(new Date().getFullYear());
-  const [settingsDraft, setSettingsDraft] =
-    useState<PublicHolidaySettingsUpdate>(defaultSettings);
-  const [holidayDraft, setHolidayDraft] =
-    useState<InternalHolidayInput>(emptyHoliday);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [deleteCandidate, setDeleteCandidate] = useState<PublicHoliday | null>(null);
-
-  const settingsQuery = useQuery({
-    queryKey: publicHolidayQueryKeys.settings,
-    queryFn: fetchPublicHolidaySettings,
-    staleTime: 60_000,
-  });
-  const holidaysQuery = useQuery({
-    queryKey: publicHolidayQueryKeys.holidays(year),
-    queryFn: () => fetchPublicHolidays(year),
-    enabled: year >= 1970 && year <= 2100,
-  });
-
-  useEffect(() => {
-    if (!settingsQuery.data) {
-      return;
-    }
-    setSettingsDraft({
-      enabled: settingsQuery.data.enabled,
-      automatic_sync: settingsQuery.data.automatic_sync,
-      frequency: settingsQuery.data.frequency,
-    });
-  }, [settingsQuery.data]);
-
-  const saveSettingsMutation = useMutation({
-    mutationFn: updatePublicHolidaySettings,
-    onError: (error) =>
-      toast.error("Setările integrării nu au putut fi salvate", {
-        description: getErrorMessage(error),
-      }),
-    onSuccess: (settings) => {
-      queryClient.setQueryData(publicHolidayQueryKeys.settings, settings);
-      toast.success("Setările integrării Nager.Date au fost salvate.");
-    },
-  });
-
-  const syncMutation = useMutation({
-    mutationFn: synchronizePublicHolidays,
-    onError: (error) => {
-      void queryClient.invalidateQueries({ queryKey: publicHolidayQueryKeys.root });
-      toast.error("Sincronizarea Nager.Date a eșuat", {
-        description: getErrorMessage(error),
-      });
-    },
-    onSuccess: (result) => {
-      void queryClient.invalidateQueries({ queryKey: publicHolidayQueryKeys.root });
-      if (result.status === "skipped") {
-        toast.warning("Sincronizarea a fost omisă", {
-          description: result.message,
-        });
-        return;
-      }
-      toast.success("Zilele de sărbătoare au fost sincronizate", {
-        description: result.message,
-      });
-    },
-  });
-
-  const createMutation = useMutation({
-    mutationFn: createInternalHoliday,
-    onError: (error) =>
-      toast.error("Ziua internă nu a putut fi adăugată", {
-        description: getErrorMessage(error),
-      }),
-    onSuccess: () => {
-      setHolidayDraft(emptyHoliday);
-      void queryClient.invalidateQueries({ queryKey: publicHolidayQueryKeys.root });
-      toast.success("Ziua internă a fost adăugată.");
-    },
-  });
-
-  const updateMutation = useMutation({
-    mutationFn: ({
-      holidayId,
-      values,
-    }: {
-      holidayId: string;
-      values: InternalHolidayInput;
-    }) => updateInternalHoliday(holidayId, values),
-    onError: (error) =>
-      toast.error("Ziua internă nu a putut fi modificată", {
-        description: getErrorMessage(error),
-      }),
-    onSuccess: () => {
-      setEditingId(null);
-      setHolidayDraft(emptyHoliday);
-      void queryClient.invalidateQueries({ queryKey: publicHolidayQueryKeys.root });
-      toast.success("Ziua internă a fost actualizată.");
-    },
-  });
-
-  const deleteMutation = useMutation({
-    mutationFn: deleteInternalHoliday,
-    onError: (error) =>
-      toast.error("Ziua internă nu a putut fi ștearsă", {
-        description: getErrorMessage(error),
-      }),
-    onSuccess: () => {
-      setDeleteCandidate(null);
-      void queryClient.invalidateQueries({ queryKey: publicHolidayQueryKeys.root });
-      toast.success("Ziua internă a fost ștearsă.");
-    },
-  });
-
-  function handleHolidaySubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!holidayDraft.date || !holidayDraft.local_name.trim()) {
-      toast.warning("Completează data și denumirea zilei interne.");
-      return;
-    }
-    if (editingId) {
-      updateMutation.mutate({ holidayId: editingId, values: holidayDraft });
-      return;
-    }
-    createMutation.mutate(holidayDraft);
-  }
-
-  function startEditing(holiday: PublicHoliday) {
-    if (!holiday.is_internal) {
-      return;
-    }
-    setEditingId(holiday.id);
-    setHolidayDraft({
-      date: romanianDateToIso(holiday.date),
-      local_name: holiday.local_name,
-      description: holiday.description,
-    });
-  }
-
-  function requestDelete(holiday: PublicHoliday) {
-    if (holiday.is_internal) {
-      setDeleteCandidate(holiday);
-    }
-  }
+  const {
+    cancelEditing,
+    closeDeleteDialog,
+    confirmDelete,
+    createOrUpdatePending,
+    deleteCandidate,
+    deletePending,
+    deletePendingId,
+    editing,
+    handleHolidaySubmit,
+    holidayDraft,
+    holidaysQuery,
+    requestDelete,
+    saveSettings,
+    saveSettingsPending,
+    settingsDraft,
+    settingsQuery,
+    setHolidayDraft,
+    setSettingsDraft,
+    setYear,
+    startEditing,
+    synchronize,
+    syncPending,
+    year,
+  } = usePublicHolidaysIntegration();
 
   if (settingsQuery.isPending) {
     return (
@@ -221,7 +66,7 @@ export function PublicHolidaysIntegrationPanel() {
     return (
       <ApplicationState
         actionLabel="Încearcă din nou"
-        description={getErrorMessage(settingsQuery.error)}
+        description={formatApiError(settingsQuery.error, operationErrorFallback)}
         onAction={() => void settingsQuery.refetch()}
         title="Integrarea nu este disponibilă"
       />
@@ -241,7 +86,8 @@ export function PublicHolidaysIntegrationPanel() {
               Zile libere și sărbători
             </h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-              Configurează sincronizarea sărbătorilor legale și gestionează zilele interne utilizate în întreaga platformă.
+              Configurează sincronizarea sărbătorilor legale și gestionează zilele
+              interne utilizate în întreaga platformă.
             </p>
           </div>
         </div>
@@ -258,34 +104,33 @@ export function PublicHolidaysIntegrationPanel() {
 
       {holidaysQuery.isError ? (
         <Alert variant="destructive">
-          <AlertDescription>{getErrorMessage(holidaysQuery.error)}</AlertDescription>
+          <AlertDescription>
+            {formatApiError(holidaysQuery.error, operationErrorFallback)}
+          </AlertDescription>
         </Alert>
       ) : null}
 
       <NagerDateSettingsCard
         onChange={setSettingsDraft}
-        onSave={() => saveSettingsMutation.mutate(settingsDraft)}
-        onSync={() => syncMutation.mutate()}
-        savePending={saveSettingsMutation.isPending}
+        onSave={saveSettings}
+        onSync={synchronize}
+        savePending={saveSettingsPending}
         settings={settingsQuery.data}
-        syncPending={syncMutation.isPending}
+        syncPending={syncPending}
         values={settingsDraft}
       />
 
       <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(20rem,0.75fr)_minmax(0,1.5fr)]">
         <InternalHolidayForm
-          editing={editingId !== null}
-          onCancel={() => {
-            setEditingId(null);
-            setHolidayDraft(emptyHoliday);
-          }}
+          editing={editing}
+          onCancel={cancelEditing}
           onChange={setHolidayDraft}
           onSubmit={handleHolidaySubmit}
-          pending={createMutation.isPending || updateMutation.isPending}
+          pending={createOrUpdatePending}
           values={holidayDraft}
         />
         <PublicHolidayTable
-          deletePendingId={deleteMutation.isPending ? deleteMutation.variables ?? null : null}
+          deletePendingId={deletePendingId}
           holidays={holidaysQuery.data ?? []}
           loading={holidaysQuery.isPending || holidaysQuery.isFetching}
           onDelete={requestDelete}
@@ -297,8 +142,8 @@ export function PublicHolidaysIntegrationPanel() {
 
       <AlertDialog
         onOpenChange={(open) => {
-          if (!open && !deleteMutation.isPending) {
-            setDeleteCandidate(null);
+          if (!open) {
+            closeDeleteDialog();
           }
         }}
         open={deleteCandidate !== null}
@@ -316,19 +161,13 @@ export function PublicHolidaysIntegrationPanel() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={deleteMutation.isPending}>
-              Renunță
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={deletePending}>Renunță</AlertDialogCancel>
             <AlertDialogAction
-              disabled={!deleteCandidate || deleteMutation.isPending}
-              onClick={() => {
-                if (deleteCandidate) {
-                  deleteMutation.mutate(deleteCandidate.id);
-                }
-              }}
+              disabled={!deleteCandidate || deletePending}
+              onClick={confirmDelete}
               variant="destructive"
             >
-              {deleteMutation.isPending ? <Spinner /> : <Trash2 aria-hidden="true" />}
+              {deletePending ? <Spinner /> : <Trash2 aria-hidden="true" />}
               Șterge ziua
             </AlertDialogAction>
           </AlertDialogFooter>
