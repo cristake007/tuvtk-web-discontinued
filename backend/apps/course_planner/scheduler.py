@@ -55,7 +55,8 @@ class CourseScheduler:
             return start_date.strftime(ROMANIAN_DATE_FORMAT)
 
         end_date = self.calculate_end_date(start_date, duration)
+        formatted_end_date = end_date.strftime(ROMANIAN_DATE_FORMAT)
         if start_date.month == end_date.month and start_date.year == end_date.year:
-            return f"{start_date:%d}-{end_date:%d.%m.%Y}"
+            return f"{start_date:%d}-{formatted_end_date}"
 
-        return f"{start_date:%d.%m}-{end_date:%d.%m.%Y}"
+        return f"{start_date:%d.%m}-{formatted_end_date}"
