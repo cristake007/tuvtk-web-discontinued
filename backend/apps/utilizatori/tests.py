@@ -52,6 +52,14 @@ class UtilizatoriApiTests(TestCase):
         self.assertEqual(payload["count"], 1)
         self.assertEqual(payload["results"][0]["username"], "maria.popescu")
 
+    def test_invalid_filter_returns_standard_validation_error(self):
+        response = self.client.get("/api/v1/utilizatori/", {"role": "owner"})
+
+        self.assertEqual(response.status_code, 400)
+        payload = response.json()
+        self.assertEqual(payload["code"], "validation_error")
+        self.assertIn("role", payload["fields"])
+
     def test_superuser_can_create_user_with_hashed_password(self):
         response = self.client.post(
             "/api/v1/utilizatori/",
@@ -87,6 +95,19 @@ class UtilizatoriApiTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertFalse(get_user_model().objects.filter(username="new-admin").exists())
+
+    def test_staff_user_cannot_modify_another_administrator(self):
+        self.client.force_authenticate(self.staff_user)
+
+        response = self.client.patch(
+            f"/api/v1/utilizatori/{self.superuser.pk}",
+            {"first_name": "Changed"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.superuser.refresh_from_db()
+        self.assertNotEqual(self.superuser.first_name, "Changed")
 
     def test_user_cannot_deactivate_own_account(self):
         response = self.client.patch(
