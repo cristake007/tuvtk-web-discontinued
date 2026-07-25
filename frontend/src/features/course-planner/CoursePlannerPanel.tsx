@@ -2,8 +2,9 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
-import { ApiError } from "@/api/http";
-import { ApplicationState } from "@/components/ApplicationState";
+import { QueryApplicationState } from "@/components/QueryApplicationState";
+import { formatApiError } from "@/lib/api-errors";
+import { saveBlob } from "@/lib/download";
 
 import {
   coursePlannerHistoryQueryKey,
@@ -29,24 +30,6 @@ type ExcelDownloadRequest = {
   filename: string;
   generationId: string;
 };
-
-function getErrorMessage(error: unknown): string {
-  if (error instanceof ApiError || error instanceof Error) {
-    return error.message;
-  }
-  return "Operațiunea nu a putut fi finalizată.";
-}
-
-function saveBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  document.body.append(anchor);
-  anchor.click();
-  anchor.remove();
-  URL.revokeObjectURL(url);
-}
 
 export function CoursePlannerPanel() {
   const queryClient = useQueryClient();
@@ -85,7 +68,7 @@ export function CoursePlannerPanel() {
     mutationFn: saveCoursePlannerSettings,
     onError: (error) =>
       toast.error("Setările nu au putut fi salvate", {
-        description: getErrorMessage(error),
+        description: formatApiError(error, "Operațiunea nu a putut fi finalizată."),
       }),
     onSuccess: (savedSettings) => {
       queryClient.setQueryData(coursePlannerQueryKey, savedSettings);
@@ -97,7 +80,7 @@ export function CoursePlannerPanel() {
     mutationFn: generateCourseSchedule,
     onError: (error) =>
       toast.error("Planificarea nu a putut fi generată", {
-        description: getErrorMessage(error),
+        description: formatApiError(error, "Operațiunea nu a putut fi finalizată."),
       }),
     onSuccess: (response) => {
       setResult(response);
@@ -117,7 +100,7 @@ export function CoursePlannerPanel() {
       }),
     onError: (error) =>
       toast.error("Fișierul Excel nu a putut fi descărcat", {
-        description: getErrorMessage(error),
+        description: formatApiError(error, "Operațiunea nu a putut fi finalizată."),
       }),
     onSuccess: (blob, request) => {
       saveBlob(blob, request.filename);
@@ -161,25 +144,19 @@ export function CoursePlannerPanel() {
     });
   }
 
-  if (settingsQuery.isPending) {
-    return (
-      <ApplicationState
-        description="Se încarcă setările și ultima configurație a planificatorului."
-        loading
-        title="Se încarcă planificatorul"
-      />
-    );
-  }
-
-  if (settingsQuery.isError) {
-    return (
-      <ApplicationState
-        actionLabel="Încearcă din nou"
-        description={getErrorMessage(settingsQuery.error)}
-        onAction={() => void settingsQuery.refetch()}
-        title="Planificatorul nu este disponibil"
-      />
-    );
+  const queryState = (
+    <QueryApplicationState
+      error={settingsQuery.error}
+      errorDescription="Setările planificatorului nu au putut fi încărcate."
+      errorTitle="Planificatorul nu este disponibil"
+      loading={settingsQuery.isPending}
+      loadingDescription="Se încarcă setările și ultima configurație a planificatorului."
+      loadingTitle="Se încarcă planificatorul"
+      onRetry={() => void settingsQuery.refetch()}
+    />
+  );
+  if (settingsQuery.isPending || settingsQuery.isError) {
+    return queryState;
   }
 
   return (
