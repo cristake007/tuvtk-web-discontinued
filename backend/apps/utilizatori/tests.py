@@ -1,5 +1,7 @@
+import json
+
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import Client, TestCase
 from rest_framework.test import APIClient
 
 
@@ -59,6 +61,25 @@ class UtilizatoriApiTests(TestCase):
         payload = response.json()
         self.assertEqual(payload["code"], "validation_error")
         self.assertIn("role", payload["fields"])
+
+    def test_browser_session_create_requires_csrf(self):
+        browser = Client(enforce_csrf_checks=True)
+        browser.force_login(self.superuser)
+
+        response = browser.post(
+            "/api/v1/utilizatori/",
+            data=json.dumps(
+                {
+                    "username": "csrf-test",
+                    "password": "A-secure-password-2026",
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["code"], "csrf_failed")
+        self.assertFalse(get_user_model().objects.filter(username="csrf-test").exists())
 
     def test_superuser_can_create_user_with_hashed_password(self):
         response = self.client.post(
