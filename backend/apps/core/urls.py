@@ -1,7 +1,7 @@
 from django.urls import path
 
 from .views import (
-    CompanyLogoSettingsView,
+    CompanyLogoAdministrationView,
     CompanyLogoView,
     CoreBootstrapView,
     PublicBrandingView,
@@ -14,8 +14,8 @@ urlpatterns = [
     path("bootstrap", CoreBootstrapView.as_view(), name="bootstrap"),
     path("company-logo", CompanyLogoView.as_view(), name="company-logo"),
     path(
-        "settings/company-logo",
-        CompanyLogoSettingsView.as_view(),
-        name="company-logo-settings",
+        "administration/company-logo",
+        CompanyLogoAdministrationView.as_view(),
+        name="administration-company-logo",
     ),
 ]
