@@ -18,8 +18,9 @@ export type NavigationItem = {
 };
 
 export type CoreBootstrap = {
+  authenticated: boolean;
   configuration: ShellConfiguration;
-  user: ShellUser;
+  user: ShellUser | null;
   navigation: NavigationItem[];
 };
 
