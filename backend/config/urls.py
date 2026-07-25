@@ -7,6 +7,9 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
+handler404 = "config.error_views.api_not_found"
+handler500 = "config.error_views.api_server_error"
+
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("api/schema", SpectacularAPIView.as_view(), name="api-schema"),
