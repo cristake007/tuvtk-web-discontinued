@@ -25,7 +25,6 @@ export function updatePublicHolidaySettings(
 ): Promise<PublicHolidaySettings> {
   return apiRequest<PublicHolidaySettings>(`${basePath}/settings`, {
     method: "PUT",
-    includeCsrf: true,
     body: JSON.stringify(values),
   });
 }
@@ -33,7 +32,6 @@ export function updatePublicHolidaySettings(
 export function synchronizePublicHolidays(): Promise<SynchronizationResult> {
   return apiRequest<SynchronizationResult>(`${basePath}/sync`, {
     method: "POST",
-    includeCsrf: true,
   });
 }
 
@@ -46,7 +44,6 @@ export function createInternalHoliday(
 ): Promise<PublicHoliday> {
   return apiRequest<PublicHoliday>(`${basePath}/internal`, {
     method: "POST",
-    includeCsrf: true,
     body: JSON.stringify(values),
   });
 }
@@ -57,7 +54,6 @@ export function updateInternalHoliday(
 ): Promise<PublicHoliday> {
   return apiRequest<PublicHoliday>(`${basePath}/internal/${holidayId}`, {
     method: "PATCH",
-    includeCsrf: true,
     body: JSON.stringify(values),
   });
 }
@@ -65,6 +61,5 @@ export function updateInternalHoliday(
 export function deleteInternalHoliday(holidayId: string): Promise<void> {
   return apiRequest<void>(`${basePath}/internal/${holidayId}`, {
     method: "DELETE",
-    includeCsrf: true,
   });
 }
