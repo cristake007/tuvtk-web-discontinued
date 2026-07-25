@@ -9,6 +9,9 @@ from .api_serializers import HealthResponseSerializer
 
 
 def database_status(alias: str) -> str:
+    if alias not in connections.databases:
+        return "disabled"
+
     try:
         with connections[alias].cursor() as cursor:
             cursor.execute("SELECT 1")
@@ -43,10 +46,13 @@ class HealthView(APIView):
                 "status": database_status("registry"),
             },
         }
-        healthy = all(database["status"] == "ok" for database in databases.values())
+        core_healthy = databases["core"]["status"] == "ok"
+        all_healthy = core_healthy and databases["registry"]["status"] == "ok"
         payload = {
-            "status": "ok" if healthy else "degraded",
+            "status": "ok" if all_healthy else "degraded",
             "databases": databases,
         }
-        response_status = status.HTTP_200_OK if healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+        response_status = (
+            status.HTTP_200_OK if core_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+        )
         return Response(HealthResponseSerializer(payload).data, status=response_status)
