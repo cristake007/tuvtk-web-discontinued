@@ -1,8 +1,10 @@
+import { useMemo, useState } from "react";
 import {
   ArrowRight,
   Database,
   Mail,
   PlugZap,
+  Search,
   Settings2,
   SlidersHorizontal,
   Users,
@@ -18,6 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 
 type AdministrationEntry = {
   description: string;
@@ -158,6 +161,13 @@ const administrationGroups: AdministrationGroup[] = [
   },
 ];
 
+function normalizeSearchValue(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("ro-RO");
+}
+
 function AdministrationEntryRow({ entry }: { entry: AdministrationEntry }) {
   const content = (
     <>
@@ -198,6 +208,35 @@ function AdministrationEntryRow({ entry }: { entry: AdministrationEntry }) {
 }
 
 export function AdministrationPage() {
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const filteredGroups = useMemo(() => {
+    const normalizedQuery = normalizeSearchValue(searchQuery.trim());
+
+    if (!normalizedQuery) {
+      return administrationGroups;
+    }
+
+    return administrationGroups.reduce<AdministrationGroup[]>((groups, group) => {
+      const groupMatches = [group.name, group.description].some((value) =>
+        normalizeSearchValue(value).includes(normalizedQuery),
+      );
+      const matchingEntries = groupMatches
+        ? group.entries
+        : group.entries.filter((entry) =>
+            [entry.name, entry.description].some((value) =>
+              normalizeSearchValue(value).includes(normalizedQuery),
+            ),
+          );
+
+      if (matchingEntries.length > 0) {
+        groups.push({ ...group, entries: matchingEntries });
+      }
+
+      return groups;
+    }, []);
+  }, [searchQuery]);
+
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6">
       <header className="flex items-start gap-4">
@@ -216,8 +255,23 @@ export function AdministrationPage() {
         </div>
       </header>
 
-      <div className="grid min-w-0 gap-5 xl:grid-cols-2">
-        {administrationGroups.map((group) => {
+      <div className="relative max-w-2xl">
+        <Search
+          aria-hidden="true"
+          className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+        />
+        <Input
+          aria-label="Caută în administrare"
+          className="h-10 pl-9"
+          onChange={(event) => setSearchQuery(event.currentTarget.value)}
+          placeholder="Caută o secțiune sau o setare..."
+          type="search"
+          value={searchQuery}
+        />
+      </div>
+
+      <div className="grid min-w-0 gap-5">
+        {filteredGroups.map((group) => {
           const Icon = group.icon;
 
           return (
@@ -243,6 +297,18 @@ export function AdministrationPage() {
             </Card>
           );
         })}
+
+        {filteredGroups.length === 0 ? (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
+              <Search aria-hidden="true" className="size-5 text-muted-foreground" />
+              <p className="font-medium">Nu am găsit rezultate</p>
+              <p className="text-sm text-muted-foreground">
+                Încearcă un alt termen de căutare.
+              </p>
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
     </section>
   );
