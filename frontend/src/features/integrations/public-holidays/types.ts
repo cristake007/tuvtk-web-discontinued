@@ -6,6 +6,6 @@ export type PublicHolidaySettingsUpdate = components["schemas"]["PublicHolidaySe
 export type InternalHolidayInput = components["schemas"]["InternalHolidayWrite"];
 export type SynchronizationResult = components["schemas"]["SynchronizationResult"];
 
-export type PublicHolidaySource = PublicHoliday["source"];
-export type PublicHolidayFrequency = PublicHolidaySettings["frequency"];
-export type PublicHolidaySyncStatus = PublicHolidaySettings["last_status"];
+export type PublicHolidaySource = NonNullable<PublicHoliday["source"]>;
+export type PublicHolidayFrequency = NonNullable<PublicHolidaySettings["frequency"]>;
+export type PublicHolidaySyncStatus = NonNullable<PublicHolidaySettings["last_status"]>;
