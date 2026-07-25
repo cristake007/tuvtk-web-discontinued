@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
@@ -52,6 +52,7 @@ function saveBlob(blob: Blob, filename: string) {
 
 export function CoursePlannerPanel() {
   const queryClient = useQueryClient();
+  const scheduleSectionRef = useRef<HTMLDivElement | null>(null);
   const settingsQuery = useQuery({
     queryKey: coursePlannerQueryKey,
     queryFn: fetchCoursePlannerSettings,
@@ -69,6 +70,21 @@ export function CoursePlannerPanel() {
     setSettings(settingsQuery.data);
     setHolidaysText(settingsQuery.data.holidays.join("\n"));
   }, [settingsQuery.data]);
+
+  useEffect(() => {
+    if (!result) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      scheduleSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
+  }, [result]);
 
   const normalizedHolidays = useMemo(
     () =>
@@ -281,7 +297,11 @@ export function CoursePlannerPanel() {
         />
       </div>
 
-      {result ? <CourseScheduleTable schedule={result.schedule} /> : null}
+      {result ? (
+        <div ref={scheduleSectionRef} className="scroll-mt-20">
+          <CourseScheduleTable schedule={result.schedule} />
+        </div>
+      ) : null}
     </div>
   );
 }
