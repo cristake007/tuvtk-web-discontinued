@@ -1,4 +1,4 @@
-import { ArrowLeft, PanelsTopLeft } from "lucide-react";
+import { ArrowLeft, Monitor } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ export function AdministrationUserInterfacePage() {
       <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="flex min-w-0 items-start gap-4">
           <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-            <PanelsTopLeft aria-hidden="true" className="size-6" />
+            <Monitor aria-hidden="true" className="size-6" />
           </span>
           <div>
             <p className="text-sm font-medium text-primary">
