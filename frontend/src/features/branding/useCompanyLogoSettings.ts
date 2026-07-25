@@ -7,11 +7,14 @@ import {
 } from "@tanstack/react-query";
 
 import { coreBootstrapQueryKey, fetchCoreBootstrap } from "@/api/core";
-import { ApiError } from "@/api/http";
 import type { CoreBootstrap, ShellConfiguration } from "@/features/core/types";
+import { formatApiError } from "@/lib/api-errors";
 
 import { removeCompanyLogo, uploadCompanyLogo } from "./api";
 import { validateCompanyLogo } from "./validation";
+
+const mutationErrorFallback =
+  "Sigla companiei nu a putut fi actualizată. Încearcă din nou.";
 
 function updateCachedConfiguration(
   queryClient: QueryClient,
@@ -20,16 +23,6 @@ function updateCachedConfiguration(
   queryClient.setQueryData<CoreBootstrap>(coreBootstrapQueryKey, (current) =>
     current ? { ...current, configuration } : current,
   );
-}
-
-function formatMutationError(error: Error | null): string | null {
-  if (!error) {
-    return null;
-  }
-
-  return error instanceof ApiError
-    ? error.message
-    : "Sigla companiei nu a putut fi actualizată. Încearcă din nou.";
 }
 
 export function useCompanyLogoSettings() {
@@ -118,9 +111,11 @@ export function useCompanyLogoSettings() {
     configuredLogoUrl,
     displayedLogoUrl: previewUrl ?? configuredLogoUrl,
     isSaving: uploadMutation.isPending || removeMutation.isPending,
-    mutationError:
-      formatMutationError(uploadMutation.error) ??
-      formatMutationError(removeMutation.error),
+    mutationError: uploadMutation.error
+      ? formatApiError(uploadMutation.error, mutationErrorFallback)
+      : removeMutation.error
+        ? formatApiError(removeMutation.error, mutationErrorFallback)
+        : null,
     removeConfiguredLogo,
     removePending: removeMutation.isPending,
     removeSuccess: removeMutation.isSuccess,
