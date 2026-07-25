@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import { FileSpreadsheet } from "lucide-react";
 
 import {
@@ -48,6 +49,45 @@ function buildRows(schedule: ScheduledCourse[]): ScheduleRow[] {
 
 export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] }) {
   const rows = buildRows(schedule);
+  const topScrollRef = useRef<HTMLDivElement>(null);
+  const topScrollContentRef = useRef<HTMLDivElement>(null);
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const syncingRef = useRef(false);
+
+  useEffect(() => {
+    const tableScroll = tableScrollRef.current;
+    const topScrollContent = topScrollContentRef.current;
+
+    if (!tableScroll || !topScrollContent) {
+      return;
+    }
+
+    const updateWidth = () => {
+      topScrollContent.style.width = `${tableScroll.scrollWidth}px`;
+    };
+
+    updateWidth();
+    const observer = new ResizeObserver(updateWidth);
+    observer.observe(tableScroll);
+    const table = tableScroll.querySelector("table");
+    if (table) {
+      observer.observe(table);
+    }
+
+    return () => observer.disconnect();
+  }, [rows.length]);
+
+  function syncScroll(source: HTMLDivElement, target: HTMLDivElement | null) {
+    if (!target || syncingRef.current) {
+      return;
+    }
+
+    syncingRef.current = true;
+    target.scrollLeft = source.scrollLeft;
+    requestAnimationFrame(() => {
+      syncingRef.current = false;
+    });
+  }
 
   return (
     <Card className="shadow-sm">
@@ -61,47 +101,73 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
         </CardDescription>
       </CardHeader>
       <CardContent className="px-0">
-        <Table className="min-w-[118rem] table-fixed border-separate border-spacing-0">
+        <div
+          ref={topScrollRef}
+          aria-label="Derulare orizontală tabel"
+          className="h-4 overflow-x-auto overflow-y-hidden border-b bg-muted/20"
+          onScroll={(event) => syncScroll(event.currentTarget, tableScrollRef.current)}
+          role="region"
+        >
+          <div ref={topScrollContentRef} className="h-px" />
+        </div>
+
+        <Table
+          containerRef={tableScrollRef}
+          className="isolate min-w-[118rem] table-fixed border-separate border-spacing-0"
+          containerClassName="scroll-smooth"
+          onScrollCapture={(event) => {
+            if (event.currentTarget.parentElement === event.target) {
+              syncScroll(event.currentTarget.parentElement, topScrollRef.current);
+            }
+          }}
+        >
           <TableHeader className="bg-muted/70">
             <TableRow className="hover:bg-transparent">
-              <TableHead className="sticky left-0 z-30 w-96 min-w-96 border-r bg-muted px-4">
+              <TableHead className="sticky left-0 z-60 w-96 min-w-96 border-r bg-muted px-4">
                 Curs
               </TableHead>
-              <TableHead className="sticky left-96 z-30 w-32 min-w-32 border-r bg-muted px-4">
+              <TableHead className="sticky left-96 z-60 w-32 min-w-32 border-r bg-muted px-4">
                 Durată
               </TableHead>
-              <TableHead className="sticky left-[32rem] z-30 w-36 min-w-36 border-r bg-muted px-4 shadow-[6px_0_8px_-8px_var(--foreground)]">
+              <TableHead className="sticky left-[32rem] z-60 w-36 min-w-36 border-r bg-muted px-4 shadow-[6px_0_8px_-8px_var(--foreground)]">
                 Investiție
               </TableHead>
               {monthNames.map((monthName) => (
-                <TableHead className="w-36 min-w-36 px-4" key={monthName}>
+                <TableHead className="relative z-10 w-36 min-w-36 bg-muted/70 px-4" key={monthName}>
                   {monthName}
                 </TableHead>
               ))}
             </TableRow>
           </TableHeader>
           <TableBody>
-            {rows.map((row) => (
-              <TableRow
-                className="[&>td]:bg-background even:[&>td]:bg-muted/25"
-                key={row.key}
-              >
-                <TableCell className="sticky left-0 z-20 w-96 min-w-96 whitespace-normal border-r px-4 py-3 font-medium">
-                  {row.title}
-                </TableCell>
-                <TableCell className="sticky left-96 z-20 w-32 min-w-32 border-r px-4 py-3">
-                  {row.duration}
-                </TableCell>
-                <TableCell className="sticky left-[32rem] z-20 w-36 min-w-36 border-r px-4 py-3 shadow-[6px_0_8px_-8px_var(--foreground)]">
-                  {row.investment || "—"}
-                </TableCell>
-                {monthNames.map((_, index) => (
-                  <TableCell className="w-36 min-w-36 px-4 py-3" key={index + 1}>
-                    {row.months[index + 1] || "—"}
+            {rows.map((row, rowIndex) => {
+              const stickyBackground = rowIndex % 2 === 0 ? "bg-background" : "bg-muted";
+
+              return (
+                <TableRow className="even:bg-muted/25" key={row.key}>
+                  <TableCell
+                    className={`sticky left-0 z-50 w-96 min-w-96 whitespace-normal border-r px-4 py-3 font-medium ${stickyBackground}`}
+                  >
+                    {row.title}
                   </TableCell>
-                ))}
-              </TableRow>
-            ))}
+                  <TableCell
+                    className={`sticky left-96 z-50 w-32 min-w-32 border-r px-4 py-3 ${stickyBackground}`}
+                  >
+                    {row.duration}
+                  </TableCell>
+                  <TableCell
+                    className={`sticky left-[32rem] z-50 w-36 min-w-36 border-r px-4 py-3 shadow-[6px_0_8px_-8px_var(--foreground)] ${stickyBackground}`}
+                  >
+                    {row.investment || "—"}
+                  </TableCell>
+                  {monthNames.map((_, index) => (
+                    <TableCell className="relative z-0 w-36 min-w-36 px-4 py-3" key={index + 1}>
+                      {row.months[index + 1] || "—"}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </CardContent>
