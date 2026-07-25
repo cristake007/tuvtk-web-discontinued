@@ -106,8 +106,20 @@ class UserWriteSerializer(serializers.ModelSerializer):
                     "Doar un superutilizator poate acorda sau retrage accesul de administrator."
                 )
 
-        if target is not None and target.is_superuser and not request.user.is_superuser:
-            raise PermissionDenied("Doar un superutilizator poate modifica acest cont.")
+        if (
+            target is not None
+            and target.is_staff
+            and target.pk != request.user.pk
+            and not request.user.is_superuser
+        ):
+            raise PermissionDenied(
+                "Doar un superutilizator poate modifica un alt cont administrativ."
+            )
+
+        if target is not None and target.is_superuser and requested_staff is False:
+            raise serializers.ValidationError(
+                {"is_staff": "Un superutilizator trebuie să rămână administrator."}
+            )
 
         if target is not None and target.pk == request.user.pk:
             if attrs.get("is_active") is False:
