@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { FileSpreadsheet, Save, Sparkles } from "lucide-react";
+import { CalendarDays, FileSpreadsheet, Save, Sparkles } from "lucide-react";
 
 import { FileUploadField } from "@/components/FileUploadField";
 import { Button } from "@/components/ui/button";
@@ -21,8 +21,10 @@ import type { CoursePlannerSettings } from "../types";
 type PlannerConfigurationCardProps = {
   file: File | null;
   generatePending: boolean;
+  holidaysPending: boolean;
   holidaysText: string;
   onClearMonths: () => void;
+  onFetchHolidays: () => void;
   onFileChange: (file: File | undefined) => void;
   onGenerate: (event: FormEvent<HTMLFormElement>) => void;
   onHolidaysChange: (value: string) => void;
@@ -38,8 +40,10 @@ type PlannerConfigurationCardProps = {
 export function PlannerConfigurationCard({
   file,
   generatePending,
+  holidaysPending,
   holidaysText,
   onClearMonths,
+  onFetchHolidays,
   onFileChange,
   onGenerate,
   onHolidaysChange,
@@ -156,28 +160,42 @@ export function PlannerConfigurationCard({
             </div>
           </fieldset>
 
-          <label className="grid gap-2 text-sm font-medium" htmlFor="holidays">
-            Zile libere suplimentare
+          <div className="grid gap-2">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <label className="text-sm font-medium" htmlFor="holidays">
+                Zile libere
+              </label>
+              <Button
+                disabled={busy || holidaysPending || settings.months.length === 0}
+                onClick={onFetchHolidays}
+                size="sm"
+                type="button"
+                variant="outline"
+              >
+                {holidaysPending ? <Spinner /> : <CalendarDays aria-hidden="true" />}
+                {holidaysPending ? "Se preiau…" : "Preia zilele libere"}
+              </Button>
+            </div>
             <Textarea
               className="min-h-28 resize-y"
-              disabled={busy}
+              disabled={busy || holidaysPending}
               id="holidays"
               onChange={(event) => onHolidaysChange(event.target.value)}
               placeholder={"01.01.2027\n02.01.2027"}
               value={holidaysText}
             />
             <span className="text-xs font-normal leading-5 text-muted-foreground">
-              Folosește formatul ZZ.LL.AAAA. Datele pot fi separate prin virgulă sau pe rânduri noi.
+              Butonul preia zilele legale și interne pentru anul și lunile selectate. Poți modifica apoi lista manual, folosind formatul ZZ.LL.AAAA.
             </span>
-          </label>
+          </div>
         </CardContent>
 
         <CardFooter className="flex flex-wrap justify-between gap-3">
-          <Button disabled={busy} onClick={onSave} type="button" variant="outline">
+          <Button disabled={busy || holidaysPending} onClick={onSave} type="button" variant="outline">
             {savePending ? <Spinner /> : <Save aria-hidden="true" />}
             {savePending ? "Se salvează…" : "Salvează setările"}
           </Button>
-          <Button disabled={busy} size="lg" type="submit">
+          <Button disabled={busy || holidaysPending} size="lg" type="submit">
             {generatePending ? <Spinner /> : <FileSpreadsheet aria-hidden="true" />}
             {generatePending ? "Se generează…" : "Generează planificarea"}
           </Button>
