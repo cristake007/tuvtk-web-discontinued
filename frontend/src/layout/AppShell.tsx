@@ -1,57 +1,40 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
 import { Outlet } from "react-router-dom";
 
-import { coreBootstrapQueryKey, fetchCoreBootstrap } from "@/api/core";
+import { coreBootstrapQueryKey } from "@/api/core";
 import { ApiError } from "@/api/http";
-import { ApplicationState } from "@/components/ApplicationState";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { logout } from "@/features/auth/api";
-import { authQueryKeys } from "@/features/auth/queryKeys";
-import type { AuthenticationSession } from "@/features/auth/types";
+import type { CoreBootstrap } from "@/features/core/types";
 
 import { AppHeader } from "./app-shell/AppHeader";
 import { AppSidebar } from "./app-shell/AppSidebar";
 import { buildNavigationTree } from "./app-shell/navigation";
 
-const unauthenticatedSession: AuthenticationSession = {
-  authenticated: false,
-  user: null,
-};
-
 type AppShellStyle = CSSProperties & {
   "--app-header-height": string;
 };
 
-export function AppShell() {
+export function AppShell({ bootstrap }: { bootstrap: CoreBootstrap }) {
   const queryClient = useQueryClient();
   const [headerCompact, setHeaderCompact] = useState(false);
   const headerHeight = headerCompact ? "4rem" : "5rem";
 
-  const bootstrapQuery = useQuery({
-    queryKey: coreBootstrapQueryKey,
-    queryFn: fetchCoreBootstrap,
-    retry: false,
-    staleTime: 60_000,
-  });
-
   const logoutMutation = useMutation({
     mutationFn: logout,
     onSuccess: () => {
-      queryClient.removeQueries({ queryKey: coreBootstrapQueryKey });
-      queryClient.setQueryData(authQueryKeys.session, unauthenticatedSession);
+      queryClient.setQueryData<CoreBootstrap>(coreBootstrapQueryKey, {
+        ...bootstrap,
+        authenticated: false,
+        navigation: [],
+        user: null,
+      });
     },
   });
-
-  useEffect(() => {
-    if (bootstrapQuery.error instanceof ApiError && bootstrapQuery.error.status === 401) {
-      queryClient.removeQueries({ queryKey: coreBootstrapQueryKey });
-      queryClient.setQueryData(authQueryKeys.session, unauthenticatedSession);
-    }
-  }, [bootstrapQuery.error, queryClient]);
 
   useEffect(() => {
     document.documentElement.style.setProperty("--app-header-height", headerHeight);
@@ -62,32 +45,14 @@ export function AppShell() {
   }, [headerHeight]);
 
   const navigation = useMemo(
-    () => buildNavigationTree(bootstrapQuery.data?.navigation ?? []),
-    [bootstrapQuery.data?.navigation],
+    () => buildNavigationTree(bootstrap.navigation),
+    [bootstrap.navigation],
   );
 
-  if (bootstrapQuery.isPending) {
-    return (
-      <ApplicationState
-        description="Se încarcă navigația, permisiunile și configurația aplicației."
-        loading
-        title="Se pregătește aplicația"
-      />
-    );
+  if (!bootstrap.user) {
+    return null;
   }
 
-  if (bootstrapQuery.isError || !bootstrapQuery.data) {
-    return (
-      <ApplicationState
-        actionLabel="Încearcă din nou"
-        description="Configurația aplicației nu a putut fi încărcată din Django."
-        onAction={() => void bootstrapQuery.refetch()}
-        title="Aplicația nu este disponibilă"
-      />
-    );
-  }
-
-  const bootstrap = bootstrapQuery.data;
   const shellStyle: AppShellStyle = {
     "--app-header-height": headerHeight,
   };
