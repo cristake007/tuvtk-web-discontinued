@@ -2,6 +2,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Eye, EyeOff, LockKeyhole } from "lucide-react";
 
+import { coreBootstrapQueryKey } from "@/api/core";
 import { ApiError } from "@/api/http";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,6 @@ import {
   type LoginFieldErrors,
   validateLoginCredentials,
 } from "./loginValidation";
-import { authQueryKeys } from "./queryKeys";
 
 function getLoginError(error: Error | null): string | null {
   if (!error) {
@@ -25,6 +25,10 @@ function getLoginError(error: Error | null): string | null {
 
   if (error instanceof ApiError && error.status === 401) {
     return "Numele de utilizator sau parola nu sunt corecte.";
+  }
+
+  if (error instanceof ApiError && error.status === 429) {
+    return "Au fost prea multe încercări nereușite. Încearcă din nou peste câteva minute.";
   }
 
   if (error instanceof ApiError && error.status === 403) {
@@ -47,9 +51,8 @@ export function LoginForm() {
 
   const loginMutation = useMutation({
     mutationFn: login,
-    onSuccess: (session) => {
-      queryClient.setQueryData(authQueryKeys.session, session);
-      void queryClient.invalidateQueries({ queryKey: ["core-bootstrap"] });
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: coreBootstrapQueryKey });
     },
   });
 
