@@ -28,9 +28,9 @@ const AdministrationPage = lazy(async () => {
   return { default: module.AdministrationPage };
 });
 
-const AdministrationSystemPage = lazy(async () => {
-  const module = await import("@/pages/AdministrationSystemPage");
-  return { default: module.AdministrationSystemPage };
+const AdministrationUserInterfacePage = lazy(async () => {
+  const module = await import("@/pages/AdministrationUserInterfacePage");
+  return { default: module.AdministrationUserInterfacePage };
 });
 
 const IntegrationsPage = lazy(async () => {
@@ -107,18 +107,18 @@ function AdministrationRoute() {
   );
 }
 
-function AdministrationSystemRoute() {
+function AdministrationUserInterfaceRoute() {
   return (
     <Suspense
       fallback={
         <ApplicationState
-          description="Se încarcă configurarea sistemului."
+          description="Se încarcă opțiunile interfeței utilizator."
           loading
-          title="Se încarcă sistemul"
+          title="Se încarcă interfața utilizator"
         />
       }
     >
-      <AdministrationSystemPage />
+      <AdministrationUserInterfacePage />
     </Suspense>
   );
 }
@@ -207,8 +207,8 @@ export const router = createBrowserRouter([
         element: <AdministrationRoute />,
       },
       {
-        path: "administrare/sistem",
-        element: <AdministrationSystemRoute />,
+        path: "administrare/sistem/interfata-utilizator",
+        element: <AdministrationUserInterfaceRoute />,
       },
       {
         path: "administrare/integrari",
