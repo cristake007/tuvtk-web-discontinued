@@ -33,6 +33,11 @@ const AdministrationUserInterfacePage = lazy(async () => {
   return { default: module.AdministrationUserInterfacePage };
 });
 
+const UtilizatoriPage = lazy(async () => {
+  const module = await import("@/pages/UtilizatoriPage");
+  return { default: module.UtilizatoriPage };
+});
+
 const IntegrationsPage = lazy(async () => {
   const module = await import("@/pages/IntegrationsPage");
   return { default: module.IntegrationsPage };
@@ -123,6 +128,22 @@ function AdministrationUserInterfaceRoute() {
   );
 }
 
+function UtilizatoriRoute() {
+  return (
+    <Suspense
+      fallback={
+        <ApplicationState
+          description="Se încarcă utilizatorii și drepturile conturilor."
+          loading
+          title="Se încarcă utilizatorii"
+        />
+      }
+    >
+      <UtilizatoriPage />
+    </Suspense>
+  );
+}
+
 function IntegrationsRoute() {
   return (
     <Suspense
@@ -209,6 +230,10 @@ export const router = createBrowserRouter([
       {
         path: "administrare/sistem/interfata-utilizator",
         element: <AdministrationUserInterfaceRoute />,
+      },
+      {
+        path: "administrare/utilizatori",
+        element: <UtilizatoriRoute />,
       },
       {
         path: "administrare/integrari",
