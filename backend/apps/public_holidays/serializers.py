@@ -1,5 +1,7 @@
 from rest_framework import serializers
 
+from config.error_serializers import ApiErrorSerializer
+
 from .models import PublicHoliday, PublicHolidaySettings
 
 
@@ -10,8 +12,8 @@ class RomanianDateField(serializers.DateField):
         super().__init__(*args, **kwargs)
 
 
-class PublicHolidayErrorDetailSerializer(serializers.Serializer):
-    detail = serializers.CharField()
+class PublicHolidayErrorDetailSerializer(ApiErrorSerializer):
+    pass
 
 
 class PublicHolidaySerializer(serializers.ModelSerializer):
