@@ -81,7 +81,9 @@ export function PublicHolidaysIntegrationPanel() {
             <CalendarDays aria-hidden="true" className="size-6" />
           </span>
           <div>
-            <p className="text-sm font-medium text-primary">Integrări · Nager.Date</p>
+            <p className="text-sm font-medium text-primary">
+              Administrare · Integrări · Nager.Date
+            </p>
             <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
               Zile libere și sărbători
             </h1>
@@ -94,7 +96,7 @@ export function PublicHolidaysIntegrationPanel() {
 
         <Button
           nativeButton={false}
-          render={<Link to="/settings/integrations" />}
+          render={<Link to="/administrare/integrari" />}
           variant="outline"
         >
           <ArrowLeft aria-hidden="true" />
