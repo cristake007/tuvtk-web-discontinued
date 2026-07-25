@@ -79,6 +79,10 @@ class CoursePlanFilesSerializer(serializers.Serializer):
 
 
 class CoursePlanGenerationSerializer(serializers.ModelSerializer):
+    months = serializers.ListField(
+        child=serializers.IntegerField(min_value=1, max_value=12),
+        read_only=True,
+    )
     created_by = serializers.SerializerMethodField()
     files = serializers.SerializerMethodField()
 
