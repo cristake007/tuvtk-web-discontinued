@@ -5,11 +5,17 @@ import type { PublicBranding } from "./types";
 
 export const publicBrandingQueryKey = ["public-branding"] as const;
 
-const userInterfaceCompanyLogoPath =
-  "/api/v1/core/administration/user-interface/company-logo";
+const userInterfacePath = "/api/v1/core/administration/user-interface";
+const userInterfaceCompanyLogoPath = `${userInterfacePath}/company-logo`;
 
 export function fetchPublicBranding(): Promise<PublicBranding> {
   return apiRequest<PublicBranding>("/api/v1/core/branding", {
+    cache: "no-store",
+  });
+}
+
+export function fetchUserInterfaceSettings(): Promise<ShellConfiguration> {
+  return apiRequest<ShellConfiguration>(userInterfacePath, {
     cache: "no-store",
   });
 }
