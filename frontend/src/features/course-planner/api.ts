@@ -1,4 +1,4 @@
-import { apiDownload, apiRequest, ensureCsrfCookie } from "@/api/http";
+import { apiDownload, apiRequest } from "@/api/http";
 
 import type {
   CoursePlanFileType,
@@ -19,21 +19,18 @@ export function fetchCoursePlannerSettings(): Promise<CoursePlannerSettings> {
   });
 }
 
-export async function saveCoursePlannerSettings(
+export function saveCoursePlannerSettings(
   settings: CoursePlannerSettings,
 ): Promise<CoursePlannerSettings> {
-  await ensureCsrfCookie();
   return apiRequest<CoursePlannerSettings>(`${coursePlannerPath}/settings`, {
     method: "PUT",
     body: JSON.stringify(settings),
-    includeCsrf: true,
   });
 }
 
-export async function generateCourseSchedule(
+export function generateCourseSchedule(
   input: CoursePlannerInput,
 ): Promise<GenerateScheduleResponse> {
-  await ensureCsrfCookie();
   const formData = new FormData();
   formData.append("input_file", input.inputFile);
   formData.append("year", String(input.year));
@@ -43,7 +40,6 @@ export async function generateCourseSchedule(
   return apiRequest<GenerateScheduleResponse>(`${coursePlannerPath}/generate`, {
     method: "POST",
     body: formData,
-    includeCsrf: true,
   });
 }
 
@@ -63,11 +59,9 @@ export function downloadCoursePlanFile(input: {
   );
 }
 
-export async function exportCourseSchedule(generationId: string): Promise<Blob> {
-  await ensureCsrfCookie();
+export function exportCourseSchedule(generationId: string): Promise<Blob> {
   return apiDownload(`${coursePlannerPath}/export`, {
     method: "POST",
     body: JSON.stringify({ generation_id: generationId }),
-    includeCsrf: true,
   });
 }
