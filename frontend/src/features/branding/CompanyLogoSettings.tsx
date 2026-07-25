@@ -84,7 +84,7 @@ export function CompanyLogoSettings() {
     );
   }
 
-  if (!bootstrapQuery.data.user.is_staff) {
+  if (!bootstrapQuery.data.user?.is_staff) {
     return (
       <ApplicationState
         description="Este necesar acces de administrator pentru modificarea identității vizuale."
