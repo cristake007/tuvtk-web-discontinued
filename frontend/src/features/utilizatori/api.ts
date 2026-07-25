@@ -10,8 +10,6 @@ import type {
 
 const basePath = "/api/v1/utilizatori";
 
-export const utilizatoriQueryKey = ["utilizatori"] as const;
-
 export function fetchUtilizatori(input: {
   page: number;
   role: UtilizatorRoleFilter;
