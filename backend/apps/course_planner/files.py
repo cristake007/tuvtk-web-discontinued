@@ -303,23 +303,24 @@ def create_excel_export(
     headers = ["Title", "Permalink", "Durata Curs", "investitie", *month_names]
     schedule_sheet.append(headers)
 
-    rows_by_title: dict[str, dict[str, Any]] = {}
-    order: list[str] = []
-    for item in sorted(schedule, key=lambda value: value.get("original_order", 0)):
-        title = str(item["title"])
-        if title not in rows_by_title:
-            rows_by_title[title] = {
-                "Title": title,
+    rows_by_order: dict[int, dict[str, Any]] = {}
+    order: list[int] = []
+    sorted_schedule = sorted(schedule, key=lambda value: value.get("original_order", 0))
+    for fallback_order, item in enumerate(sorted_schedule):
+        course_order = int(item.get("original_order", fallback_order))
+        if course_order not in rows_by_order:
+            rows_by_order[course_order] = {
+                "Title": str(item["title"]),
                 "Permalink": item.get("permalink", ""),
                 "Durata Curs": item.get("duration_label", ""),
                 "investitie": item.get("investment", ""),
                 **{month: "" for month in month_names},
             }
-            order.append(title)
-        rows_by_title[title][month_names[int(item["month"]) - 1]] = item["date_range"]
+            order.append(course_order)
+        rows_by_order[course_order][month_names[int(item["month"]) - 1]] = item["date_range"]
 
-    for title in order:
-        row = rows_by_title[title]
+    for course_order in order:
+        row = rows_by_order[course_order]
         schedule_sheet.append([row[header] for header in headers])
 
     if holidays:
