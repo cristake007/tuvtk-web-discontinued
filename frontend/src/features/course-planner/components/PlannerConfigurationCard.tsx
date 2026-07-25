@@ -127,7 +127,9 @@ export function PlannerConfigurationCard({
                   id="randomness"
                   max={10}
                   min={1}
-                  onValueChange={(value) => onRandomnessChange(value[0] ?? 1)}
+                  onValueChange={(value) =>
+                    onRandomnessChange(Array.isArray(value) ? (value[0] ?? 1) : value)
+                  }
                   step={1}
                   value={[settings.randomness]}
                 />
