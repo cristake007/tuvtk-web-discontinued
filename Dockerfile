@@ -12,7 +12,8 @@ RUN apt-get update \
         libpq5 \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system app \
-    && useradd --system --gid app --home-dir /app --no-create-home app
+    && useradd --system --gid app --home-dir /app --no-create-home app \
+    && chown app:app /app
 
 COPY backend/requirements.txt backend/requirements-dev.txt /tmp/
 
