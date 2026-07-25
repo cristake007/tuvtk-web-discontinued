@@ -2,6 +2,7 @@ from django.db import connections
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -25,6 +26,9 @@ def database_status(alias: str) -> str:
 class HealthView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
+    # Health is an operational status document, including when HTTP 503 is
+    # returned. It must not be converted to the standard API error envelope.
+    renderer_classes = [JSONRenderer]
 
     @extend_schema(
         operation_id="system_health",
