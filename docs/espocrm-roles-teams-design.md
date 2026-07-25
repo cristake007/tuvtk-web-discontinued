@@ -1,1388 +1,1615 @@
-# EspoCRM-Compatible Roles and Teams Design
+# Roluri, departamente și permisiuni compatibile cu EspoCRM
 
-## Status
+## Statut
 
-This document is the implementation reference for adding EspoCRM-compatible roles, teams, record ownership, field security, and special permissions to TUVTK Web.
+Acest document este referința de arhitectură pentru implementarea în TUVTK Web a unui sistem de autorizare inspirat comportamental din EspoCRM, adaptat terminologiei și structurii companiei.
 
-It is a research and architecture document only. It does not enable access-control enforcement and does not add database migrations by itself.
+Documentul descrie:
 
-Research snapshot:
+- rolurile;
+- departamentele;
+- apartenența utilizatorilor la departamente;
+- departamentul implicit opțional;
+- permisiunile pe module și înregistrări;
+- permisiunile pe câmpuri;
+- permisiunile speciale;
+- calculul accesului efectiv;
+- filtrarea queryset-urilor;
+- integrarea cu Django REST Framework și React;
+- strategia de implementare în faze.
 
-- date: `2026-07-25`;
-- upstream repository: `espocrm/espocrm`;
-- inspected branch: `master`;
-- inspected upstream commit: `d776b1f106cef73fbe8f91e87e32844c17d30ebc`;
-- target repository: `cristake007/tuvtk-web`;
-- target branch: `dev`.
+Acesta este un document de cercetare și arhitectură. Nu activează autorizarea, nu adaugă modele și nu creează migrații prin el însuși.
 
-The target is behavioral compatibility with EspoCRM, not a copy of its PHP implementation or database schema. The Django implementation must be original, use this project's architecture, and reproduce the observable permission rules described below.
-
-## Why this must be implemented as a platform capability
-
-Roles and teams cannot be added only to the `utilizatori` page. They affect:
-
-- which modules a user can open;
-- which records appear in list endpoints;
-- which individual records can be read, edited, or deleted;
-- which fields are returned or accepted by the API;
-- who a record can be assigned to;
-- which teams can be attached to a record;
-- exports, mass updates, audit access, streams, collaborators, calendars, and future modules;
-- navigation visibility and frontend action availability.
-
-Authorization must therefore be centralized in Django and applied before pagination, serialization, exports, counts, and mutations. React may hide unavailable actions, but React is not a security boundary.
-
-## EspoCRM behavior to reproduce
-
-### Role sources
-
-An internal non-admin user receives roles from three additive sources:
-
-1. the configured baseline role, if one exists;
-2. roles assigned directly to the user;
-3. roles assigned to every team of which the user is a member.
-
-The sources are merged into one effective ACL table for the user. Team roles are inherited automatically; they are not copied onto the user record.
-
-Role order does not create precedence. The most permissive grant wins for each scope, action, field, and special permission.
-
-### Additive merge semantics
-
-EspoCRM uses permissive merging, not deny-overrides.
-
-For record access actions, the order from most permissive to least permissive is:
+Referință cercetare:
 
 ```text
-all > team > own > no
+data: 2026-07-25
+sursă: espocrm/espocrm
+ramură analizată: master
+commit analizat: d776b1f106cef73fbe8f91e87e32844c17d30ebc
+repo țintă: cristake007/tuvtk-web
+ramură țintă: dev
 ```
 
-For creation and boolean permissions:
+Obiectivul este compatibilitatea comportamentală cu EspoCRM, nu copierea codului PHP sau a schemei sale de baze de date. Implementarea Django trebuie să fie originală și adaptată convențiilor proiectului.
+
+## Decizie terminologică
+
+În TUVTK Web se folosesc termenii:
 
 ```text
-yes > no
+Rol
+Departament
+Permisiune
 ```
 
-Each individual role may leave a value unset. An unset value does not participate in the merge. If all roles leave a value unset, the strict default is denial.
+Nu se folosesc în interfață sau în codul nou termenii `Team`, `Role` ori `Permission`.
 
-Consequences:
-
-- one role granting `all` and another granting `no` resolves to `all`;
-- one role granting `team` and another granting `own` resolves to `team`;
-- a restrictive role cannot remove access granted by another role;
-- restrictions must be achieved by removing the permissive role, changing it, or applying a platform-level mandatory restriction;
-- users with no applicable role receive minimal access.
-
-### Administrator behavior
-
-EspoCRM administrators bypass normal role restrictions and receive the highest available access, except for system-disabled scopes and mandatory platform restrictions.
-
-TUVTK mapping:
-
-- Django `is_superuser=True` is the full ACL bypass and access-control administrator;
-- Django `is_staff=True` only permits entry to staff administration areas and does not imply unrestricted business-data access;
-- a staff user must still be evaluated against roles for normal application scopes;
-- only superusers should create or modify roles, teams, memberships, baseline-role configuration, or direct role assignments during the initial implementation phases.
-
-This preserves the existing distinction between staff administration access and full platform control.
-
-### Scope actions
-
-A scope is an access-controlled resource type, such as `companies`, `documents`, `course_plans`, or a future CRM entity.
-
-EspoCRM defines these actions:
+Maparea semantică față de EspoCRM este:
 
 ```text
-create
-read
-edit
-delete
-stream
+EspoCRM Team       -> Departament
+EspoCRM Role       -> Rol
+EspoCRM Permission -> Permisiune
 ```
 
-`create` is a boolean permission (`yes` or `no`). The other record actions use `all`, `team`, `own`, or `no`.
+Termenul corect în limba română este **permisiune**, plural **permisiuni**.
 
-A scope can also be disabled completely by platform configuration. Disabled scopes stay unavailable even for administrators when the platform marks the scope as unavailable.
+Identificatorii Python, cheile JSON și valorile din baza de date se scriu fără diacritice, dar rămân în limba română.
 
-### Record-level meanings
-
-#### All
-
-The user can perform the action on every record in the scope, subject to field restrictions and mandatory platform rules.
-
-#### Team
-
-For record visibility, a record qualifies when at least one of these is true:
-
-- the record is related to one of the user's teams;
-- the user owns the record;
-- the record is shared with the user through collaborators, for actions where collaborator sharing applies.
-
-EspoCRM's list filtering implements this as an `OR`, not only as team intersection. A user with team access therefore continues to see their own record even when the record has no team.
-
-#### Own
-
-Ownership is resolved in this order:
-
-1. if the scope supports multiple assigned users, the current user is one of them;
-2. otherwise, if it supports one assigned user, that user is the current user;
-3. otherwise, if it supports `created_by`, the creator is the current user;
-4. otherwise, no record can satisfy `own`.
-
-For read and stream access, collaborators are also treated as shared access when the scope supports collaborators and the role level is not `no`.
-
-#### No
-
-No record qualifies. List queries must return an empty queryset, and object-level access must fail.
-
-### Collaborators
-
-EspoCRM collaborators provide read and stream access when the user's role level for that scope is not `no`.
-
-Behavior to preserve in a later phase:
-
-- collaborators do not grant edit or delete by themselves;
-- the creator is initially added as a collaborator on supported scopes;
-- assignees are added as collaborators;
-- a previous assignee can remain a collaborator after reassignment;
-- adding or removing collaborators requires edit access to the record and sufficient assignment permission;
-- collaborator membership is included in list query filters for shared read access.
-
-Collaborators are not required for the first roles-and-teams milestone, but the core access compiler and ownership adapter must leave space for them.
-
-### Baseline role
-
-A single optional baseline role is applied to every internal non-superuser account.
-
-Other direct and team roles only add permissions on top of it. Because merge behavior is permissive, a baseline role should contain the minimum common access, not restrictions intended to override other roles.
-
-Changing the baseline role must invalidate every compiled user ACL immediately.
-
-### Direct roles and team roles
-
-A role can be linked directly to users and to teams.
-
-A user's effective role sources must be visible separately:
-
-- baseline;
-- direct;
-- inherited from team, including the source team.
-
-The effective-access view must show both source roles and the final merged result. This corresponds to EspoCRM's `Access` action on a user detail page and is essential for diagnosing why a user has a permission.
-
-### Teams
-
-EspoCRM teams are flat groups; they are not nested organizational trees.
-
-A user can belong to multiple teams. A team can have:
-
-- a name;
-- a description;
-- one or more roles;
-- a position list;
-- users, where each membership may carry a position;
-- optional presentation settings such as a layout set.
-
-The membership position is descriptive and can be used by assignment workflows. It is not an ACL role and must not be confused with role inheritance.
-
-A role attached to a team is inherited by every current team member.
-
-### Default team
-
-A user may have one default team, and that team must also be one of the user's memberships.
-
-EspoCRM uses the default team for at least these behaviors:
-
-- newly created records are related to that team by default;
-- team-specific layout configuration can be resolved through the user's default team.
-
-TUVTK must enforce the membership invariant transactionally. When a default-team membership is removed, the API must either require a replacement default team in the same transaction or clear the default team explicitly. It must never leave an invalid reference.
-
-### Assignment permission
-
-Assignment permission is independent from scope `edit` access. Editing a record does not automatically allow unrestricted reassignment.
-
-Levels:
+Exemple:
 
 ```text
-all
-team
-no
+Departament
+Rol
+PermisiuneRol
+MembruDepartament
+departament_implicit
+fara_acces
+proprii
 ```
 
-Behavior:
-
-- `all`: the user can assign to eligible users and teams without team restriction;
-- `team`: a target user must share at least one team with the acting user, and assigned teams must belong to the acting user's team set;
-- `no`: the user cannot change assigned users or teams.
-
-Creating records must still be practical when assignment is restricted:
-
-- default assigned user is the creator when the scope uses an assigned user;
-- default team is the creator's default team when available;
-- server defaults are applied before assignment validation;
-- clients cannot bypass assignment permission by sending relationship IDs directly.
-
-EspoCRM also uses assignment permission for some user/team stream and collaborator operations. Those integrations belong to later phases.
-
-### User permission
-
-User permission controls access to other users and supervisory information.
-
-Levels:
+În interfață se folosesc diacritice:
 
 ```text
-all
-team
-no
+Departamente
+Roluri
+Permisiuni
+Departament implicit
+Proprii
+Fără acces
+Nesetat
 ```
 
-The current user always remains accessible to themselves.
+## Contextul organizației
 
-At `team`, another user is accessible only when the two users share at least one team. This permission must protect:
-
-- user lookup endpoints;
-- assignment candidate endpoints;
-- another user's effective-access details;
-- future user streams and supervisory views.
-
-The current `utilizatori` administration endpoint remains a separate privileged administration function. When roles are enforced, normal business users must not gain administration access merely because their User permission is `all`.
-
-### Other special permissions
-
-EspoCRM defines special permissions independently from scope actions. The compatibility registry should support at least:
+Compania are aproximativ 15 persoane și separă activitatea în zone precum:
 
 ```text
-assignment
-user
-user_calendar
-portal
-group_email_account
+Training
+Certificări
+Industrial
+```
+
+În acest proiect, aceste zone sunt denumite **departamente**.
+
+Departamentele sunt grupuri plate de acces și organizare. Nu reprezintă obligatoriu o organigramă rigidă.
+
+Reguli acceptate:
+
+- un utilizator poate să nu aparțină niciunui departament;
+- un utilizator poate aparține unuia sau mai multor departamente;
+- un utilizator poate avea opțional un departament implicit;
+- departamentul implicit trebuie să fie unul dintre departamentele utilizatorului;
+- un departament poate să nu aibă niciun rol;
+- un rol poate să nu fie atribuit nimănui;
+- un utilizator poate să nu aibă niciun rol direct;
+- toate departamentele sunt plate în prima versiune;
+- nu se implementează departamente părinte-copil;
+- poziția unui membru într-un departament este descriptivă și nu este rol ACL.
+
+## De ce este o capabilitate de platformă
+
+Rolurile și departamentele nu pot fi implementate doar ca niște câmpuri în pagina `Utilizatori`.
+
+Sistemul afectează:
+
+- modulele pe care un utilizator le poate deschide;
+- înregistrările care apar în endpointurile de listă;
+- citirea, editarea și ștergerea unei înregistrări;
+- câmpurile returnate de API;
+- câmpurile acceptate la creare și actualizare;
+- persoanele și departamentele către care poate fi alocată o înregistrare;
+- exporturile;
+- actualizările în masă;
+- accesul la audit;
+- fluxurile și colaboratorii viitori;
+- navigația și acțiunile din frontend.
+
+Autorizarea trebuie să fie centralizată în Django și aplicată înainte de:
+
+```text
+filtrare
+numărare
+paginare
+serializare
 export
-mass_update
-data_privacy
-follower_management
-message
+actualizare
+ștergere
+```
+
+React poate ascunde funcții indisponibile, dar nu este o barieră de securitate.
+
+## Comportamentul EspoCRM care trebuie păstrat
+
+### Sursele rolurilor
+
+Un utilizator intern care nu este superutilizator poate primi roluri din trei surse opționale:
+
+1. rolul de bază configurat global;
+2. rolurile atribuite direct utilizatorului;
+3. rolurile moștenite din fiecare departament activ al utilizatorului.
+
+Formula conceptuală:
+
+```text
+rol de bază opțional
++ roluri directe opționale
++ roluri moștenite din departamente opționale
+= acces efectiv
+```
+
+Toate cele trei surse pot lipsi.
+
+Un utilizator fără departamente și fără roluri este valid. Pentru resursele protejate primește valorile implicite stricte, în mod normal `fara_acces`.
+
+Rolurile moștenite din departamente nu se copiază în tabela rolurilor directe ale utilizatorului.
+
+### Fuziunea permisivă
+
+Rolurile sunt cumulative.
+
+Nu există regula „interdicția câștigă”. Valoarea cea mai permisivă câștigă pentru fiecare acțiune, câmp și permisiune specială.
+
+Nivelurile pentru înregistrări sunt:
+
+```text
+toate > departament > proprii > fara_acces
+```
+
+Nivelurile booleene sunt:
+
+```text
+da > nu
+```
+
+Un rol poate avea valoarea:
+
+```text
+nesetat
+```
+
+`nesetat` nu participă la fuziune.
+
+Dacă toate sursele sunt `nesetat`, se aplică valoarea strictă implicită, de regulă `fara_acces` sau `nu`.
+
+Exemple obligatorii:
+
+```text
+toate + fara_acces = toate
+departament + proprii = departament
+proprii + fara_acces = proprii
+da + nu = da
+nesetat + departament = departament
+nesetat + nesetat = valoarea strictă implicită
+```
+
+Consecințe:
+
+- un rol restrictiv nu poate anula accesul acordat de alt rol;
+- pentru restricționare trebuie eliminat ori modificat rolul permisiv;
+- restricțiile obligatorii ale platformei se aplică separat după fuziune;
+- ordinea rolurilor nu creează prioritate.
+
+### Administrator și personal administrativ
+
+Maparea TUVTK este:
+
+```text
+is_superuser=True -> ocolire completă a ACL-ului normal
+is_staff=True     -> acces la zone administrative, nu acces nelimitat la date
+```
+
+Reguli:
+
+- superutilizatorul primește acces maxim, exceptând restricțiile obligatorii ale platformei;
+- un utilizator `is_staff=True` continuă să fie evaluat prin roluri pentru modulele de business;
+- în primele faze doar superutilizatorii pot crea sau modifica roluri, departamente și atribuiri;
+- dreptul de a administra utilizatori nu trebuie confundat cu permisiunea de a vedea toate datele de business.
+
+## Domenii de acces
+
+Un domeniu de acces este o resursă protejată, de exemplu:
+
+```text
+utilizatori
+planificari_cursuri
+zile_libere
+navigatie
+interfata
+companii
+documente
+```
+
+Domeniile sunt înregistrate în cod, nu create arbitrar din interfață.
+
+Acțiunile compatibile sunt:
+
+```text
+creare
+citire
+editare
+stergere
+flux
+```
+
+`creare` folosește valori booleene:
+
+```text
+da
+nu
+nesetat
+```
+
+Celelalte acțiuni folosesc:
+
+```text
+toate
+departament
+proprii
+fara_acces
+nesetat
+```
+
+Un domeniu poate fi:
+
+```text
+dezactivat
+observare
+aplicat
+```
+
+Semnificații:
+
+- `dezactivat`: ACL-ul nou nu este folosit pentru domeniu;
+- `observare`: decizia este calculată și înregistrată, dar nu blochează;
+- `aplicat`: decizia ACL este obligatorie.
+
+## Semnificația nivelurilor pe înregistrări
+
+### Toate
+
+Utilizatorul poate efectua acțiunea asupra tuturor înregistrărilor domeniului, sub rezerva restricțiilor obligatorii și a permisiunilor pe câmpuri.
+
+### Departament
+
+O înregistrare este accesibilă dacă este adevărată cel puțin una dintre condiții:
+
+- înregistrarea aparține unuia dintre departamentele active ale utilizatorului;
+- utilizatorul este proprietarul înregistrării;
+- înregistrarea este partajată cu utilizatorul prin colaboratori, pentru acțiunile care acceptă această regulă.
+
+Aceasta este o condiție `OR`, nu doar intersecția dintre departamente.
+
+Un utilizator cu nivel `departament` trebuie să își poată vedea propria înregistrare chiar dacă acea înregistrare nu are departament.
+
+### Proprii
+
+Proprietatea se determină în această ordine:
+
+1. dacă domeniul are mai mulți utilizatori alocați, utilizatorul curent este printre ei;
+2. altfel, dacă domeniul are un utilizator alocat, acesta este utilizatorul curent;
+3. altfel, dacă domeniul are creator, creatorul este utilizatorul curent;
+4. altfel, nicio înregistrare nu poate satisface nivelul `proprii`.
+
+Pentru citire și flux, colaboratorii pot primi acces partajat dacă domeniul suportă colaboratori și nivelul nu este `fara_acces`.
+
+### Fără acces
+
+Nicio înregistrare nu este accesibilă.
+
+Endpointurile de listă trebuie să producă un queryset gol, iar accesul individual trebuie refuzat.
+
+## Departamente
+
+### Reguli generale
+
+Un departament poate avea:
+
+- nume;
+- cod sau slug;
+- descriere;
+- stare activă;
+- membri;
+- poziții descriptive;
+- zero sau mai multe roluri;
+- înregistrări asociate.
+
+Un utilizator poate aparține mai multor departamente.
+
+Un utilizator poate să nu aparțină niciunui departament.
+
+Un departament poate exista fără membri și fără roluri.
+
+Rolurile atribuite unui departament sunt moștenite de toți membrii activi ai acelui departament.
+
+Departamentele rămân plate. Nu se introduce moștenire între departamente.
+
+### Departamentul implicit
+
+Departamentul implicit este opțional.
+
+Configurații valide:
+
+```text
+departamente: []
+departament_implicit: null
+```
+
+```text
+departamente: [Training]
+departament_implicit: null
+```
+
+```text
+departamente: [Training, Certificari]
+departament_implicit: Training
+```
+
+Invarianta obligatorie:
+
+```text
+departament_implicit este null
+sau
+departament_implicit aparține departamentelor active ale utilizatorului
+```
+
+Departamentul implicit poate fi folosit pentru:
+
+- asocierea automată a unei înregistrări noi;
+- filtrări și valori implicite în formulare;
+- configurări viitoare specifice departamentului;
+- selectarea layoutului ori a contextului implicit, dacă va exista această funcție.
+
+La eliminarea apartenenței la departamentul implicit, operația trebuie să:
+
+- aleagă explicit alt departament implicit în aceeași tranzacție;
+- sau să seteze explicit valoarea la `null`.
+
+Nu se acceptă o referință invalidă.
+
+### Poziția în departament
+
+Un membru poate avea opțional o poziție descriptivă, de exemplu:
+
+```text
+Coordonator
+Responsabil cursuri
+Auditor
+Consultant
+```
+
+Poziția:
+
+- nu este rol ACL;
+- nu acordă automat permisiuni;
+- poate fi utilizată ulterior în fluxuri și afișare;
+- trebuie să fie goală sau una dintre pozițiile configurate pentru departament.
+
+## Roluri
+
+Un rol poate fi atribuit:
+
+- direct unui utilizator;
+- unui departament;
+- simultan utilizatorilor și departamentelor;
+- nimănui încă.
+
+Un rol poate avea:
+
+- permisiuni pe domenii;
+- permisiuni pe câmpuri;
+- permisiuni speciale;
+- stare activă;
+- descriere.
+
+Un rol inactiv nu participă la calculul accesului efectiv.
+
+Rolurile directe, cele moștenite și rolul de bază trebuie păstrate separat în răspunsurile de diagnostic.
+
+## Rolul de bază
+
+Poate exista un singur rol de bază global și este opțional.
+
+Acesta se aplică tuturor utilizatorilor interni care nu sunt superutilizatori.
+
+Rolul de bază trebuie să conțină accesul comun minim, nu restricții care încearcă să anuleze alte roluri.
+
+Schimbarea rolului de bază invalidează accesul calculat pentru toți utilizatorii.
+
+## Permisiunea de alocare
+
+Permisiunea de alocare este separată de permisiunea de editare a înregistrării.
+
+Nivelurile sunt:
+
+```text
+toate
+departament
+fara_acces
+```
+
+Comportament:
+
+- `toate`: poate aloca către utilizatori și departamente eligibile fără limitarea la departamente comune;
+- `departament`: utilizatorul țintă trebuie să aibă cel puțin un departament comun, iar departamentele alocate trebuie să aparțină utilizatorului care efectuează operația;
+- `fara_acces`: nu poate modifica utilizatorii sau departamentele alocate.
+
+La creare:
+
+- utilizatorul alocat implicit poate fi creatorul;
+- departamentul implicit poate fi adăugat automat;
+- valorile implicite se aplică pe server înaintea validării;
+- clientul nu poate ocoli verificarea trimițând direct ID-uri de relații.
+
+## Permisiunea asupra utilizatorilor
+
+Această permisiune controlează accesul la alți utilizatori în contexte de business.
+
+Nivelurile sunt:
+
+```text
+toate
+departament
+fara_acces
+```
+
+Reguli:
+
+- utilizatorul curent rămâne întotdeauna accesibil propriei persoane;
+- la nivel `departament`, un alt utilizator este accesibil doar dacă există cel puțin un departament comun;
+- această permisiune protejează căutările de utilizatori, candidații de alocare și accesul efectiv al altui utilizator;
+- nu acordă acces la pagina administrativă `Utilizatori`;
+- administrarea conturilor rămâne o funcție separată, protejată explicit.
+
+## Alte permisiuni speciale
+
+Registrul trebuie să poată susține fără schimbarea schemei:
+
+```text
+alocare
+utilizatori
+calendar_utilizatori
+portal
+cont_email_grup
+export
+actualizare_in_masa
+protectia_datelor
+gestionare_urmaritori
+mesaje
 audit
-mention
-lock
+mentionare
+blocare
 ```
 
-Not every permission must be active in phase one. The registry must support adding them without schema changes.
-
-Recommended first active permissions:
+Permisiunile active recomandate inițial:
 
 ```text
-assignment: all | team | no
-user: all | team | no
-export: yes | no
-mass_update: yes | no
-audit: yes | no
+alocare: toate | departament | fara_acces
+utilizatori: toate | departament | fara_acces
+export: da | nu
+actualizare_in_masa: da | nu
+audit: da | nu
 ```
 
-Later modules can activate the remaining permissions when the associated feature exists.
+Fiecare definiție din registru stabilește:
 
-### Field-level security
+- codul;
+- eticheta;
+- nivelurile permise;
+- ordinea nivelurilor;
+- valoarea strictă implicită;
+- dacă permisiunea este activă.
 
-For each scope and field, a role may define:
+## Permisiuni pe câmpuri
+
+Pentru fiecare domeniu și câmp, un rol poate defini:
 
 ```text
-read: yes | no
-edit: yes | no
+citire: da | nu | nesetat
+editare: da | nu | nesetat
 ```
 
-Unset values do not participate in merging. More permissive values win.
-
-Effective behavior:
-
-- no read access: the field is not exposed by normal API responses and is not rendered in normal frontend views;
-- no edit access: input for the field is rejected or removed before persistence;
-- field access never grants record access;
-- record access is evaluated first, then field access;
-- global sensitive-field restrictions can remain mandatory regardless of roles;
-- fields used internally for authorization must never become writable merely because a role says `yes`.
-
-For TUVTK APIs, explicit attempts to write a forbidden field should return the standard API error envelope with field-level details. This provides clearer diagnostics than silently discarding user input while preserving the same security result.
-
-### Delete-created exception
-
-EspoCRM can optionally allow users to delete recently created records even when the merged delete level would normally deny the operation. Its default threshold is 24 hours and it applies only under specific creator and assignment conditions.
-
-This is an advanced compatibility feature. It must not be included in the initial enforcement phase. If added later, it must be:
-
-- disabled by default in TUVTK;
-- controlled by explicit platform settings;
-- tested separately from standard role resolution;
-- applied consistently to detail and bulk deletion paths;
-- recorded in audit logs.
-
-### Mandatory platform rules
-
-EspoCRM applies strict defaults, disabled scopes, mandatory rules for normal users, and administrator-mandatory rules after role merging.
-
-TUVTK needs the same concept even if the first UI does not expose it.
-
-Examples:
-
-- authentication fields cannot be edited through a generic scope permission;
-- security and audit fields remain read-only;
-- disabled modules remain disabled;
-- superusers can still be prevented from changing internal immutable fields through normal APIs;
-- permissions absent from all roles default to denial.
-
-Mandatory rules must be code/configuration-owned, not editable through the normal role editor.
-
-## Django domain model
-
-Create a dedicated backend application:
-
-```text
-backend/apps/access_control/
-```
-
-Do not place the ACL compiler inside `authentication`, `core`, or `utilizatori`. Authentication establishes identity; access control decides authorization.
-
-### AccessRole
-
-Suggested fields:
-
-```text
-id
-name
-slug
-description
-is_active
-created_at
-updated_at
-created_by
-updated_by
-```
-
-Constraints:
-
-- `name` and `slug` unique among active roles;
-- inactive roles do not participate in compilation;
-- deleting a role with assignments should be a soft deactivation or an explicit protected operation;
-- role mutations require superuser permission in the initial version.
-
-### AccessRoleScopePermission
-
-One row per role and scope:
-
-```text
-role
-scope_code
-create_level
-read_level
-edit_level
-delete_level
-stream_level
-```
-
-Allowed stored values:
-
-```text
-create_level: not_set | yes | no
-record levels: not_set | all | team | own | no
-```
-
-Constraint:
-
-```text
-unique(role, scope_code)
-```
-
-Using normalized rows instead of a large JSON blob provides database constraints, auditability, focused API updates, and easier migrations while preserving EspoCRM behavior.
-
-### AccessRoleFieldPermission
-
-One row per role, scope, and field:
-
-```text
-role
-scope_code
-field_code
-read_level
-edit_level
-```
-
-Allowed values:
-
-```text
-not_set | yes | no
-```
-
-Constraint:
-
-```text
-unique(role, scope_code, field_code)
-```
-
-Only fields registered by the scope definition may be stored.
-
-### AccessRoleSpecialPermission
-
-One row per role and registered special permission:
-
-```text
-role
-permission_code
-level
-```
-
-Constraint:
-
-```text
-unique(role, permission_code)
-```
-
-The permission registry defines the allowed level set and ranking for each permission.
-
-### Team
-
-Suggested fields:
-
-```text
-id
-name
-slug
-description
-position_list
-is_active
-created_at
-updated_at
-created_by
-updated_by
-```
-
-`position_list` can be a validated JSON array of unique non-empty strings because its behavior matches EspoCRM's ordered list and does not require independent permissions.
-
-Teams remain flat in the compatibility implementation. Do not add parent-team inheritance unless a separate future requirement explicitly changes the model.
-
-### TeamMembership
-
-Through model between Django user and team:
-
-```text
-user
-team
-position
-is_active
-created_at
-created_by
-```
-
-Constraint:
-
-```text
-unique(user, team)
-```
-
-Rules:
-
-- membership position is empty or one of the team's configured positions;
-- inactive membership does not grant roles or record access;
-- membership mutation invalidates the user's effective ACL;
-- users cannot add themselves to teams through their own profile endpoint;
-- removing membership must handle the default-team invariant.
-
-### TeamRoleAssignment
-
-Through model:
-
-```text
-team
-role
-created_at
-created_by
-```
-
-Constraint:
-
-```text
-unique(team, role)
-```
-
-A change affects every active member of the team.
-
-### UserRoleAssignment
-
-Through model:
-
-```text
-user
-role
-created_at
-created_by
-```
-
-Constraint:
-
-```text
-unique(user, role)
-```
-
-This table represents only direct roles. Team-inherited and baseline roles must not be copied into it.
-
-### UserAccessProfile
-
-The project currently uses Django's existing user model. Replacing it with a custom user model at this stage would be invasive and is not required.
-
-Use a one-to-one profile:
-
-```text
-user
-default_team
-access_version
-created_at
-updated_at
-```
-
-Rules:
-
-- default team is nullable;
-- default team must be an active team with an active membership for the user;
-- `access_version` supports safe cache invalidation if per-user versioning is adopted;
-- profile creation is automatic and idempotent.
-
-### AccessControlConfiguration
-
-Singleton configuration:
-
-```text
-baseline_role
-revision
-is_enforcement_enabled
-updated_at
-updated_by
-```
-
-The baseline role is nullable. The revision changes after any mutation that can affect effective access.
-
-### Scope registry
-
-Scope definitions should be code-owned rather than administrator-created database rows.
-
-Suggested location:
-
-```text
-backend/apps/access_control/scopes.py
-```
-
-Each registered scope declares:
-
-```text
-code
-label
-model or service resource
-supported actions
-ownership strategy
-supports teams
-supports collaborators
-supports stream
-assignable
-registered fields
-mandatory field restrictions
-enforcement state
-```
-
-Example conceptual definition:
-
-```text
-code: course_plans
-supported_actions: create, read, edit, delete
-ownership: assigned_user_then_created_by
-supports_teams: true
-supports_collaborators: false
-enforcement: shadow
-```
-
-Permissions stored for unknown scope or field codes must fail validation. Removing a registered field or scope requires a deliberate data migration or cleanup command.
-
-## Effective ACL compiler
-
-Create one service responsible for compilation:
-
-```text
-backend/apps/access_control/compiler.py
-```
-
-Input:
-
-```text
-user
-```
-
-Output should be an immutable structure containing:
-
-```text
-source roles
-merged scope permissions
-merged field permissions
-merged special permissions
-user team IDs
-default team ID
-revision/cache metadata
-```
-
-### Compilation algorithm
-
-For a non-superuser:
-
-1. load the active baseline role, if configured;
-2. load active direct user roles;
-3. load active team memberships;
-4. load active roles for those teams;
-5. preserve source metadata for diagnostics;
-6. merge every scope/action using the registered rank;
-7. merge field read/edit values using `yes > no`, ignoring `not_set`;
-8. merge special permissions using each permission's registry-defined rank;
-9. apply strict-deny defaults to missing values;
-10. apply mandatory platform restrictions;
-11. return the immutable effective ACL.
-
-For a superuser:
-
-1. produce highest normal access for enabled scopes;
-2. keep system-disabled scopes disabled;
-3. apply administrator-mandatory field and action restrictions;
-4. return source metadata indicating superuser bypass.
-
-### Merge functions
-
-Merge functions must be pure and unit-tested.
-
-Suggested APIs:
-
-```text
-merge_record_level(levels) -> all | team | own | no
-merge_boolean_level(levels) -> yes | no
-merge_special_level(permission_code, levels) -> registered level
-merge_field_level(levels) -> yes | no
-```
-
-`not_set` is ignored before ranking. An empty list resolves to the registered strict default, normally `no`.
-
-Never implement permission merging with database row order, Python enum order by accident, or the first matching role.
-
-## Central authorization services
-
-Suggested modules:
-
-```text
-backend/apps/access_control/compiler.py
-backend/apps/access_control/checker.py
-backend/apps/access_control/querysets.py
-backend/apps/access_control/assignment.py
-backend/apps/access_control/fields.py
-backend/apps/access_control/cache.py
-backend/apps/access_control/registry.py
-```
-
-### Scope checker
-
-Must answer:
-
-```text
-can_create(user, scope)
-can_read(user, scope, object)
-can_edit(user, scope, object)
-can_delete(user, scope, object)
-can_stream(user, scope, object)
-```
-
-Object checks must use the same ownership predicates as queryset filtering.
-
-### Queryset filtering
-
-Must answer:
-
-```text
-filter_readable(queryset, user, scope)
-filter_editable(queryset, user, scope)
-filter_deletable(queryset, user, scope)
-```
-
-Rules:
-
-- `all`: unchanged queryset;
-- `team`: team relation OR own predicate, plus collaborator sharing for supported read/stream operations;
-- `own`: own predicate, plus collaborator sharing for supported read/stream operations;
-- `no`: `queryset.none()`;
-- apply `distinct()` only when required by many-to-many joins;
-- apply ACL filtering before search, pagination counts, pagination slices, exports, aggregates, and bulk operations;
-- never fetch an unrestricted queryset and filter records in Python.
-
-### Ownership adapter
-
-Not every domain model will have the same field names. Use a registered adapter per scope rather than hard-coding one global model mixin immediately.
-
-The adapter exposes:
-
-```text
-own_q(user)
-team_q(user)
-shared_q(user, action)
-is_own(user, object)
-is_team(user, object)
-is_shared(user, object, action)
-apply_create_defaults(user, validated_data)
-validate_assignment(user, old_object, new_values)
-```
-
-Default ownership behavior should match EspoCRM:
-
-```text
-multiple assigned users
-else assigned user
-else created by
-else no ownership
-```
-
-A future abstract `AccessControlledModel` can standardize new domain models, but existing models should be integrated with adapters to avoid unsafe broad migrations.
-
-### DRF integration
-
-Provide reusable DRF components:
-
-```text
-ScopePermission
-AccessControlledQuerysetMixin
-AccessControlledSerializerMixin
-AssignmentValidationMixin
-FieldSecuritySerializerMixin
-```
-
-Every enforced endpoint for a scope must use the central components. Do not scatter calls such as `if user.is_staff` or custom team filters across individual views.
-
-The standard API error envelope remains:
+Reguli:
+
+- `nesetat` nu participă la fuziune;
+- `da` este mai permisiv decât `nu`;
+- permisiunea pe câmp nu acordă acces la înregistrare;
+- accesul la înregistrare este evaluat înaintea câmpurilor;
+- un câmp fără drept de citire nu apare în răspunsurile API normale;
+- un câmp fără drept de editare nu poate fi modificat;
+- câmpurile interne de securitate rămân protejate prin reguli obligatorii;
+- încercarea explicită de a scrie un câmp interzis trebuie să producă eroare clară.
+
+Formatul standard al erorii:
 
 ```json
 {
   "code": "permission_denied",
-  "detail": "...",
-  "fields": {}
+  "detail": "Nu aveți permisiunea necesară.",
+  "fields": {
+    "nume_camp": ["Câmpul nu poate fi modificat."]
+  }
 }
 ```
 
-Forbidden field writes should populate `fields` with the affected names.
+## Colaboratori
 
-## Cache design and invalidation
+Colaboratorii sunt o funcție ulterioară, dar arhitectura trebuie să permită adăugarea lor.
 
-EspoCRM compiles and caches an ACL table per user. TUVTK should do the same using the existing Django cache/Redis infrastructure and request-local memoization.
+Comportament compatibil:
 
-Recommended first implementation:
+- pot acorda citire și flux;
+- nu acordă automat editare sau ștergere;
+- creatorul poate fi adăugat automat;
+- persoanele alocate pot fi adăugate automat;
+- un fost responsabil poate rămâne colaborator;
+- filtrarea listelor trebuie să includă colaboratorii înainte de paginare.
 
-```text
-cache key: access-control:user:<user-id>:revision:<global-revision>
-```
+Colaboratorii nu sunt necesari pentru prima fază cu roluri și departamente.
 
-The global revision is incremented transactionally after:
+## Reguli obligatorii ale platformei
 
-- role scope, field, or special permission changes;
-- role activation/deactivation;
-- direct user-role changes;
-- team-role changes;
-- team membership changes;
-- team activation/deactivation;
-- baseline-role changes;
-- scope registry version changes;
-- mandatory rule changes.
+După fuziunea rolurilor se aplică restricții care nu pot fi modificate din editorul de roluri.
 
-Use `transaction.on_commit` so uncommitted or rolled-back changes never invalidate or publish partial access state.
+Exemple:
 
-A global revision is intentionally simple and safe. It invalidates more users than necessary but avoids stale permission grants. Targeted user/role/team versioning can be introduced only after profiling demonstrates a need.
+- câmpurile de autentificare nu devin editabile generic;
+- câmpurile de securitate și audit rămân protejate;
+- modulele dezactivate rămân dezactivate;
+- câmpurile imutabile nu pot fi schimbate nici de superutilizator prin endpointuri generice;
+- valorile absente din toate rolurile se rezolvă strict la refuz.
 
-Within a request, compile once per user and reuse the immutable object.
+Regulile obligatorii sunt definite în cod sau configurație controlată, nu în tabele administrabile liber.
 
-Permission revocation must take effect immediately after commit. No API process, Celery worker, or other application instance may continue using a stale grant.
+## Aplicația Django
 
-## API design
-
-All routes are under:
+Se creează o aplicație backend dedicată:
 
 ```text
-/api/v1/access-control/
+backend/apps/control_acces/
 ```
 
-### Scope registry
+Nu se introduce compilatorul în:
 
 ```text
-GET /api/v1/access-control/scopes
+authentication
+core
+utilizatori
 ```
 
-Returns available scopes, actions, fields, special permissions, labels, level options, and enforcement state. The frontend role editor must render from this contract rather than hard-coded module lists.
-
-### Roles
+Responsabilitățile rămân separate:
 
 ```text
-GET    /api/v1/access-control/roles/
-POST   /api/v1/access-control/roles/
-GET    /api/v1/access-control/roles/<role-id>
-PATCH  /api/v1/access-control/roles/<role-id>
-DELETE /api/v1/access-control/roles/<role-id>
-PUT    /api/v1/access-control/roles/<role-id>/permissions
+authentication -> stabilește identitatea
+control_acces  -> decide autorizarea
+utilizatori    -> administrează conturile
 ```
 
-The role detail response includes scope, field, and special permissions. The permissions update should be transactional and validate every scope, field, action, and level.
+## Modelul de date Django
 
-Prefer deactivation over destructive deletion when the role has assignment history.
+### Rol
 
-### Teams
+Model:
 
 ```text
-GET    /api/v1/access-control/teams/
-POST   /api/v1/access-control/teams/
-GET    /api/v1/access-control/teams/<team-id>
-PATCH  /api/v1/access-control/teams/<team-id>
-DELETE /api/v1/access-control/teams/<team-id>
-PUT    /api/v1/access-control/teams/<team-id>/roles
-GET    /api/v1/access-control/teams/<team-id>/members
-PUT    /api/v1/access-control/teams/<team-id>/members
+Rol
 ```
 
-Membership updates must be transactional and return the final membership set, including positions and default-team consequences.
-
-### User access assignments
+Câmpuri recomandate:
 
 ```text
-GET /api/v1/access-control/users/<user-id>/assignments
-PUT /api/v1/access-control/users/<user-id>/roles
-PUT /api/v1/access-control/users/<user-id>/teams
-PUT /api/v1/access-control/users/<user-id>/default-team
+id
+nume
+slug
+descriere
+este_activ
+creat_la
+actualizat_la
+creat_de
+actualizat_de
 ```
 
-Assignments response distinguishes direct roles from inherited roles.
+Reguli:
 
-### Effective access
+- numele și slugul sunt unice;
+- rolurile inactive nu participă la compilare;
+- rolurile atribuite nu se șterg distructiv în mod implicit;
+- dezactivarea este acțiunea principală;
+- modificarea necesită superutilizator în prima versiune.
+
+### PermisiuneDomeniuRol
+
+Un rând pentru fiecare pereche rol-domeniu:
 
 ```text
-GET /api/v1/access-control/users/<user-id>/effective-access
+rol
+cod_domeniu
+nivel_creare
+nivel_citire
+nivel_editare
+nivel_stergere
+nivel_flux
 ```
 
-Response includes:
+Valori stocate:
 
 ```text
-user summary
-superuser bypass flag
-baseline role
-active direct roles
-active team roles grouped by team
-merged scope permissions
-merged field permissions
-merged special permissions
-team IDs
-default team
-compiler revision
+nivel_creare:
+  nesetat | da | nu
+
+niveluri pe înregistrări:
+  nesetat | toate | departament | proprii | fara_acces
 ```
 
-This endpoint powers the EspoCRM-like `Acces` action on the user page. It must never expose another user's effective access unless the caller has the required administration or User permission.
-
-### Assignment candidates
-
-Future record forms should not load all users and teams and filter in React.
-
-Provide server-filtered candidate endpoints:
+Constrângere:
 
 ```text
-GET /api/v1/access-control/assignment/users?scope=<scope>&search=<term>
-GET /api/v1/access-control/assignment/teams?scope=<scope>&search=<term>
+unique(rol, cod_domeniu)
 ```
 
-These endpoints apply assignment permission, active status, scope requirements, and team restrictions before returning candidates.
+### PermisiuneCampRol
 
-## Frontend design
+Un rând pentru fiecare rol, domeniu și câmp:
 
-Keep Roles and Teams inside the `Administrare` area, under the existing `Utilizatori` section. Do not add them as unrelated top-level sidebar modules.
+```text
+rol
+cod_domeniu
+cod_camp
+nivel_citire
+nivel_editare
+```
 
-Recommended routes:
+Valori:
+
+```text
+nesetat | da | nu
+```
+
+Constrângere:
+
+```text
+unique(rol, cod_domeniu, cod_camp)
+```
+
+Se acceptă numai câmpuri înregistrate în definiția domeniului.
+
+### PermisiuneSpecialaRol
+
+Un rând pentru fiecare rol și permisiune specială:
+
+```text
+rol
+cod_permisiune
+nivel
+```
+
+Constrângere:
+
+```text
+unique(rol, cod_permisiune)
+```
+
+Nivelurile sunt validate prin registrul permisiunilor speciale.
+
+### Departament
+
+Model:
+
+```text
+Departament
+```
+
+Câmpuri recomandate:
+
+```text
+id
+nume
+slug
+descriere
+lista_pozitii
+este_activ
+creat_la
+actualizat_la
+creat_de
+actualizat_de
+```
+
+`lista_pozitii` poate fi un JSON validat care conține șiruri unice, ne-goale.
+
+Departamentele sunt plate.
+
+### MembruDepartament
+
+Model de legătură între utilizator și departament:
+
+```text
+utilizator
+departament
+pozitie
+este_activ
+creat_la
+creat_de
+```
+
+Constrângere:
+
+```text
+unique(utilizator, departament)
+```
+
+Reguli:
+
+- apartenența este opțională;
+- poziția este goală sau se află în lista departamentului;
+- apartenența inactivă nu acordă roluri;
+- modificarea invalidează accesul utilizatorului;
+- utilizatorul nu se poate adăuga singur într-un departament prin profil;
+- eliminarea apartenenței tratează departamentul implicit în aceeași tranzacție.
+
+### RolDepartament
+
+Model de legătură:
+
+```text
+departament
+rol
+creat_la
+creat_de
+```
+
+Constrângere:
+
+```text
+unique(departament, rol)
+```
+
+Modificarea afectează toți membrii activi ai departamentului.
+
+### RolUtilizator
+
+Model de legătură pentru roluri directe:
+
+```text
+utilizator
+rol
+creat_la
+creat_de
+```
+
+Constrângere:
+
+```text
+unique(utilizator, rol)
+```
+
+Tabela conține numai rolurile directe.
+
+Rolurile de bază și cele moștenite nu se copiază aici.
+
+### ProfilAccesUtilizator
+
+Se păstrează modelul Django existent pentru utilizatori.
+
+Se adaugă un profil one-to-one:
+
+```text
+utilizator
+departament_implicit
+versiune_acces
+creat_la
+actualizat_la
+```
+
+Reguli:
+
+- profilul se creează automat și idempotent;
+- departamentul implicit este nullable;
+- departamentul implicit trebuie să aibă o apartenență activă;
+- `versiune_acces` poate fi folosită pentru invalidare țintită în viitor.
+
+### ConfiguratieControlAcces
+
+Configurație singleton:
+
+```text
+rol_de_baza
+revizie
+aplicare_activa
+actualizat_la
+actualizat_de
+```
+
+Reguli:
+
+- rolul de bază este nullable;
+- revizia se schimbă după orice modificare care afectează accesul;
+- aplicarea poate fi activată gradual.
+
+## Registrul domeniilor
+
+Locație recomandată:
+
+```text
+backend/apps/control_acces/domenii.py
+```
+
+Fiecare domeniu declară:
+
+```text
+cod
+eticheta
+actiuni
+strategie_proprietate
+suporta_departamente
+suporta_colaboratori
+suporta_flux
+poate_fi_alocat
+campuri
+restrictii_obligatorii
+stare_aplicare
+```
+
+Exemplu conceptual:
+
+```text
+cod: planificari_cursuri
+actiuni: creare, citire, editare, stergere
+strategie_proprietate: utilizator_alocat_apoi_creator
+suporta_departamente: true
+suporta_colaboratori: false
+stare_aplicare: observare
+```
+
+Reguli:
+
+- domeniile necunoscute sunt refuzate la validare;
+- acțiunile necunoscute sunt refuzate;
+- câmpurile necunoscute sunt refuzate;
+- eliminarea unui domeniu necesită curățare sau migrare deliberată;
+- frontendul primește lista din API, nu o păstrează hard-codată.
+
+## Registrul permisiunilor speciale
+
+Locație recomandată:
+
+```text
+backend/apps/control_acces/permisiuni.py
+```
+
+Fiecare definiție declară:
+
+```text
+cod
+eticheta
+niveluri
+clasament
+valoare_implicita
+este_activa
+```
+
+Adăugarea unei noi permisiuni nu trebuie să necesite schimbarea compilatorului.
+
+## Compilatorul accesului efectiv
+
+Locație recomandată:
+
+```text
+backend/apps/control_acces/compilator.py
+```
+
+Intrare:
+
+```text
+utilizator
+```
+
+Surse colectate:
+
+```text
+rol_de_baza
+roluri_directe_active
+roluri_din_departamente_active
+```
+
+Ieșirea este o structură imutabilă care conține:
+
+```text
+surse_roluri
+permisiuni_domenii
+permisiuni_campuri
+permisiuni_speciale
+departamente_active
+departament_implicit
+revizie
+explicatia_valorilor_castigatoare
+```
+
+Compilatorul:
+
+- nu conține logică frontend;
+- nu execută filtrarea în memorie după citirea datelor;
+- trebuie să poată fi testat cu obiecte simple;
+- folosește funcții pure pentru fuziune;
+- compilează o singură dată per utilizator și revizie;
+- păstrează sursa care a acordat nivelul câștigător.
+
+## Serviciul central de autorizare
+
+Locație recomandată:
+
+```text
+backend/apps/control_acces/servicii.py
+```
+
+Interfață conceptuală:
+
+```text
+poate_crea(utilizator, domeniu)
+poate_citi(utilizator, domeniu, obiect)
+poate_edita(utilizator, domeniu, obiect)
+poate_sterge(utilizator, domeniu, obiect)
+poate_citi_camp(utilizator, domeniu, camp)
+poate_edita_camp(utilizator, domeniu, camp)
+are_permisiune_speciala(utilizator, cod)
+filtreaza_queryset(utilizator, domeniu, queryset)
+```
+
+Toate endpointurile de business trebuie să folosească același serviciu.
+
+Nu se acceptă implementări locale diferite ale nivelurilor `departament` și `proprii`.
+
+## Filtrarea queryset-urilor
+
+Filtrarea trebuie aplicată în baza de date, înainte de:
+
+```text
+distinct
+ordonare
+numarare
+paginare
+serializare
+```
+
+### Nivel toate
+
+```text
+queryset neschimbat
+```
+
+### Nivel fără acces
+
+```text
+queryset.none()
+```
+
+### Nivel proprii
+
+Condiție bazată pe strategia domeniului:
+
+```text
+utilizatori_alocati conține utilizatorul
+sau
+utilizator_alocat = utilizator
+sau
+creat_de = utilizator
+```
+
+Pentru citire și flux se poate adăuga condiția colaboratorilor.
+
+### Nivel departament
+
+Condiție `OR`:
+
+```text
+departamentele înregistrării intersectează departamentele utilizatorului
+sau
+înregistrarea este proprie
+sau
+utilizatorul este colaborator, unde este permis
+```
+
+Se folosesc:
+
+- `Q` objects;
+- `Exists` sau subinterogări când sunt potrivite;
+- `distinct()` numai când relațiile pot produce duplicate;
+- indexuri pentru cheile de relație.
+
+Nu se filtrează rezultate deja paginate.
+
+## Verificarea obiectelor individuale
+
+Orice endpoint de detaliu trebuie să aplice aceeași semantică precum endpointul de listă.
+
+Nu se acceptă situația în care:
+
+- lista ascunde înregistrarea;
+- dar URL-ul direct o returnează.
+
+Verificarea obiectului și filtrarea listelor trebuie să provină din aceeași definiție de proprietate.
+
+## Integrarea DRF
+
+Componente recomandate:
+
+```text
+ControlAccesDomeniu
+MixinQuerysetControlAcces
+MixinCampuriControlAcces
+ValidareAlocare
+```
+
+Ordine recomandată:
+
+1. autentificare;
+2. verificarea accesului la domeniu;
+3. filtrarea queryset-ului;
+4. verificarea obiectului;
+5. filtrarea câmpurilor citibile;
+6. validarea câmpurilor editabile;
+7. validarea alocării;
+8. salvarea;
+9. auditarea.
+
+Nu se bazează securitatea pe date trimise de frontend.
+
+## Cache și invalidare
+
+EspoCRM compilează ACL-ul pentru fiecare utilizator. TUVTK trebuie să păstreze același principiu.
+
+Cheie simplă inițială:
+
+```text
+control-acces:utilizator:<id>:revizie:<revizie-globala>
+```
+
+Revizia globală se incrementează după:
+
+- schimbarea permisiunilor unui rol;
+- activarea sau dezactivarea unui rol;
+- schimbarea rolurilor directe;
+- schimbarea rolurilor departamentelor;
+- schimbarea apartenențelor;
+- activarea sau dezactivarea unui departament;
+- schimbarea rolului de bază;
+- schimbarea registrului domeniilor;
+- schimbarea regulilor obligatorii.
+
+Invalidarea se publică prin `transaction.on_commit`.
+
+O tranzacție anulată nu trebuie să invalideze sau să publice o stare incompletă.
+
+În aceeași cerere, accesul se compilează o singură dată.
+
+Revocarea unei permisiuni trebuie să aibă efect imediat după commit în:
+
+- procesele API;
+- workerele Celery;
+- toate instanțele aplicației.
+
+## API
+
+Prefix:
+
+```text
+/api/v1/control-acces/
+```
+
+### Domenii
+
+```text
+GET /api/v1/control-acces/domenii
+```
+
+Returnează:
+
+- domenii;
+- acțiuni;
+- câmpuri;
+- niveluri;
+- permisiuni speciale;
+- etichete;
+- starea aplicării.
+
+### Roluri
+
+```text
+GET    /api/v1/control-acces/roluri/
+POST   /api/v1/control-acces/roluri/
+GET    /api/v1/control-acces/roluri/<id>
+PATCH  /api/v1/control-acces/roluri/<id>
+DELETE /api/v1/control-acces/roluri/<id>
+PUT    /api/v1/control-acces/roluri/<id>/permisiuni
+```
+
+Ștergerea permanentă nu este acțiunea principală. Se preferă dezactivarea.
+
+### Departamente
+
+```text
+GET    /api/v1/control-acces/departamente/
+POST   /api/v1/control-acces/departamente/
+GET    /api/v1/control-acces/departamente/<id>
+PATCH  /api/v1/control-acces/departamente/<id>
+DELETE /api/v1/control-acces/departamente/<id>
+PUT    /api/v1/control-acces/departamente/<id>/roluri
+GET    /api/v1/control-acces/departamente/<id>/membri
+PUT    /api/v1/control-acces/departamente/<id>/membri
+```
+
+Actualizarea membrilor este tranzacțională și tratează departamentul implicit.
+
+### Atribuiri utilizator
+
+```text
+GET /api/v1/control-acces/utilizatori/<id>/atribuiri
+PUT /api/v1/control-acces/utilizatori/<id>/roluri
+PUT /api/v1/control-acces/utilizatori/<id>/departamente
+PUT /api/v1/control-acces/utilizatori/<id>/departament-implicit
+```
+
+Răspunsul separă:
+
+```text
+roluri_directe
+roluri_mostenite
+rol_de_baza
+```
+
+### Acces efectiv
+
+```text
+GET /api/v1/control-acces/utilizatori/<id>/acces-efectiv
+```
+
+Răspunsul include:
+
+- utilizatorul;
+- ocolirea de superutilizator;
+- rolul de bază;
+- rolurile directe;
+- rolurile grupate pe departamente;
+- permisiunile finale pe domenii;
+- permisiunile finale pe câmpuri;
+- permisiunile speciale;
+- departamentele;
+- departamentul implicit;
+- revizia;
+- sursa valorii câștigătoare.
+
+### Candidați pentru alocare
+
+```text
+GET /api/v1/control-acces/alocare/utilizatori?domeniu=<cod>&cautare=<text>
+GET /api/v1/control-acces/alocare/departamente?domeniu=<cod>&cautare=<text>
+```
+
+Filtrarea este efectuată pe server.
+
+## Frontend
+
+Rolurile și departamentele rămân în zona `Administrare`, în secțiunea utilizatorilor.
+
+Rute:
 
 ```text
 /administrare/utilizatori
 /administrare/utilizatori/roluri
-/administrare/utilizatori/roluri/<role-id>
-/administrare/utilizatori/echipe
-/administrare/utilizatori/echipe/<team-id>
+/administrare/utilizatori/roluri/<id>
+/administrare/utilizatori/departamente
+/administrare/utilizatori/departamente/<id>
 ```
 
-### Utilizatori page
+### Pagina Utilizatori
 
-Extend the existing page with:
+Se adaugă:
 
-- direct roles;
-- team memberships and membership position;
-- default team;
-- an `Acces` action that opens the effective-access view;
-- source labels showing `Direct`, `Echipă: <name>`, and `Rol de bază`;
-- no ability for a normal user or ordinary staff account to escalate its own assignments.
+- roluri directe;
+- apartenențe la departamente;
+- poziția în departament;
+- departamentul implicit;
+- acțiunea `Acces efectiv`;
+- etichete pentru sursele rolurilor.
 
-Do not overload the current create/edit dialog with the full role matrix. User identity fields and access assignments should be separate sections or tabs.
-
-### Roles list
-
-Use shadcn components and include:
-
-- live search;
-- active/inactive filter;
-- assigned users count;
-- assigned teams count;
-- baseline badge;
-- create, duplicate, deactivate, and open actions;
-- no permanent delete as the primary action.
-
-### Role editor
-
-Render from the scope registry.
-
-Recommended sections:
-
-1. general role information;
-2. scope access matrix;
-3. field-level security;
-4. special permissions;
-5. assigned users and teams;
-6. effective impact summary.
-
-The scope matrix columns:
+Etichete:
 
 ```text
-Scope | Create | Read | Edit | Delete | Stream
+Direct
+Departament: Training
+Rol de bază
 ```
 
-Each value supports `Nesetat`, preserving EspoCRM's additive merge behavior.
+Identitatea utilizatorului și matricea completă de acces nu trebuie înghesuite în același dialog.
 
-Field security should load fields only when a scope is expanded. Large matrices should not render every field for every scope at once.
+### Lista Roluri
 
-### Teams list and detail
+Componente recomandate:
 
-Include:
+- căutare live;
+- filtru activ/inactiv;
+- număr utilizatori direcți;
+- număr departamente;
+- insignă pentru rolul de bază;
+- creare;
+- duplicare;
+- dezactivare;
+- deschidere.
 
-- name and description;
-- active status;
-- member count;
-- role count;
-- position list;
-- members table with position and default-team indicator;
-- roles inherited by all members;
-- warnings showing how many users will be affected by role changes.
+### Editor Rol
 
-### Effective access viewer
+Secțiuni:
 
-Must display both source and result:
+1. informații generale;
+2. matricea domeniilor;
+3. permisiuni pe câmpuri;
+4. permisiuni speciale;
+5. utilizatori și departamente;
+6. rezumatul impactului.
 
-- source roles grouped by baseline, direct, and team;
-- merged permission matrix;
-- field restrictions;
-- special permissions;
-- explanation for each final value, showing which source role granted the winning level;
-- current cache/compiler revision.
-
-This diagnostic view is not optional. With permissive merging, it is the only reliable way for administrators to understand unexpected access.
-
-## Navigation behavior
-
-Navigation visibility should use effective scope access:
-
-- hide a module when the scope is disabled or all meaningful actions are denied;
-- do not rely only on `is_staff` for business modules;
-- keep `Administrare` staff-only;
-- access-control administration pages remain superuser-only in the first release;
-- backend endpoints remain authoritative even when navigation is hidden.
-
-The core bootstrap can eventually include a compact effective-access map for frontend feature gating. It must not include the entire field-level matrix unless needed, to keep startup payloads small.
-
-## Enforcement rollout
-
-Access control is too central for a single all-or-nothing commit. Use explicit phases.
-
-### Phase 0 — Foundation and frozen contracts
-
-Deliver:
-
-- this document;
-- scope and special-permission registries;
-- enums and pure merge functions;
-- architecture tests for ranking and strict defaults;
-- no database enforcement.
-
-Exit criteria:
-
-- all current and planned first-wave scopes are named;
-- ownership strategy for each pilot scope is documented;
-- no duplicate permission vocabulary exists in feature apps.
-
-### Phase 1 — Teams, roles, and assignments
-
-Deliver:
-
-- Django models and migrations;
-- role/team/user assignment APIs;
-- default-team invariant;
-- administration list/detail pages;
-- OpenAPI-generated frontend types;
-- audit timestamps and actor fields;
-- superuser-only mutation permissions.
-
-No business endpoint is restricted by the new roles yet.
-
-Exit criteria:
-
-- role inheritance can be configured;
-- team membership and positions work;
-- users cannot self-escalate;
-- all assignment mutations invalidate access cache state.
-
-### Phase 2 — Effective ACL compiler
-
-Deliver:
-
-- baseline, direct, and team role collection;
-- permissive merge engine;
-- mandatory restrictions;
-- Redis and request-local caching;
-- effective-access endpoint and viewer;
-- source-role explanations.
-
-Still no production business scope enforcement.
-
-Exit criteria:
-
-- compiled results match the complete merge test matrix;
-- changes revoke or grant access immediately after commit;
-- effective-access output explains every winning value.
-
-### Phase 3 — Shadow enforcement on one pilot scope
-
-Choose one non-critical domain with clear ownership fields.
-
-Deliver:
-
-- ownership adapter;
-- queryset filtering;
-- object permission checks;
-- create defaults;
-- assignment validation;
-- shadow mode that calculates decisions and logs differences without denying current requests.
-
-Exit criteria:
-
-- list, detail, export, count, update, and delete decisions are consistent;
-- query plans use expected indexes;
-- no hidden endpoint bypasses the adapter.
-
-### Phase 4 — Enforce pilot scope
-
-Enable real enforcement for the pilot scope only.
-
-Deliver:
-
-- feature flag/state changed from `shadow` to `enforced`;
-- frontend actions driven by effective permissions;
-- integration tests using real browser sessions and CSRF;
-- audit records for denied sensitive operations where appropriate.
-
-Exit criteria:
-
-- no unrestricted fallback endpoint remains;
-- pagination totals do not reveal inaccessible records;
-- bulk operations use the same ACL queryset.
-
-### Phase 5 — Field security and special permissions
-
-Deliver:
-
-- serializer output filtering;
-- forbidden input validation;
-- export permission;
-- mass-update permission;
-- assignment and User permission candidate endpoints;
-- frontend field/action gating.
-
-Exit criteria:
-
-- field restrictions apply to detail, list, export, and generated documents where relevant;
-- clients cannot write restricted fields by direct API calls;
-- assignment permission is enforced server-side.
-
-### Phase 6 — Roll out to remaining modules
-
-Integrate one scope at a time:
+Coloane:
 
 ```text
-companies
-documents
-course planner resources
-public-holiday administration
-future CRM and operational modules
+Domeniu | Creare | Citire | Editare | Ștergere | Flux
 ```
 
-Administrative configuration resources may retain explicit staff/superuser policies where Espo-style record ownership is not appropriate.
+Valorile includ `Nesetat`.
 
-Each scope moves through `disabled`, `shadow`, and `enforced` states independently.
+Câmpurile unui domeniu se încarcă la expandare, nu toate simultan.
 
-### Phase 7 — Advanced compatibility
+### Lista și detaliul Departamentelor
 
-Optional later work:
+Se afișează:
 
-- collaborators;
-- stream permissions;
-- recently-created delete exception;
-- user calendars;
-- follower, mention, message, audit, and lock permissions;
-- layout sets through default team;
-- external identity-provider team mapping;
-- portal/API-user role variants if those user types are introduced.
+- nume;
+- descriere;
+- stare;
+- număr membri;
+- număr roluri;
+- lista pozițiilor;
+- membri;
+- poziția membrului;
+- indicator departament implicit;
+- rolurile moștenite;
+- avertismentul privind numărul utilizatorilor afectați.
 
-Do not implement these as placeholders in earlier phases.
+### Vizualizarea Acces efectiv
 
-## Security invariants
+Trebuie să afișeze sursa și rezultatul:
 
-The implementation is incomplete unless all of these are true:
+- rol de bază;
+- roluri directe;
+- roluri pe departamente;
+- matricea finală;
+- permisiunile pe câmpuri;
+- permisiunile speciale;
+- explicația valorii câștigătoare;
+- revizia curentă.
 
-- no user can assign a role or team to themselves through a normal profile endpoint;
-- no staff user can grant themselves superuser access;
-- `is_staff` does not bypass business-data ACL;
-- role and team mutations are CSRF-protected;
-- inactive roles, teams, memberships, and users do not grant access;
-- inaccessible records are removed at queryset level before pagination and counts;
-- detail endpoints do not reveal record existence through different error behavior when avoidable;
-- export and bulk endpoints use the same filtered queryset as list endpoints;
-- background tasks receive an explicit actor or system authorization context;
-- Celery tasks do not silently run with unrestricted user authority;
-- direct object IDs cannot bypass assignment candidate restrictions;
-- forbidden fields cannot be written by manually crafted requests;
-- default team always belongs to the user;
-- cache invalidation occurs after commit and across application processes;
-- every enforced scope has matching queryset and object-level predicates;
-- permission checks are covered by tests using standard users, staff users, and superusers.
+Această pagină este obligatorie pentru diagnosticarea fuziunii permisive.
 
-## Test matrix
+## Navigație
 
-### Role collection
+Vizibilitatea modulelor folosește accesul efectiv.
 
-- baseline role only;
-- direct role only;
-- one team role;
-- multiple team roles from multiple memberships;
-- baseline plus direct plus team roles;
-- inactive role ignored;
-- inactive team membership ignored;
-- duplicate source role does not change the result;
-- superuser bypass.
+Reguli:
 
-### Merge behavior
+- un modul se ascunde când domeniul este dezactivat sau nu există nicio acțiune utilă permisă;
+- modulele de business nu se bazează numai pe `is_staff`;
+- `Administrare` rămâne pentru personal administrativ;
+- administrarea controlului de acces rămâne superutilizator-only la început;
+- backendul rămâne autoritar chiar dacă navigația ascunde o rută.
 
-- `all` wins over `team`, `own`, and `no`;
-- `team` wins over `own` and `no`;
-- `own` wins over `no`;
-- `yes` wins over `no`;
-- `not_set` is ignored;
-- all unset values resolve to strict denial;
-- field `yes` wins over field `no`;
-- special permissions use their registered ranking;
-- mandatory rules override the merged result.
+Bootstrapul frontend poate primi o hartă compactă a accesului, nu întreaga matrice de câmpuri.
 
-### Team and default team
+## Aplicarea graduală
 
-- multiple team memberships;
-- membership position validation;
-- team roles inherited immediately;
-- removing a team role revokes access immediately;
-- default team must be an active membership;
-- removing default membership requires clear or replacement;
-- user cannot manage own membership;
-- team deletion/deactivation does not leave invalid default references.
+### Faza 0 — Contracte și funcții pure
 
-### Own access
+Se livrează:
 
-- multiple assigned users contains actor;
-- single assigned user equals actor;
-- created-by fallback equals actor;
-- another user's record denied;
-- scope with no ownership field produces an empty queryset for `own`;
-- object check and queryset result agree.
+- aplicația `control_acces`;
+- enumerările nivelurilor;
+- registrul domeniilor;
+- registrul permisiunilor speciale;
+- structurile imutabile;
+- funcțiile pure de fuziune;
+- testele de clasament și valori implicite;
+- fără modele;
+- fără migrații;
+- fără blocarea endpointurilor existente.
 
-### Team access
+Criterii de ieșire:
 
-- record and user share one team;
-- record and user share multiple teams;
-- no common team denied;
-- own record without a team remains accessible;
-- collaborators included for read/stream when supported;
-- collaborator alone does not permit edit/delete;
-- object check and queryset result agree.
+- vocabularul este exclusiv în română;
+- domeniile inițiale sunt identificate;
+- strategiile de proprietate sunt documentate;
+- nu există alt vocabular ACL în aplicațiile de business.
 
-### Assignment permission
+### Faza 1 — Roluri, departamente și atribuiri
 
-- `all` can assign to eligible user and team;
-- `team` can assign to a user sharing a team;
-- `team` cannot assign to an unrelated user;
-- `team` can attach actor's team;
-- `team` cannot attach an unrelated team;
-- `no` cannot reassign;
-- creation defaults to self/default team without bypassing validation;
-- direct relationship IDs cannot bypass rules.
+Se livrează:
 
-### User permission
+- modelele;
+- migrațiile;
+- API-urile administrative;
+- invarianta departamentului implicit;
+- paginile de listă și detaliu;
+- tipurile frontend generate din OpenAPI;
+- auditarea actorului și momentului;
+- mutații superutilizator-only.
 
-- current user always accessible to themselves;
-- `all` permits eligible other users;
-- `team` permits users sharing any active team;
-- `team` denies unrelated users;
-- `no` denies other users;
-- effective-access endpoint obeys supervisory restrictions.
+Niciun endpoint de business nu este încă restricționat de noile roluri.
 
-### Field security
+### Faza 2 — Compilator și acces efectiv
 
-- unreadable field absent from list and detail payloads;
-- unreadable field absent from export;
-- uneditable field write rejected;
-- mandatory protected field remains protected for permissive roles;
-- field grant does not bypass record denial.
+Se livrează:
 
-### Endpoint consistency
+- colectarea rolului de bază;
+- colectarea rolurilor directe;
+- colectarea rolurilor departamentelor;
+- fuziunea permisivă;
+- regulile obligatorii;
+- cache;
+- invalidare;
+- endpointul de acces efectiv;
+- explicația surselor.
 
-For every enforced scope, test:
+### Faza 3 — Infrastructura DRF în mod observare
+
+Se livrează:
+
+- mixinurile de filtrare;
+- verificarea obiectelor;
+- filtrarea câmpurilor;
+- validarea alocării;
+- jurnalizarea diferențelor;
+- fără blocare reală.
+
+Se compară decizia nouă cu comportamentul existent.
+
+### Faza 4 — Domeniu pilot
+
+Se alege un domeniu cu proprietate clară.
+
+Se livrează:
+
+- câmpuri de proprietate necesare;
+- relația cu departamente;
+- indexuri;
+- filtrare queryset;
+- verificare obiect;
+- câmpuri;
+- exporturi și numărări conforme;
+- aplicare reală numai pe domeniul pilot.
+
+### Faza 5 — Extindere pe module
+
+Se activează domeniu cu domeniu.
+
+Fiecare modul trebuie să dovedească:
+
+- filtrarea listelor;
+- accesul direct;
+- crearea;
+- editarea;
+- ștergerea;
+- exportul;
+- actualizarea în masă;
+- testarea nivelurilor;
+- lipsa scurgerilor prin căutări și relații.
+
+### Faza 6 — Funcții avansate
+
+Se pot adăuga:
+
+- colaboratori;
+- flux;
+- calendar utilizatori;
+- permisiuni de audit extinse;
+- blocare;
+- menționare;
+- ștergerea recent creată, dacă este decisă explicit.
+
+## Testare obligatorie
+
+### Fuziunea rolurilor
+
+- fără roluri;
+- numai rol de bază;
+- numai rol direct;
+- numai rol din departament;
+- toate sursele;
+- roluri inactive;
+- departamente inactive;
+- apartenențe inactive;
+- `toate + fara_acces`;
+- `departament + proprii`;
+- `nesetat` din toate sursele;
+- sursa câștigătoare.
+
+### Departamente
+
+- utilizator fără departamente;
+- utilizator cu un departament;
+- utilizator cu mai multe departamente;
+- departament implicit null;
+- departament implicit valid;
+- departament implicit invalid;
+- eliminarea departamentului implicit;
+- rol moștenit;
+- rol eliminat;
+- poziție validă;
+- poziție invalidă.
+
+### Queryset
+
+- toate;
+- departament;
+- proprii;
+- fără acces;
+- înregistrare fără departament, dar proprie;
+- înregistrare din departament comun;
+- înregistrare din alt departament;
+- paginare după filtrare;
+- count după filtrare;
+- lipsa duplicatelor.
+
+### Obiect individual
+
+- obiect din listă accesibil;
+- obiect ascuns refuzat direct;
+- editare proprie;
+- editare departament;
+- ștergere refuzată;
+- obiect inexistent versus inaccesibil fără scurgeri de informații.
+
+### Câmpuri
+
+- câmp citibil;
+- câmp ascuns;
+- câmp editabil;
+- câmp refuzat;
+- câmp intern obligatoriu;
+- câmp necunoscut;
+- eroare standardizată.
+
+### Alocare
+
+- toate;
+- departament comun;
+- fără departament comun;
+- fără acces;
+- valori implicite de creare;
+- ID-uri trimise direct pentru ocolire;
+- utilizator inactiv;
+- departament inactiv.
+
+### Cache
+
+- hit;
+- miss;
+- schimbare rol;
+- schimbare apartenență;
+- schimbare rol departament;
+- schimbare rol de bază;
+- rollback;
+- invalidare după commit;
+- consistență între procese.
+
+## Securitate
+
+Principii obligatorii:
+
+- deny by default;
+- verificare pe server;
+- filtrare înainte de paginare;
+- fără încredere în frontend;
+- fără auto-escaladare;
+- fără modificarea propriilor roluri ori departamente;
+- fără diferențe între listă și detaliu;
+- fără scurgeri prin export, autocomplete sau count;
+- fără ACL rămas în cache după revocare;
+- fără câmpuri sensibile controlate doar de roluri.
+
+## Performanță și indexuri
+
+Indexuri recomandate:
 
 ```text
-list
-detail
-create
-update
-delete
-search
-count
-export
-bulk update
-bulk delete
-related-record endpoint
-background task
+MembruDepartament(utilizator, este_activ)
+MembruDepartament(departament, este_activ)
+RolUtilizator(utilizator, rol)
+RolDepartament(departament, rol)
+PermisiuneDomeniuRol(rol, cod_domeniu)
+PermisiuneCampRol(rol, cod_domeniu, cod_camp)
+PermisiuneSpecialaRol(rol, cod_permisiune)
 ```
 
-A permission model that protects only standard CRUD views is not complete.
+Modelele de business care suportă acces pe departament trebuie să indexeze tabelele intermediare.
 
-### Cache invalidation
+Queryseturile nu trebuie să compileze accesul pentru fiecare rând.
 
-- direct role assignment added and removed;
-- team membership added and removed;
-- team role added and removed;
-- role permission changed;
-- role/team activated or deactivated;
-- baseline role changed;
-- transaction rollback does not publish an invalid revision;
-- separate process observes the new revision;
-- revocation is not delayed by stale request-local data in a new request.
+## Audit
 
-## Performance and indexes
+Se înregistrează cel puțin:
 
-Add indexes for:
+- cine a creat rolul;
+- cine l-a modificat;
+- cine a schimbat permisiunile;
+- cine a adăugat sau eliminat un membru;
+- cine a schimbat rolurile unui departament;
+- cine a schimbat rolurile directe;
+- cine a schimbat departamentul implicit;
+- cine a schimbat rolul de bază;
+- momentul;
+- valorile anterioare și noi, unde este fezabil.
+
+## Compatibilitate și licențiere
+
+Implementarea este clean-room și urmărește comportamentul observabil al EspoCRM.
+
+Nu se copiază cod PHP.
+
+Când documentația și codul sursă diferă, comportamentul demonstrat prin cod și teste upstream are prioritate pentru compatibilitatea descrisă aici.
+
+## Fișiere EspoCRM analizate
+
+Referințe principale:
 
 ```text
-team_membership(user_id, team_id, is_active)
-team_membership(team_id, is_active)
-user_role_assignment(user_id, role_id)
-team_role_assignment(team_id, role_id)
-role_scope_permission(role_id, scope_code)
-role_field_permission(role_id, scope_code, field_code)
-role_special_permission(role_id, permission_code)
+application/Espo/Core/Acl/Table/DefaultRoleListProvider.php
+application/Espo/Core/Acl/Table/DefaultTable.php
+application/Espo/Core/AclManager.php
+application/Espo/Core/Acl/DefaultOwnershipChecker.php
+application/Espo/Core/Acl/DefaultAccessChecker.php
+application/Espo/Core/Select/AccessControl/Filters/OnlyOwn.php
+application/Espo/Core/Select/AccessControl/Filters/OnlyTeam.php
+application/Espo/Core/Acl/Table/DefaultCacheKeyProvider.php
+tests/integration/Espo/User/AclTest.php
 ```
 
-Every access-controlled record model that supports team access needs an indexed relationship table. Assigned-user and created-by foreign keys must be indexed.
+## Decizii înghețate înainte de implementare
 
-Use `Exists` subqueries or carefully constructed joins for team and collaborator predicates. Confirm query plans with realistic data volumes before enabling enforcement on large tables.
+Următoarele decizii nu trebuie schimbate accidental în fazele următoare:
 
-Avoid:
-
-- loading all team IDs or record IDs into Python for filtering;
-- per-record ACL checks in list serializers;
-- N+1 source-role resolution;
-- compiling the effective ACL repeatedly in one request;
-- returning the full field matrix in core bootstrap;
-- globally invalidating Redis keys by scanning the keyspace.
-
-## Audit requirements
-
-Access-control configuration changes should be auditable from the first database phase.
-
-Record:
-
-- actor;
-- timestamp;
-- target role, team, user, or configuration;
-- operation;
-- before and after values for permission and assignment changes;
-- request correlation identifier when available.
-
-Do not log passwords, session IDs, CSRF tokens, or unrelated personal data.
-
-Denied-operation audit logging should be selective to avoid noise. Always log attempted privilege escalation, role/team self-assignment, and prohibited superuser changes.
-
-## Decisions intentionally deferred
-
-The following are not needed to begin implementation and should not be guessed into phase one:
-
-- nested teams;
-- organization/tenant boundaries;
-- portal users and portal roles;
-- API users with independent credentials;
-- project-specific roles separate from global roles;
-- temporary delegated access;
-- approval workflows for role changes;
-- layout sets;
-- collaborator notifications;
-- recently-created deletion exception;
-- row-level security inside PostgreSQL.
-
-Their absence must not block the core EspoCRM-compatible behavior.
-
-## Clean-room and licensing note
-
-EspoCRM's repository is licensed under AGPL-3.0. This design records publicly observable behavior and architectural findings. TUVTK implementation code must be written independently in Python and TypeScript and must not copy or translate EspoCRM PHP source.
-
-Behavioral compatibility does not require matching EspoCRM's internal class names, storage format, or code structure. If source code is ever copied or adapted, the project's licensing obligations must be reviewed separately before distribution or deployment.
-
-This is an engineering note, not legal advice.
-
-## Official research sources
-
-Documentation:
-
-- <https://docs.espocrm.com/administration/roles-management/>
-- <https://docs.espocrm.com/administration/users-management/>
-- <https://docs.espocrm.com/administration/collaborators/>
-- <https://docs.espocrm.com/administration/layout-manager/>
-- <https://docs.espocrm.com/development/acl/>
-- <https://docs.espocrm.com/development/metadata/app-acl/>
-
-Pinned upstream source snapshot:
-
-- Role metadata: <https://github.com/espocrm/espocrm/blob/d776b1f106cef73fbe8f91e87e32844c17d30ebc/application/Espo/Resources/metadata/entityDefs/Role.json>
-- Team metadata: <https://github.com/espocrm/espocrm/blob/d776b1f106cef73fbe8f91e87e32844c17d30ebc/application/Espo/Resources/metadata/entityDefs/Team.json>
-- User metadata: <https://github.com/espocrm/espocrm/blob/d776b1f106cef73fbe8f91e87e32844c17d30ebc/application/Espo/Resources/metadata/entityDefs/User.json>
-- Role source collection: <https://github.com/espocrm/espocrm/blob/d776b1f106cef73fbe8f91e87e32844c17d30ebc/application/Espo/Core/Acl/Table/DefaultRoleListProvider.php>
-- ACL compilation and merging: <https://github.com/espocrm/espocrm/blob/d776b1f106cef73fbe8f91e87e32844c17d30ebc/application/Espo/Core/Acl/Table/DefaultTable.php>
-- Role data wrapper: <https://github.com/espocrm/espocrm/blob/d776b1f106cef73fbe8f91e87e32844c17d30ebc/application/Espo/Core/Acl/Table/RoleEntityWrapper.php>
-- Central ACL manager: <https://github.com/espocrm/espocrm/blob/d776b1f106cef73fbe8f91e87e32844c17d30ebc/application/Espo/Core/AclManager.php>
-- Default record access checks: <https://github.com/espocrm/espocrm/blob/d776b1f106cef73fbe8f91e87e32844c17d30ebc/application/Espo/Core/Acl/DefaultAccessChecker.php>
-- Own/team/shared ownership checks: <https://github.com/espocrm/espocrm/blob/d776b1f106cef73fbe8f91e87e32844c17d30ebc/application/Espo/Core/Acl/DefaultOwnershipChecker.php>
-- Own queryset filter: <https://github.com/espocrm/espocrm/blob/d776b1f106cef73fbe8f91e87e32844c17d30ebc/application/Espo/Core/Select/AccessControl/Filters/OnlyOwn.php>
-- Team queryset filter: <https://github.com/espocrm/espocrm/blob/d776b1f106cef73fbe8f91e87e32844c17d30ebc/application/Espo/Core/Select/AccessControl/Filters/OnlyTeam.php>
-- Access-control filter factory: <https://github.com/espocrm/espocrm/blob/d776b1f106cef73fbe8f91e87e32844c17d30ebc/application/Espo/Core/Select/AccessControl/FilterFactory.php>
-- ACL integration tests: <https://github.com/espocrm/espocrm/blob/d776b1f106cef73fbe8f91e87e32844c17d30ebc/tests/integration/Espo/User/AclTest.php>
-
-## Implementation entry point
-
-When implementation begins, start with Phase 0 and Phase 1 only. Do not begin by adding permission checks to existing feature endpoints.
-
-The first implementation pull should contain:
-
-```text
-backend/apps/access_control/ registry and enums
-pure merge functions and tests
-models and migrations for roles, teams, memberships, and assignments
-superuser-protected DRF CRUD contracts
-frontend administration routes for Roluri and Echipe
-OpenAPI-generated frontend types
-cache revision invalidation hooks
-```
-
-Enforcement belongs in a later, separately testable phase after the effective ACL compiler and ownership adapters exist.
+1. termenii canonici sunt `Rol`, `Departament` și `Permisiune`;
+2. aplicația backend se numește `control_acces`;
+3. API-ul folosește `/api/v1/control-acces/`;
+4. un utilizator poate avea zero departamente;
+5. un utilizator poate avea mai multe departamente;
+6. departamentul implicit este opțional;
+7. departamentul implicit trebuie să fie o apartenență activă;
+8. rolurile directe sunt opționale;
+9. rolurile departamentelor sunt opționale;
+10. rolul de bază este opțional;
+11. toate sursele de roluri sunt cumulative;
+12. nivelurile sunt `toate > departament > proprii > fara_acces`;
+13. `nesetat` nu participă la fuziune;
+14. departamentele sunt plate;
+15. poziția în departament nu este rol ACL;
+16. `is_superuser` ocolește ACL-ul normal;
+17. `is_staff` nu oferă acces nelimitat la datele de business;
+18. autorizarea este aplicată în backend înainte de paginare și serializare;
+19. implementarea începe fără blocarea endpointurilor existente;
+20. fiecare domeniu este activat gradual după testare.
