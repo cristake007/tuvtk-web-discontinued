@@ -33,13 +33,13 @@ function valuesForUser(user: Utilizator | null): UtilizatorFormValues {
     return emptyValues;
   }
   return {
-    username: user.username,
-    first_name: user.first_name,
-    last_name: user.last_name,
-    email: user.email,
+    username: user.username ?? "",
+    first_name: user.first_name ?? "",
+    last_name: user.last_name ?? "",
+    email: user.email ?? "",
     password: "",
-    is_active: user.is_active,
-    is_staff: user.is_staff,
+    is_active: user.is_active ?? false,
+    is_staff: user.is_staff ?? false,
   };
 }
 
