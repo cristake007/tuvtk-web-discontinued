@@ -56,6 +56,7 @@ const administrationGroups: AdministrationGroup[] = [
     entries: [
       {
         description: "Gestionarea conturilor utilizatorilor platformei.",
+        href: "/administrare/utilizatori",
         name: "Utilizatori",
       },
       {
