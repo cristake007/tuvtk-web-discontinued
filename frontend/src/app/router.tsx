@@ -2,31 +2,60 @@ import { lazy, Suspense } from "react";
 import { createBrowserRouter } from "react-router-dom";
 
 import { ApplicationState } from "@/components/ApplicationState";
-import { AuthenticationGate } from "../features/auth/AuthenticationGate";
-import { ModulePlaceholderPage } from "../pages/ModulePlaceholderPage";
+import { DashboardPage } from "@/pages/DashboardPage";
+import { ModulePlaceholderPage } from "@/pages/ModulePlaceholderPage";
+import { WorkspaceCardPage } from "@/pages/WorkspaceCardPage";
 
-const DashboardPage = lazy(async () => {
-  const module = await import("../pages/DashboardPage");
-  return { default: module.DashboardPage };
+import { AuthenticationGate } from "./AuthenticationGate";
+
+const CoursePlannerPage = lazy(async () => {
+  const module = await import("@/pages/CoursePlannerPage");
+  return { default: module.CoursePlannerPage };
+});
+
+const CoursePlannerHistoryPage = lazy(async () => {
+  const module = await import("@/pages/CoursePlannerHistoryPage");
+  return { default: module.CoursePlannerHistoryPage };
 });
 
 const SettingsPage = lazy(async () => {
-  const module = await import("../pages/SettingsPage");
+  const module = await import("@/pages/SettingsPage");
   return { default: module.SettingsPage };
 });
 
-function DashboardRoute() {
+const IntegrationsPage = lazy(async () => {
+  const module = await import("@/pages/IntegrationsPage");
+  return { default: module.IntegrationsPage };
+});
+
+function CoursePlannerRoute() {
   return (
     <Suspense
       fallback={
         <ApplicationState
-          description="Loading the current workspace overview."
+          description="Se încarcă instrumentele pentru generarea perioadelor."
           loading
-          title="Loading dashboard"
+          title="Se încarcă planificatorul"
         />
       }
     >
-      <DashboardPage />
+      <CoursePlannerPage />
+    </Suspense>
+  );
+}
+
+function CoursePlannerHistoryRoute() {
+  return (
+    <Suspense
+      fallback={
+        <ApplicationState
+          description="Se încarcă generările și fișierele disponibile."
+          loading
+          title="Se încarcă istoricul"
+        />
+      }
+    >
+      <CoursePlannerHistoryPage />
     </Suspense>
   );
 }
@@ -36,13 +65,29 @@ function SettingsRoute() {
     <Suspense
       fallback={
         <ApplicationState
-          description="Loading application branding and configuration."
+          description="Se încarcă identitatea vizuală și configurarea aplicației."
           loading
-          title="Loading settings"
+          title="Se încarcă setările"
         />
       }
     >
       <SettingsPage />
+    </Suspense>
+  );
+}
+
+function IntegrationsRoute() {
+  return (
+    <Suspense
+      fallback={
+        <ApplicationState
+          description="Se încarcă serviciile externe și calendarul zilelor nelucrătoare."
+          loading
+          title="Se încarcă integrările"
+        />
+      }
+    >
+      <IntegrationsPage />
     </Suspense>
   );
 }
@@ -54,36 +99,38 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <DashboardRoute />,
+        element: <DashboardPage />,
       },
       {
         path: "companies",
-        element: (
-          <ModulePlaceholderPage
-            title="Companies"
-            description="The company directory and live registry filters will be implemented here."
-          />
-        ),
+        element: <WorkspaceCardPage ariaLabel="Conținut companii" />,
       },
       {
         path: "documents",
-        element: (
-          <ModulePlaceholderPage
-            title="Documents"
-            description="The visual document editor will be implemented as a dedicated React module here."
-          />
-        ),
+        element: <WorkspaceCardPage ariaLabel="Conținut documente" />,
+      },
+      {
+        path: "planificator-cursuri",
+        element: <CoursePlannerRoute />,
+      },
+      {
+        path: "planificator-cursuri/istoric",
+        element: <CoursePlannerHistoryRoute />,
       },
       {
         path: "settings",
         element: <SettingsRoute />,
       },
       {
+        path: "settings/integrations",
+        element: <IntegrationsRoute />,
+      },
+      {
         path: "*",
         element: (
           <ModulePlaceholderPage
-            title="Page not found"
-            description="The requested frontend route does not exist."
+            title="Pagina nu a fost găsită"
+            description="Ruta solicitată nu există în aplicație."
           />
         ),
       },

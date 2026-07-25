@@ -12,7 +12,9 @@
     "preview": "vite preview",
     "shadcn:info": "shadcn info",
     "theme:check": "node ./scripts/check-theme-tokens.mjs",
-    "typecheck": "tsc -b --pretty false"
+    "lint": "node ./scripts/check-react-conventions.mjs",
+    "typecheck": "tsc -b --pretty false",
+    "test": "node ./scripts/run-tests.mjs"
   },
   "dependencies": {
     "@base-ui/react": "1.6.0",

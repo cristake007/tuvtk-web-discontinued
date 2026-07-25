@@ -100,7 +100,6 @@ wait_for_database() {
     local service="$1"
 
     echo "Waiting for ${service}..."
-
     until compose_exec "$service" pg_isready >/dev/null 2>&1; do
         sleep 1
     done
@@ -133,7 +132,7 @@ Environment:
   logs [service]                  Follow container logs
   build [service]                 Rebuild images
 
-Backend (Django):
+Backend (Django/DRF):
   backend app <name>              Create an app under backend/apps/
   backend manage <arguments>      Run any manage.py command
   backend migrations [app]        Create migration files
@@ -141,6 +140,8 @@ Backend (Django):
   backend migrate-registry        Migrate the registry database
   backend migrate-all             Migrate both databases
   backend check                   Run Django system checks
+  backend lint                    Run Ruff checks
+  backend schema                  Generate and validate the OpenAPI schema
   backend django-shell            Open the Django shell
   backend shell                   Open /bin/sh in the backend container
   backend admin-create            Create a core database administrator
@@ -149,16 +150,19 @@ Backend (Django):
 Frontend (React/Vite):
   frontend sync                   Sync node_modules from package-lock.json
   frontend lock                   Create or refresh package-lock.json
+  frontend lint                   Check React and TypeScript conventions
   frontend typecheck              Run TypeScript validation
+  frontend test                   Run frontend unit tests
   frontend build                  Build the React application
   frontend npm <arguments>        Run any npm command
   frontend shell                  Open /bin/sh in the frontend container
 
 Tests:
   test backend [arguments]        Run Django tests
+  test frontend                   Run frontend unit tests
 
 Validation:
-  validate                        Run backend tests and frontend checks/build
+  validate                        Run backend and frontend quality gates
 
 Database:
   database reset-core             Delete only the core database volume
@@ -185,6 +189,8 @@ Commands:
   migrate-registry [arguments]    Migrate the registry database
   migrate-all                     Migrate both databases
   check                           Run Django system checks
+  lint                            Run Ruff checks
+  schema                          Generate and validate the OpenAPI schema
   django-shell                    Open the Django shell
   shell                           Open /bin/sh in the backend container
   admin-create                    Create a core database administrator
@@ -199,7 +205,9 @@ Usage: ./dev frontend <command> [arguments]
 Commands:
   sync                            Sync node_modules from package-lock.json
   lock                            Create or refresh package-lock.json
+  lint                            Check React and TypeScript conventions
   typecheck                       Run TypeScript validation
+  test                            Run frontend unit tests
   build                           Build the React application
   npm <arguments>                 Run any npm command
   shell                           Open /bin/sh in the frontend container
@@ -212,9 +220,7 @@ Usage: ./dev test <target> [arguments]
 
 Targets:
   backend [arguments]             Run Django tests
-
-No frontend test runner is configured yet. Frontend type and build checks are
-available through ./dev frontend typecheck, ./dev frontend build, or ./dev validate.
+  frontend                        Run frontend unit tests
 HELP
 }
 
@@ -253,7 +259,6 @@ create_backend_app() {
 
     mkdir -p backend/apps
     touch backend/apps/__init__.py
-
     manage startapp "$app_name" "$app_container_path"
 
     sed -i -E \
@@ -301,6 +306,12 @@ backend_command() {
         check)
             manage check
             ;;
+        lint)
+            run_backend ruff check .
+            ;;
+        schema)
+            manage spectacular --validate --file /tmp/tuvtk-openapi.yaml
+            ;;
         django-shell)
             manage shell
             ;;
@@ -337,8 +348,14 @@ frontend_command() {
             npm install --package-lock-only --include=dev
             echo "Updated frontend/package-lock.json. Review and commit it."
             ;;
+        lint)
+            npm run lint
+            ;;
         typecheck)
             npm run typecheck
+            ;;
+        test)
+            npm run test
             ;;
         build)
             npm run build
@@ -372,6 +389,13 @@ test_command() {
     case "$target" in
         backend)
             manage test "$@"
+            ;;
+        frontend)
+            [[ $# -eq 0 ]] || {
+                echo "Usage: ./dev test frontend" >&2
+                exit 2
+            }
+            npm run test
             ;;
         help|-h|--help)
             show_test_help
@@ -493,9 +517,13 @@ case "$command" in
         ;;
     validate)
         manage check
+        run_backend ruff check .
+        manage spectacular --validate --file /tmp/tuvtk-openapi.yaml
         manage test
         run_frontend sh ./scripts/sync-dependencies.sh
+        npm run lint
         npm run typecheck
+        npm run test
         npm run build
         ;;
     database)

@@ -1,21 +1,17 @@
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
-import type { ShellConfiguration } from "@/api/types";
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
-  SidebarRail,
   useSidebar,
 } from "@/components/ui/sidebar";
 
@@ -26,7 +22,6 @@ import {
 } from "./navigation";
 
 type AppSidebarProps = {
-  configuration: ShellConfiguration;
   navigation: NavigationNode[];
 };
 
@@ -59,74 +54,6 @@ function isNodeActive(node: NavigationNode, pathname: string): boolean {
   return (
     isNavigationPathActive(pathname, node.path) ||
     node.children.some((child) => isNodeActive(child, pathname))
-  );
-}
-
-function SidebarBrand({ configuration }: { configuration: ShellConfiguration }) {
-  const { setOpenMobile, state } = useSidebar();
-  const [logoFailed, setLogoFailed] = useState(false);
-  const [logoExpanded, setLogoExpanded] = useState(state !== "collapsed");
-  const previousState = useRef(state);
-
-  useEffect(() => {
-    setLogoFailed(false);
-  }, [configuration.logo_url]);
-
-  useLayoutEffect(() => {
-    if (previousState.current === state) {
-      return undefined;
-    }
-
-    previousState.current = state;
-
-    if (state === "collapsed") {
-      setLogoExpanded(false);
-      return undefined;
-    }
-
-    setLogoExpanded(false);
-
-    let secondFrame = 0;
-    const firstFrame = window.requestAnimationFrame(() => {
-      secondFrame = window.requestAnimationFrame(() => {
-        setLogoExpanded(true);
-      });
-    });
-
-    return () => {
-      window.cancelAnimationFrame(firstFrame);
-      if (secondFrame) {
-        window.cancelAnimationFrame(secondFrame);
-      }
-    };
-  }, [state]);
-
-  const showConfiguredLogo = Boolean(configuration.logo_url) && !logoFailed;
-
-  return (
-    <NavLink
-      aria-label={`${configuration.site_name} dashboard`}
-      className="relative flex h-full w-full cursor-pointer items-center justify-center overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-sidebar-ring"
-      onClick={() => setOpenMobile(false)}
-      to="/"
-    >
-      {showConfiguredLogo ? (
-        <img
-          alt={`${configuration.organization_name} logo`}
-          className={[
-            "absolute h-16 w-52 max-w-none object-contain transform-gpu",
-            "transition-transform duration-200 ease-linear motion-reduce:transition-none",
-            logoExpanded ? "scale-[1.55]" : "scale-[0.34]",
-          ].join(" ")}
-          onError={() => setLogoFailed(true)}
-          src={configuration.logo_url ?? undefined}
-        />
-      ) : (
-        <span className="text-[11px] font-bold tracking-normal text-primary">
-          TUVTK
-        </span>
-      )}
-    </NavLink>
   );
 }
 
@@ -181,17 +108,41 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
   );
 }
 
-export function AppSidebar({ configuration, navigation }: AppSidebarProps) {
-  return (
-    <Sidebar collapsible="icon" variant="sidebar">
-      <SidebarHeader className="h-16 border-b border-sidebar-border p-0">
-        <SidebarBrand configuration={configuration} />
-      </SidebarHeader>
+function BrandSidebarRail() {
+  const { state, toggleSidebar } = useSidebar();
+  const RailIcon = state === "collapsed" ? ChevronRight : ChevronLeft;
+  const expanded = state === "expanded";
 
-      <SidebarContent>
-        <SidebarGroup className="p-0 pt-3">
+  return (
+    <button
+      aria-label={expanded ? "Restrânge navigația" : "Extinde navigația"}
+      className="group/rail absolute inset-y-0 z-40 hidden w-7 cursor-pointer items-center justify-center group-data-[side=left]:-right-3.5 group-data-[side=right]:-left-3.5 md:flex"
+      onClick={toggleSidebar}
+      title={expanded ? "Restrânge navigația" : "Extinde navigația"}
+      type="button"
+    >
+      <span
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-sidebar-border/70 transition-[background-color,box-shadow] duration-200 group-hover/rail:bg-primary group-hover/rail:shadow-[0_0_3px_rgb(22_65_148_/_0.18)]"
+      />
+      <span className="relative z-10 grid size-6 shrink-0 place-items-center overflow-hidden rounded-full border border-sidebar-border bg-white p-0 text-sidebar-foreground/70 shadow-sm transition-[border-color,color,transform,box-shadow] duration-200 group-hover/rail:scale-105 group-hover/rail:border-primary group-hover/rail:text-primary group-hover/rail:shadow-primary/15">
+        <RailIcon aria-hidden="true" className="size-3" />
+      </span>
+    </button>
+  );
+}
+
+export function AppSidebar({ navigation }: AppSidebarProps) {
+  return (
+    <Sidebar
+      className="top-[var(--app-header-height)]! bottom-0! h-auto! bg-white transition-[top,left,right,width] duration-200 ease-out motion-reduce:transition-none"
+      collapsible="icon"
+      variant="sidebar"
+    >
+      <SidebarContent className="bg-white pt-[calc(var(--app-header-height)+0.5rem)] md:pt-2">
+        <SidebarGroup className="p-0">
           <SidebarGroupContent>
-            <SidebarMenu aria-label="Primary navigation" className="gap-0">
+            <SidebarMenu aria-label="Navigație principală" className="gap-0">
               {navigation.map((item) => (
                 <NavigationEntry item={item} key={item.key} />
               ))}
@@ -200,14 +151,7 @@ export function AppSidebar({ configuration, navigation }: AppSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border">
-        <div className="flex min-h-9 items-center gap-2 px-2 text-xs text-sidebar-foreground/60 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-          <span aria-hidden="true" className="size-2 shrink-0 rounded-full bg-success" />
-          <span className="truncate group-data-[collapsible=icon]:hidden">Connected</span>
-        </div>
-      </SidebarFooter>
-
-      <SidebarRail />
+      <BrandSidebarRail />
     </Sidebar>
   );
 }

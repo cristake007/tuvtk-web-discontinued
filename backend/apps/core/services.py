@@ -1,9 +1,8 @@
 from django.http import HttpRequest
 
-from apps.accounts.services import serialize_account_user
+from apps.authentication.services import serialize_session_user
 
 from .models import ApplicationConfiguration, NavigationItem
-
 
 DEFAULT_CONFIGURATION = {
     "site_name": "TUVTK",
@@ -88,6 +87,6 @@ def get_core_bootstrap(request: HttpRequest) -> dict[str, object]:
 
     return {
         "configuration": configuration_payload,
-        "user": serialize_account_user(user),
+        "user": serialize_session_user(user),
         "navigation": navigation_payload,
     }

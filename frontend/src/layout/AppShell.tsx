@@ -1,33 +1,35 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
-import { Outlet, useLocation } from "react-router-dom";
+import { Outlet } from "react-router-dom";
 
 import { coreBootstrapQueryKey, fetchCoreBootstrap } from "@/api/core";
 import { ApiError } from "@/api/http";
-import type { AuthenticationSession } from "@/api/types";
 import { ApplicationState } from "@/components/ApplicationState";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { logout } from "@/features/auth/api";
 import { authQueryKeys } from "@/features/auth/queryKeys";
+import type { AuthenticationSession } from "@/features/auth/types";
 
 import { AppHeader } from "./app-shell/AppHeader";
 import { AppSidebar } from "./app-shell/AppSidebar";
-import {
-  buildNavigationTree,
-  findCurrentNavigationItem,
-} from "./app-shell/navigation";
+import { buildNavigationTree } from "./app-shell/navigation";
 
 const unauthenticatedSession: AuthenticationSession = {
   authenticated: false,
   user: null,
 };
 
+type AppShellStyle = CSSProperties & {
+  "--app-header-height": string;
+};
+
 export function AppShell() {
-  const location = useLocation();
   const queryClient = useQueryClient();
+  const [headerCompact, setHeaderCompact] = useState(false);
+  const headerHeight = headerCompact ? "4rem" : "5rem";
 
   const bootstrapQuery = useQuery({
     queryKey: coreBootstrapQueryKey,
@@ -51,6 +53,14 @@ export function AppShell() {
     }
   }, [bootstrapQuery.error, queryClient]);
 
+  useEffect(() => {
+    document.documentElement.style.setProperty("--app-header-height", headerHeight);
+
+    return () => {
+      document.documentElement.style.removeProperty("--app-header-height");
+    };
+  }, [headerHeight]);
+
   const navigation = useMemo(
     () => buildNavigationTree(bootstrapQuery.data?.navigation ?? []),
     [bootstrapQuery.data?.navigation],
@@ -59,9 +69,9 @@ export function AppShell() {
   if (bootstrapQuery.isPending) {
     return (
       <ApplicationState
-        description="Loading your navigation, permissions, and workspace configuration."
+        description="Se încarcă navigația, permisiunile și configurația aplicației."
         loading
-        title="Preparing the application"
+        title="Se pregătește aplicația"
       />
     );
   }
@@ -69,55 +79,65 @@ export function AppShell() {
   if (bootstrapQuery.isError || !bootstrapQuery.data) {
     return (
       <ApplicationState
-        actionLabel="Try again"
-        description="The application configuration could not be loaded from Django."
+        actionLabel="Încearcă din nou"
+        description="Configurația aplicației nu a putut fi încărcată din Django."
         onAction={() => void bootstrapQuery.refetch()}
-        title="The workspace is unavailable"
+        title="Aplicația nu este disponibilă"
       />
     );
   }
 
   const bootstrap = bootstrapQuery.data;
-  const currentItem = findCurrentNavigationItem(
-    bootstrap.navigation,
-    location.pathname,
-  );
-  const pageTitle = currentItem?.label ?? "Workspace";
+  const shellStyle: AppShellStyle = {
+    "--app-header-height": headerHeight,
+  };
 
   return (
     <TooltipProvider delay={0}>
-      <SidebarProvider>
-        <AppSidebar
+      <SidebarProvider
+        className="h-svh min-h-svh flex-col overflow-hidden"
+        style={shellStyle}
+      >
+        <AppHeader
+          compact={headerCompact}
           configuration={bootstrap.configuration}
-          navigation={navigation}
+          logoutPending={logoutMutation.isPending}
+          navigation={bootstrap.navigation}
+          onLogout={() => logoutMutation.mutate()}
+          user={bootstrap.user}
         />
 
-        <SidebarInset className="min-h-svh overflow-hidden">
-          <AppHeader
-            logoutPending={logoutMutation.isPending}
-            onLogout={() => logoutMutation.mutate()}
-            pageTitle={pageTitle}
-            user={bootstrap.user}
-          />
+        <div className="flex min-h-0 w-full flex-1">
+          <AppSidebar navigation={navigation} />
 
-          <div className="flex min-h-0 flex-1 flex-col overflow-auto">
-            <div className="mx-auto flex w-full max-w-screen-2xl flex-1 flex-col p-4 sm:p-6 lg:p-8">
-              {logoutMutation.isError ? (
-                <Alert className="mb-4 border-warning/40 bg-warning/10">
-                  <AlertTriangle aria-hidden="true" />
-                  <AlertTitle>Sign out failed</AlertTitle>
-                  <AlertDescription>
-                    {logoutMutation.error instanceof ApiError
-                      ? logoutMutation.error.message
-                      : "The server could not complete the request. Please try again."}
-                  </AlertDescription>
-                </Alert>
-              ) : null}
+          <SidebarInset className="min-h-0 overflow-hidden bg-muted/30">
+            <div
+              className="flex min-h-0 flex-1 flex-col overflow-auto bg-muted/30 p-[15px]"
+              onScroll={(event) => {
+                const compact = event.currentTarget.scrollTop > 24;
+                setHeaderCompact((current) =>
+                  current === compact ? current : compact,
+                );
+              }}
+            >
+              <div className="flex min-h-full w-full flex-1 flex-col bg-background">
+                {logoutMutation.isError ? (
+                  <Alert className="m-4 mb-0 border-warning/40 bg-warning/10 sm:m-6 sm:mb-0 lg:m-8 lg:mb-0">
+                    <AlertTriangle aria-hidden="true" />
+                    <AlertTitle>Deconectarea nu a reușit</AlertTitle>
+                    <AlertDescription>
+                      {logoutMutation.error instanceof ApiError
+                        ? logoutMutation.error.message
+                        : "Serverul nu a putut finaliza cererea. Încearcă din nou."}
+                    </AlertDescription>
+                  </Alert>
+                ) : null}
 
-              <Outlet />
+                <Outlet />
+              </div>
             </div>
-          </div>
-        </SidebarInset>
+          </SidebarInset>
+        </div>
       </SidebarProvider>
     </TooltipProvider>
   );

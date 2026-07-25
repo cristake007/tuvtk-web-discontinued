@@ -1,4 +1,4 @@
-FROM python:3.14-slim-bookworm
+FROM python:3.14-slim-bookworm AS base
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
@@ -12,7 +12,7 @@ RUN apt-get update \
         libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY backend/requirements.txt /tmp/requirements.txt
+COPY backend/requirements.txt backend/requirements-dev.txt /tmp/
 
 RUN pip install --upgrade pip \
     && pip install -r /tmp/requirements.txt
@@ -24,3 +24,11 @@ COPY backend/ /app/
 EXPOSE 8000
 
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
+
+
+FROM base AS development
+
+RUN pip install -r /tmp/requirements-dev.txt
+
+
+FROM base AS production

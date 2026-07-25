@@ -5,7 +5,6 @@ from django.test import TestCase
 from .models import ApplicationConfiguration, ApplicationDefinition, NavigationItem
 from .svg import MAX_SVG_LOGO_BYTES
 
-
 VALID_LOGO = b"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40">
 <rect width="120" height="40" fill="#164194"/>
 <text x="10" y="26" fill="white">TUVTK</text>
