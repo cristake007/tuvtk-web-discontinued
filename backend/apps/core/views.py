@@ -92,6 +92,24 @@ class CompanyLogoView(APIView):
         return response
 
 
+class UserInterfaceAdministrationView(APIView):
+    permission_classes = [IsAdminUser]
+
+    @extend_schema(
+        operation_id="core_administration_user_interface_read",
+        responses={
+            200: ShellConfigurationSerializer,
+            403: ErrorDetailSerializer,
+        },
+        summary="Return user interface administration settings",
+        tags=["administration"],
+    )
+    def get(self, request):
+        configuration = get_or_create_active_configuration()
+        payload = serialize_shell_configuration(configuration)
+        return Response(ShellConfigurationSerializer(payload).data)
+
+
 class UserInterfaceCompanyLogoView(APIView):
     parser_classes = [MultiPartParser, FormParser]
     permission_classes = [IsAdminUser]
