@@ -112,7 +112,7 @@ export function PlannerConfigurationCard({
                 <SelectTrigger className="w-full cursor-pointer" id="planner-year">
                   <SelectValue>{settings.year}</SelectValue>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent align="start" alignItemWithTrigger={false}>
                   {plannerYears.map((year) => (
                     <SelectItem className="cursor-pointer" key={year} value={String(year)}>
                       {year}
