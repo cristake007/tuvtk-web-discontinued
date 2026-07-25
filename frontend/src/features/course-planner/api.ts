@@ -63,7 +63,7 @@ export async function fetchPlannerPublicHolidays(input: {
     months: input.months.join(","),
   });
   const holidays = await apiRequest<PublicHolidayListItem[]>(
-    `${publicHolidaysPath}/?${search}`,
+    `${publicHolidaysPath}/holidays?${search}`,
     { cache: "no-store" },
   );
 
