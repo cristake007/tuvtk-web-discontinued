@@ -67,10 +67,14 @@ class CoreBootstrapApiTests(TestCase):
             is_staff=is_staff,
         )
 
-    def test_bootstrap_requires_authentication(self):
+    def test_anonymous_bootstrap_returns_branding_and_authentication_state(self):
         response = self.client.get("/api/v1/core/bootstrap")
 
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["authenticated"], False)
+        self.assertIsNone(response.json()["user"])
+        self.assertEqual(response.json()["navigation"], [])
+        self.assertEqual(response.json()["configuration"]["site_name"], "TUVTK")
 
     def test_regular_user_receives_permitted_navigation(self):
         user = self.create_user("regular-user")
@@ -79,6 +83,7 @@ class CoreBootstrapApiTests(TestCase):
         response = self.client.get("/api/v1/core/bootstrap")
 
         self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["authenticated"])
         self.assertEqual(
             [item["key"] for item in response.json()["navigation"]],
             ["dashboard", "companies"],
@@ -160,6 +165,7 @@ class CoreBootstrapApiTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["code"], "permission_denied")
 
     def test_unsafe_svg_is_rejected(self):
         user = self.create_user("staff-user", is_staff=True)
@@ -176,6 +182,7 @@ class CoreBootstrapApiTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["code"], "validation_error")
         self.configuration.refresh_from_db()
         self.assertEqual(self.configuration.company_logo_svg, "")
 
