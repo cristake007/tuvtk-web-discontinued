@@ -11,7 +11,22 @@ if (!inputPath || !outputPath) {
 }
 
 const document = JSON.parse(await readFile(inputPath, "utf8"));
-const schemas = document.components?.schemas ?? {};
+const sourceSchemas = document.components?.schemas ?? {};
+const schemas = { ...sourceSchemas };
+
+// drf-spectacular appends `Request` when COMPONENT_SPLIT_REQUEST is enabled.
+// Serializer names that already end in Request therefore become names such as
+// LoginRequestRequest. Add a stable alias only when no response schema already
+// owns the shorter name.
+for (const name of Object.keys(sourceSchemas)) {
+  if (!name.endsWith("Request")) {
+    continue;
+  }
+  const stableName = name.slice(0, -"Request".length);
+  if (stableName && !schemas[stableName]) {
+    schemas[stableName] = { $ref: `#/components/schemas/${name}` };
+  }
+}
 
 function referenceName(reference) {
   return reference.split("/").at(-1);
@@ -55,14 +70,20 @@ function renderSchema(schema, depth = 0) {
     const required = new Set(schema.required ?? []);
     const indentation = "  ".repeat(depth + 1);
     const closingIndentation = "  ".repeat(depth);
+    const propertyTypes = [];
     const lines = Object.entries(properties).map(([name, value]) => {
       const optional = required.has(name) ? "" : "?";
-      return `${indentation}${JSON.stringify(name)}${optional}: ${renderSchema(value, depth + 1)};`;
+      const rendered = renderSchema(value, depth + 1);
+      propertyTypes.push(rendered);
+      return `${indentation}${JSON.stringify(name)}${optional}: ${rendered};`;
     });
     if (schema.additionalProperties) {
-      lines.push(
-        `${indentation}[key: string]: ${renderSchema(schema.additionalProperties, depth + 1)};`,
-      );
+      const additionalType =
+        schema.additionalProperties === true
+          ? "unknown"
+          : renderSchema(schema.additionalProperties, depth + 1);
+      const indexType = [...new Set([additionalType, ...propertyTypes])].join(" | ");
+      lines.push(`${indentation}[key: string]: ${indexType};`);
     }
     return withNullable(
       schema,
