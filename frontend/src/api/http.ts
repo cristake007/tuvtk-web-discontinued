@@ -6,6 +6,10 @@ export type ApiErrorPayload = {
   fields: ApiErrorFields;
 };
 
+export type ApiAuthorizationFailureDetail = ApiErrorPayload & {
+  status: number;
+};
+
 export const apiAuthorizationFailureEvent = "tuvtk:api-authorization-failure";
 
 export class ApiError extends Error {
@@ -143,7 +147,11 @@ async function fetchCsrfCookie(): Promise<void> {
 
 async function buildRequestHeaders(
   options: ApiRequestOptions,
-): Promise<{ headers: Headers; requestOptions: RequestInit; authorizationHandling: "global" | "ignore" }> {
+): Promise<{
+  headers: Headers;
+  requestOptions: RequestInit;
+  authorizationHandling: "global" | "ignore";
+}> {
   const { authorizationHandling = "global", ...requestOptions } = options;
   const headers = new Headers(requestOptions.headers);
   headers.set("Accept", "application/json");
@@ -177,14 +185,15 @@ async function buildRequestHeaders(
 function notifyAuthorizationFailure(
   status: number,
   authorizationHandling: "global" | "ignore",
+  payload: ApiErrorPayload,
 ): void {
   if (
     authorizationHandling === "global" &&
     (status === 401 || status === 403)
   ) {
     window.dispatchEvent(
-      new CustomEvent(apiAuthorizationFailureEvent, {
-        detail: { status },
+      new CustomEvent<ApiAuthorizationFailureDetail>(apiAuthorizationFailureEvent, {
+        detail: { ...payload, status },
       }),
     );
   }
@@ -205,8 +214,9 @@ export async function apiRequest<T>(
   const body = await readResponseBody(response);
 
   if (!response.ok) {
-    notifyAuthorizationFailure(response.status, authorizationHandling);
-    throw new ApiError(normalizeErrorPayload(body, response.status), response.status);
+    const payload = normalizeErrorPayload(body, response.status);
+    notifyAuthorizationFailure(response.status, authorizationHandling, payload);
+    throw new ApiError(payload, response.status);
   }
 
   return body as T;
@@ -232,8 +242,9 @@ export async function apiDownload(
 
   if (!response.ok) {
     const body = await readResponseBody(response);
-    notifyAuthorizationFailure(response.status, authorizationHandling);
-    throw new ApiError(normalizeErrorPayload(body, response.status), response.status);
+    const payload = normalizeErrorPayload(body, response.status);
+    notifyAuthorizationFailure(response.status, authorizationHandling, payload);
+    throw new ApiError(payload, response.status);
   }
 
   return response.blob();
