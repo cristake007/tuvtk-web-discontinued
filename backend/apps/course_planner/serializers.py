@@ -1,4 +1,3 @@
-import re
 from pathlib import Path
 
 from drf_spectacular.utils import extend_schema_field
@@ -6,7 +5,6 @@ from rest_framework import serializers
 
 from .files import MAX_COURSES
 from .models import CoursePlanGeneration
-from .services import parse_holidays
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 ALLOWED_EXTENSIONS = {".csv", ".xlsx", ".xls"}
@@ -20,21 +18,9 @@ class CoursePlannerSettingsSerializer(serializers.Serializer):
         max_length=12,
     )
     randomness = serializers.IntegerField(min_value=1, max_value=10)
-    holidays = serializers.ListField(
-        child=serializers.CharField(max_length=10),
-        allow_empty=True,
-        max_length=366,
-    )
 
     def validate_months(self, value):
         return list(dict.fromkeys(value))
-
-    def validate_holidays(self, value):
-        try:
-            normalized, _ = parse_holidays(value)
-        except ValueError as exc:
-            raise serializers.ValidationError(str(exc)) from exc
-        return normalized
 
 
 class GenerateScheduleSerializer(serializers.Serializer):
@@ -42,7 +28,6 @@ class GenerateScheduleSerializer(serializers.Serializer):
     year = serializers.IntegerField(min_value=2024, max_value=2100)
     months = serializers.CharField(max_length=64)
     randomness = serializers.IntegerField(min_value=1, max_value=10)
-    holidays = serializers.CharField(allow_blank=True, required=False)
 
     def validate_input_file(self, value):
         extension = Path(value.name).suffix.casefold()
@@ -68,14 +53,6 @@ class GenerateScheduleSerializer(serializers.Serializer):
         if len(months) > 12 or any(month < 1 or month > 12 for month in months):
             raise serializers.ValidationError("Lunile trebuie să fie între 1 și 12.")
         return months
-
-    def validate_holidays(self, value):
-        raw_values = [item.strip() for item in re.split(r"[\n,;]+", value) if item.strip()]
-        try:
-            normalized, _ = parse_holidays(raw_values)
-        except ValueError as exc:
-            raise serializers.ValidationError(str(exc)) from exc
-        return normalized
 
 
 class ScheduledCourseSerializer(serializers.Serializer):
@@ -152,20 +129,7 @@ class GenerateScheduleResponseSerializer(serializers.Serializer):
 
 
 class ExportScheduleSerializer(serializers.Serializer):
-    year = serializers.IntegerField(min_value=2024, max_value=2100)
-    holidays = serializers.ListField(
-        child=serializers.CharField(max_length=10),
-        allow_empty=True,
-        max_length=366,
-    )
-    schedule = ScheduledCourseSerializer(many=True, allow_empty=False)
-
-    def validate_holidays(self, value):
-        try:
-            normalized, _ = parse_holidays(value)
-        except ValueError as exc:
-            raise serializers.ValidationError(str(exc)) from exc
-        return normalized
+    generation_id = serializers.UUIDField()
 
 
 class UnscheduledCoursesSerializer(serializers.Serializer):
