@@ -10,6 +10,10 @@ VALID_LOGO = b"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40">
 <text x="10" y="26" fill="white">TUVTK</text>
 </svg>"""
 
+USER_INTERFACE_LOGO_PATH = (
+    "/api/v1/core/administration/user-interface/company-logo"
+)
+
 
 class CoreBootstrapApiTests(TestCase):
     def setUp(self):
@@ -52,9 +56,9 @@ class CoreBootstrapApiTests(TestCase):
         )
         NavigationItem.objects.create(
             application=self.core_application,
-            key="settings",
-            label="Settings",
-            path="/settings",
+            key="administration",
+            label="Administrare",
+            path="/administrare",
             icon="settings",
             position=90,
             requires_staff=True,
@@ -104,7 +108,7 @@ class CoreBootstrapApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             [item["key"] for item in response.json()["navigation"]],
-            ["dashboard", "companies", "settings"],
+            ["dashboard", "companies", "administration"],
         )
 
     def test_disabled_application_hides_its_navigation(self):
@@ -131,7 +135,7 @@ class CoreBootstrapApiTests(TestCase):
         )
 
         response = self.client.post(
-            "/api/v1/core/settings/company-logo",
+            USER_INTERFACE_LOGO_PATH,
             {"logo": logo},
         )
 
@@ -160,7 +164,7 @@ class CoreBootstrapApiTests(TestCase):
         )
 
         response = self.client.post(
-            "/api/v1/core/settings/company-logo",
+            USER_INTERFACE_LOGO_PATH,
             {"logo": logo},
         )
 
@@ -177,7 +181,7 @@ class CoreBootstrapApiTests(TestCase):
         )
 
         response = self.client.post(
-            "/api/v1/core/settings/company-logo",
+            USER_INTERFACE_LOGO_PATH,
             {"logo": logo},
         )
 
@@ -196,7 +200,7 @@ class CoreBootstrapApiTests(TestCase):
         )
 
         response = self.client.post(
-            "/api/v1/core/settings/company-logo",
+            USER_INTERFACE_LOGO_PATH,
             {"logo": logo},
         )
 
@@ -219,7 +223,7 @@ class CoreBootstrapApiTests(TestCase):
         )
 
         response = self.client.post(
-            "/api/v1/core/settings/company-logo",
+            USER_INTERFACE_LOGO_PATH,
             {"logo": logo},
         )
 
@@ -233,7 +237,7 @@ class CoreBootstrapApiTests(TestCase):
         user = self.create_user("staff-user", is_staff=True)
         self.client.force_login(user)
 
-        response = self.client.delete("/api/v1/core/settings/company-logo")
+        response = self.client.delete(USER_INTERFACE_LOGO_PATH)
 
         self.assertEqual(response.status_code, 204)
         self.configuration.refresh_from_db()
