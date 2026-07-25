@@ -20,6 +20,7 @@ urlpatterns = [
     path("auth/", include("apps.authentication.urls")),
     path("core/", include("apps.core.urls")),
     path("course-planner/", include("apps.course_planner.urls")),
+    path("utilizatori/", include("apps.utilizatori.urls")),
     path(
         "integrations/public-holidays/",
         include("apps.public_holidays.urls"),
