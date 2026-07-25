@@ -195,7 +195,9 @@ export function CoursePlanHistoryTable() {
                     {generation.source_filename}
                   </TableCell>
                   <TableCell>{generation.year}</TableCell>
-                  <TableCell>{formatMonths(generation.months)}</TableCell>
+                  <TableCell>
+                    {formatMonths(Array.isArray(generation.months) ? generation.months : [])}
+                  </TableCell>
                   <TableCell className="text-right tabular-nums">
                     {generation.course_count}
                   </TableCell>
