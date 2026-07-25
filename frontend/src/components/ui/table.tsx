@@ -7,12 +7,14 @@ import { cn } from "@/lib/utils"
 type TableProps = React.ComponentProps<"table"> & {
   containerClassName?: string
   containerRef?: React.Ref<HTMLDivElement>
+  onContainerScroll?: React.UIEventHandler<HTMLDivElement>
 }
 
 function Table({
   className,
   containerClassName,
   containerRef,
+  onContainerScroll,
   ...props
 }: TableProps) {
   return (
@@ -20,6 +22,7 @@ function Table({
       ref={containerRef}
       data-slot="table-container"
       className={cn("relative w-full overflow-x-auto", containerClassName)}
+      onScroll={onContainerScroll}
     >
       <table
         data-slot="table"
