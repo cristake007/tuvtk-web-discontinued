@@ -6,11 +6,16 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 
-import { coreBootstrapQueryKey, fetchCoreBootstrap } from "@/api/core";
+import { coreBootstrapQueryKey } from "@/api/core";
 import type { CoreBootstrap, ShellConfiguration } from "@/features/core/types";
 import { formatApiError } from "@/lib/api-errors";
 
-import { removeCompanyLogo, uploadCompanyLogo } from "./api";
+import {
+  fetchUserInterfaceSettings,
+  removeCompanyLogo,
+  uploadCompanyLogo,
+} from "./api";
+import { userInterfaceQueryKeys } from "./queryKeys";
 import { validateCompanyLogo } from "./validation";
 
 const mutationErrorFallback =
@@ -20,6 +25,7 @@ function updateCachedConfiguration(
   queryClient: QueryClient,
   configuration: ShellConfiguration,
 ) {
+  queryClient.setQueryData(userInterfaceQueryKeys.settings(), configuration);
   queryClient.setQueryData<CoreBootstrap>(coreBootstrapQueryKey, (current) =>
     current ? { ...current, configuration } : current,
   );
@@ -31,9 +37,9 @@ export function useCompanyLogoSettings() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectionError, setSelectionError] = useState<string | null>(null);
 
-  const bootstrapQuery = useQuery({
-    queryKey: coreBootstrapQueryKey,
-    queryFn: fetchCoreBootstrap,
+  const settingsQuery = useQuery({
+    queryKey: userInterfaceQueryKeys.settings(),
+    queryFn: fetchUserInterfaceSettings,
     retry: false,
     staleTime: 60_000,
   });
@@ -54,11 +60,17 @@ export function useCompanyLogoSettings() {
   const removeMutation = useMutation({
     mutationFn: removeCompanyLogo,
     onSuccess: () => {
-      const current = queryClient.getQueryData<CoreBootstrap>(coreBootstrapQueryKey);
+      const current = queryClient.getQueryData<ShellConfiguration>(
+        userInterfaceQueryKeys.settings(),
+      );
       if (current) {
         updateCachedConfiguration(queryClient, {
-          ...current.configuration,
+          ...current,
           logo_url: null,
+        });
+      } else {
+        void queryClient.invalidateQueries({
+          queryKey: userInterfaceQueryKeys.settings(),
         });
       }
       resetSelection();
@@ -104,10 +116,9 @@ export function useCompanyLogoSettings() {
     removeMutation.mutate();
   }
 
-  const configuredLogoUrl = bootstrapQuery.data?.configuration.logo_url ?? null;
+  const configuredLogoUrl = settingsQuery.data?.logo_url ?? null;
 
   return {
-    bootstrapQuery,
     configuredLogoUrl,
     displayedLogoUrl: previewUrl ?? configuredLogoUrl,
     isSaving: uploadMutation.isPending || removeMutation.isPending,
@@ -122,6 +133,7 @@ export function useCompanyLogoSettings() {
     selectedFile,
     selectionError,
     selectLogo,
+    settingsQuery,
     uploadPending: uploadMutation.isPending,
     uploadSelectedLogo,
     uploadSuccess: uploadMutation.isSuccess,
