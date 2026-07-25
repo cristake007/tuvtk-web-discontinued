@@ -7,6 +7,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 import { monthNames } from "../constants";
 import type { ScheduledCourse } from "../types";
@@ -53,38 +61,49 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
         </CardDescription>
       </CardHeader>
       <CardContent className="px-0">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[76rem] border-collapse text-sm">
-            <thead className="bg-muted/70 text-left">
-              <tr>
-                <th className="border-b px-4 py-3 font-medium">Curs</th>
-                <th className="border-b px-4 py-3 font-medium">Durată</th>
-                <th className="border-b px-4 py-3 font-medium">Investiție</th>
-                {monthNames.map((monthName) => (
-                  <th className="border-b px-4 py-3 font-medium" key={monthName}>
-                    {monthName}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr className="odd:bg-background even:bg-muted/25" key={row.key}>
-                  <td className="max-w-96 border-b px-4 py-3 font-medium">{row.title}</td>
-                  <td className="whitespace-nowrap border-b px-4 py-3">{row.duration}</td>
-                  <td className="whitespace-nowrap border-b px-4 py-3">
-                    {row.investment || "—"}
-                  </td>
-                  {monthNames.map((_, index) => (
-                    <td className="whitespace-nowrap border-b px-4 py-3" key={index + 1}>
-                      {row.months[index + 1] || "—"}
-                    </td>
-                  ))}
-                </tr>
+        <Table className="min-w-[118rem] table-fixed border-separate border-spacing-0">
+          <TableHeader className="bg-muted/70">
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="sticky left-0 z-30 w-96 min-w-96 border-r bg-muted px-4">
+                Curs
+              </TableHead>
+              <TableHead className="sticky left-96 z-30 w-32 min-w-32 border-r bg-muted px-4">
+                Durată
+              </TableHead>
+              <TableHead className="sticky left-[32rem] z-30 w-36 min-w-36 border-r bg-muted px-4 shadow-[6px_0_8px_-8px_var(--foreground)]">
+                Investiție
+              </TableHead>
+              {monthNames.map((monthName) => (
+                <TableHead className="w-36 min-w-36 px-4" key={monthName}>
+                  {monthName}
+                </TableHead>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((row) => (
+              <TableRow
+                className="[&>td]:bg-background even:[&>td]:bg-muted/25"
+                key={row.key}
+              >
+                <TableCell className="sticky left-0 z-20 w-96 min-w-96 whitespace-normal border-r px-4 py-3 font-medium">
+                  {row.title}
+                </TableCell>
+                <TableCell className="sticky left-96 z-20 w-32 min-w-32 border-r px-4 py-3">
+                  {row.duration}
+                </TableCell>
+                <TableCell className="sticky left-[32rem] z-20 w-36 min-w-36 border-r px-4 py-3 shadow-[6px_0_8px_-8px_var(--foreground)]">
+                  {row.investment || "—"}
+                </TableCell>
+                {monthNames.map((_, index) => (
+                  <TableCell className="w-36 min-w-36 px-4 py-3" key={index + 1}>
+                    {row.months[index + 1] || "—"}
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </CardContent>
     </Card>
   );
