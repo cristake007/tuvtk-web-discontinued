@@ -28,6 +28,11 @@ const IntegrationsPage = lazy(async () => {
   return { default: module.IntegrationsPage };
 });
 
+const PublicHolidaysIntegrationPage = lazy(async () => {
+  const module = await import("@/pages/PublicHolidaysIntegrationPage");
+  return { default: module.PublicHolidaysIntegrationPage };
+});
+
 function CoursePlannerRoute() {
   return (
     <Suspense
@@ -81,13 +86,29 @@ function IntegrationsRoute() {
     <Suspense
       fallback={
         <ApplicationState
-          description="Se încarcă serviciile externe și calendarul zilelor nelucrătoare."
+          description="Se încarcă serviciile disponibile pentru configurare."
           loading
           title="Se încarcă integrările"
         />
       }
     >
       <IntegrationsPage />
+    </Suspense>
+  );
+}
+
+function PublicHolidaysIntegrationRoute() {
+  return (
+    <Suspense
+      fallback={
+        <ApplicationState
+          description="Se încarcă integrarea pentru zile libere și sărbători."
+          loading
+          title="Se încarcă integrarea"
+        />
+      }
+    >
+      <PublicHolidaysIntegrationPage />
     </Suspense>
   );
 }
@@ -124,6 +145,10 @@ export const router = createBrowserRouter([
       {
         path: "settings/integrations",
         element: <IntegrationsRoute />,
+      },
+      {
+        path: "settings/integrations/public-holidays",
+        element: <PublicHolidaysIntegrationRoute />,
       },
       {
         path: "*",
