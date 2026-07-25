@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
+import { formatRomanianDateTime } from "@/lib/dates";
 
 import type {
   PublicHolidayFrequency,
@@ -40,16 +41,6 @@ const statusLabels = {
   skipped: "Omis",
   failed: "Eroare",
 } as const;
-
-function formatDateTime(value: string | null): string {
-  if (!value) {
-    return "—";
-  }
-  return new Intl.DateTimeFormat("ro-RO", {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(new Date(value));
-}
 
 export function NagerDateSettingsCard({
   settings,
@@ -155,15 +146,21 @@ export function NagerDateSettingsCard({
         <dl className="grid content-start gap-3 rounded-lg bg-muted/40 p-4 text-sm">
           <div className="flex justify-between gap-4">
             <dt className="text-muted-foreground">Ultima încercare</dt>
-            <dd className="text-right font-medium">{formatDateTime(settings.last_attempted_at)}</dd>
+            <dd className="text-right font-medium">
+              {formatRomanianDateTime(settings.last_attempted_at)}
+            </dd>
           </div>
           <div className="flex justify-between gap-4">
             <dt className="text-muted-foreground">Ultima sincronizare</dt>
-            <dd className="text-right font-medium">{formatDateTime(settings.last_successful_at)}</dd>
+            <dd className="text-right font-medium">
+              {formatRomanianDateTime(settings.last_successful_at)}
+            </dd>
           </div>
           <div className="flex justify-between gap-4">
             <dt className="text-muted-foreground">Următoarea verificare scadentă</dt>
-            <dd className="text-right font-medium">{formatDateTime(settings.next_sync_at)}</dd>
+            <dd className="text-right font-medium">
+              {formatRomanianDateTime(settings.next_sync_at)}
+            </dd>
           </div>
           <div className="border-t pt-3">
             <dt className="text-muted-foreground">Ultimul rezultat</dt>
