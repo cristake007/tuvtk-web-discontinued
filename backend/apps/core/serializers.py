@@ -27,8 +27,9 @@ class NavigationItemSerializer(serializers.Serializer):
 
 
 class CoreBootstrapSerializer(serializers.Serializer):
+    authenticated = serializers.BooleanField()
     configuration = ShellConfigurationSerializer()
-    user = SessionUserSerializer()
+    user = SessionUserSerializer(allow_null=True)
     navigation = NavigationItemSerializer(many=True)
 
 
