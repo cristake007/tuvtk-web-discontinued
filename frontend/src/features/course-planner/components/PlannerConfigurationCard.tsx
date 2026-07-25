@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -125,18 +126,19 @@ export function PlannerConfigurationCard({
               </span>
             </div>
 
-            <label className="grid content-start gap-2 text-sm font-medium" htmlFor="randomness">
-              Nivel de distribuție
+            <div className="grid content-start gap-2 text-sm font-medium">
+              <label htmlFor="randomness">Nivel de distribuție</label>
               <div className="flex items-center gap-3 rounded-lg border bg-muted/20 px-3 py-3">
-                <input
-                  className="h-2 min-w-0 flex-1 cursor-pointer accent-primary"
+                <Slider
+                  aria-label="Nivel de distribuție"
+                  className="min-w-0 flex-1 cursor-pointer"
                   disabled={busy}
                   id="randomness"
                   max={10}
                   min={1}
-                  onChange={(event) => onRandomnessChange(Number(event.target.value))}
-                  type="range"
-                  value={settings.randomness}
+                  onValueChange={(value) => onRandomnessChange(value[0] ?? 1)}
+                  step={1}
+                  value={[settings.randomness]}
                 />
                 <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">
                   {settings.randomness}
@@ -145,7 +147,7 @@ export function PlannerConfigurationCard({
               <span className="text-xs font-normal leading-5 text-muted-foreground">
                 1 păstrează mai mult spațiu între cursuri, iar 10 distribuie mai liber.
               </span>
-            </label>
+            </div>
           </div>
 
           <fieldset className="grid gap-3" disabled={busy}>
