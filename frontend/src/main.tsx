@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "react-router-dom";
 
+import { ApiAuthorizationHandler } from "@/app/ApiAuthorizationHandler";
 import { Toaster } from "@/components/ui/sonner";
 
 import { router } from "./app/router";
@@ -27,6 +28,7 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
+      <ApiAuthorizationHandler />
       <RouterProvider router={router} />
       <Toaster />
     </QueryClientProvider>
