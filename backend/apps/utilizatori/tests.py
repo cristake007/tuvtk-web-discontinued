@@ -37,7 +37,7 @@ class UtilizatoriApiTests(TestCase):
         response = self.client.get("/api/v1/utilizatori/")
 
         self.assertEqual(response.status_code, 403)
-        self.assertEqual(response.data["code"], "permission_denied")
+        self.assertEqual(response.json()["code"], "permission_denied")
 
     def test_staff_user_can_search_and_filter_users(self):
         self.client.force_authenticate(self.staff_user)
@@ -48,8 +48,9 @@ class UtilizatoriApiTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data["count"], 1)
-        self.assertEqual(response.data["results"][0]["username"], "maria.popescu")
+        payload = response.json()
+        self.assertEqual(payload["count"], 1)
+        self.assertEqual(payload["results"][0]["username"], "maria.popescu")
 
     def test_superuser_can_create_user_with_hashed_password(self):
         response = self.client.post(
@@ -95,7 +96,7 @@ class UtilizatoriApiTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
-        self.assertEqual(response.data["code"], "validation_error")
+        self.assertEqual(response.json()["code"], "validation_error")
         self.superuser.refresh_from_db()
         self.assertTrue(self.superuser.is_active)
 
