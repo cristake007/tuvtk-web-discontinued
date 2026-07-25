@@ -115,21 +115,17 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
           containerRef={tableScrollRef}
           className="isolate min-w-[118rem] table-fixed border-separate border-spacing-0"
           containerClassName="scroll-smooth"
-          onScrollCapture={(event) => {
-            if (event.currentTarget.parentElement === event.target) {
-              syncScroll(event.currentTarget.parentElement, topScrollRef.current);
-            }
-          }}
+          onContainerScroll={(event) => syncScroll(event.currentTarget, topScrollRef.current)}
         >
           <TableHeader className="bg-muted/70">
             <TableRow className="hover:bg-transparent">
-              <TableHead className="sticky left-0 z-60 w-96 min-w-96 border-r bg-muted px-4">
+              <TableHead className="sticky left-0 z-[70] w-96 min-w-96 border-r bg-muted px-4">
                 Curs
               </TableHead>
-              <TableHead className="sticky left-96 z-60 w-32 min-w-32 border-r bg-muted px-4">
+              <TableHead className="sticky left-96 z-[70] w-32 min-w-32 border-r bg-muted px-4">
                 Durată
               </TableHead>
-              <TableHead className="sticky left-[32rem] z-60 w-36 min-w-36 border-r bg-muted px-4 shadow-[6px_0_8px_-8px_var(--foreground)]">
+              <TableHead className="sticky left-[32rem] z-[70] w-36 min-w-36 border-r bg-muted px-4 shadow-[6px_0_8px_-8px_var(--foreground)]">
                 Investiție
               </TableHead>
               {monthNames.map((monthName) => (
@@ -146,17 +142,17 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
               return (
                 <TableRow className="even:bg-muted/25" key={row.key}>
                   <TableCell
-                    className={`sticky left-0 z-50 w-96 min-w-96 whitespace-normal border-r px-4 py-3 font-medium ${stickyBackground}`}
+                    className={`sticky left-0 z-[60] w-96 min-w-96 whitespace-normal border-r px-4 py-3 font-medium ${stickyBackground}`}
                   >
                     {row.title}
                   </TableCell>
                   <TableCell
-                    className={`sticky left-96 z-50 w-32 min-w-32 border-r px-4 py-3 ${stickyBackground}`}
+                    className={`sticky left-96 z-[60] w-32 min-w-32 border-r px-4 py-3 ${stickyBackground}`}
                   >
                     {row.duration}
                   </TableCell>
                   <TableCell
-                    className={`sticky left-[32rem] z-50 w-36 min-w-36 border-r px-4 py-3 shadow-[6px_0_8px_-8px_var(--foreground)] ${stickyBackground}`}
+                    className={`sticky left-[32rem] z-[60] w-36 min-w-36 border-r px-4 py-3 shadow-[6px_0_8px_-8px_var(--foreground)] ${stickyBackground}`}
                   >
                     {row.investment || "—"}
                   </TableCell>
