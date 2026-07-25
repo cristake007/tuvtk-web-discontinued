@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "apps.core.apps.CoreConfig",
     "apps.course_planner.apps.CoursePlannerConfig",
     "apps.public_holidays.apps.PublicHolidaysConfig",
+    "apps.utilizatori.apps.UtilizatoriConfig",
 ]
 
 
