@@ -12,14 +12,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
-import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 
 type AdministrationEntry = {
@@ -171,35 +164,34 @@ function normalizeSearchValue(value: string) {
 function AdministrationEntryRow({ entry }: { entry: AdministrationEntry }) {
   const content = (
     <>
-      <div className="min-w-0 flex-1">
-        <p className="font-medium text-foreground">{entry.name}</p>
-        <p className="mt-1 text-sm leading-5 text-muted-foreground">
-          {entry.description}
-        </p>
-      </div>
+      <p
+        className={
+          entry.href
+            ? "font-medium text-primary"
+            : "font-medium text-foreground"
+        }
+      >
+        {entry.name}
+      </p>
+      <p className="text-sm leading-5 text-muted-foreground">
+        {entry.description}
+      </p>
       {entry.href ? (
-        <>
-          <Badge className="shrink-0" variant="secondary">
-            Disponibil
-          </Badge>
-          <ArrowRight
-            aria-hidden="true"
-            className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
-          />
-        </>
+        <ArrowRight
+          aria-hidden="true"
+          className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
+        />
       ) : (
-        <Badge className="shrink-0" variant="outline">
-          În pregătire
-        </Badge>
+        <span aria-hidden="true" className="size-4" />
       )}
     </>
   );
 
   const className =
-    "group flex items-center gap-3 border-t px-4 py-3 text-left transition-colors first:border-t-0 hover:bg-muted/40";
+    "group grid min-h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-t px-4 py-3 text-left first:border-t-0 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)_auto]";
 
   return entry.href ? (
-    <Link className={className} to={entry.href}>
+    <Link className={`${className} transition-colors hover:bg-muted/40`} to={entry.href}>
       {content}
     </Link>
   ) : (
@@ -239,23 +231,17 @@ export function AdministrationPage() {
 
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6">
-      <header className="flex items-start gap-4">
-        <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-          <Settings2 aria-hidden="true" className="size-6" />
-        </span>
-        <div>
-          <p className="text-sm font-medium text-primary">Configurarea platformei</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-            Administrare
-          </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Gestionează setările generale, utilizatorii, comunicarea, datele și
-            serviciile externe ale platformei.
-          </p>
-        </div>
+      <header>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          Administrare
+        </h1>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+          Gestionează setările generale, utilizatorii, comunicarea, datele și
+          serviciile externe ale platformei.
+        </p>
       </header>
 
-      <div className="relative max-w-2xl">
+      <div className="relative w-full">
         <Search
           aria-hidden="true"
           className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
@@ -270,31 +256,31 @@ export function AdministrationPage() {
         />
       </div>
 
-      <div className="grid min-w-0 gap-5">
+      <div className="grid min-w-0 gap-7">
         {filteredGroups.map((group) => {
           const Icon = group.icon;
 
           return (
-            <Card className="overflow-hidden" key={group.name}>
-              <CardHeader className="border-b bg-muted/20">
-                <div className="flex items-start gap-3">
-                  <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                    <Icon aria-hidden="true" className="size-5" />
-                  </span>
-                  <div>
-                    <CardTitle>{group.name}</CardTitle>
-                    <CardDescription className="mt-1">
-                      {group.description}
-                    </CardDescription>
-                  </div>
+            <section className="grid min-w-0 gap-2" key={group.name}>
+              <div className="flex items-start gap-2 px-1">
+                <Icon
+                  aria-hidden="true"
+                  className="mt-0.5 size-4 shrink-0 text-muted-foreground"
+                />
+                <div className="min-w-0">
+                  <h2 className="font-semibold text-foreground">{group.name}</h2>
+                  <p className="mt-0.5 text-sm text-muted-foreground">
+                    {group.description}
+                  </p>
                 </div>
-              </CardHeader>
-              <CardContent className="p-0">
+              </div>
+
+              <Card className="gap-0 rounded-md py-0">
                 {group.entries.map((entry) => (
                   <AdministrationEntryRow entry={entry} key={entry.name} />
                 ))}
-              </CardContent>
-            </Card>
+              </Card>
+            </section>
           );
         })}
 
