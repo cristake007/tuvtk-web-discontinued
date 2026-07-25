@@ -8,12 +8,6 @@ import type {
   SynchronizationResult,
 } from "./types";
 
-export const publicHolidayQueryKeys = {
-  root: ["public-holidays"] as const,
-  settings: ["public-holidays", "settings"] as const,
-  holidays: (year: number) => ["public-holidays", "holidays", year] as const,
-};
-
 const basePath = "/api/v1/integrations/public-holidays";
 
 export function fetchPublicHolidaySettings(): Promise<PublicHolidaySettings> {
