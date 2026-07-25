@@ -57,7 +57,7 @@ export interface components {
       alias: string;
       status: "ok" | "error" | "disabled";
     };
-    InternalHolidayInput: {
+    InternalHolidayWrite: {
       date: string;
       local_name: string;
       description: string;
