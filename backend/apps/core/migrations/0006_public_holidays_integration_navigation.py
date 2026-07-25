@@ -42,7 +42,7 @@ def remove_public_holidays_navigation(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("core", "0004_course_planner_navigation"),
+        ("core", "0005_course_planner_history_navigation"),
         ("public_holidays", "0001_initial"),
     ]
 
