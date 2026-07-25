@@ -6,6 +6,8 @@ from typing import Any, Sequence
 from django.core.files.base import ContentFile
 from django.db import transaction
 
+from config.formats import ROMANIAN_DATE_FORMAT
+
 from .files import CourseInput, create_excel_export
 from .models import CoursePlanGeneration, CoursePlannerSettings
 from .scheduler import CourseScheduler
@@ -47,12 +49,12 @@ def parse_holidays(values: Sequence[str]) -> tuple[list[str], list[date]]:
     for value in values:
         clean_value = value.strip()
         try:
-            parsed = datetime.strptime(clean_value, "%d.%m.%Y").date()
+            parsed = datetime.strptime(clean_value, ROMANIAN_DATE_FORMAT).date()
         except ValueError as exc:
             raise ValueError(
                 f'Data „{clean_value}” trebuie să respecte formatul ZZ.LL.AAAA.'
             ) from exc
-        canonical = parsed.strftime("%d.%m.%Y")
+        canonical = parsed.strftime(ROMANIAN_DATE_FORMAT)
         if canonical not in normalized:
             normalized.append(canonical)
             parsed_dates.append(parsed)
