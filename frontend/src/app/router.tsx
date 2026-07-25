@@ -13,6 +13,11 @@ const CoursePlannerPage = lazy(async () => {
   return { default: module.CoursePlannerPage };
 });
 
+const CoursePlannerGeneratorPage = lazy(async () => {
+  const module = await import("@/pages/CoursePlannerGeneratorPage");
+  return { default: module.CoursePlannerGeneratorPage };
+});
+
 const CoursePlannerHistoryPage = lazy(async () => {
   const module = await import("@/pages/CoursePlannerHistoryPage");
   return { default: module.CoursePlannerHistoryPage };
@@ -38,13 +43,29 @@ function CoursePlannerRoute() {
     <Suspense
       fallback={
         <ApplicationState
-          description="Se încarcă instrumentele pentru generarea perioadelor."
+          description="Se încarcă instrumentele disponibile pentru cursuri."
           loading
           title="Se încarcă planificatorul"
         />
       }
     >
       <CoursePlannerPage />
+    </Suspense>
+  );
+}
+
+function CoursePlannerGeneratorRoute() {
+  return (
+    <Suspense
+      fallback={
+        <ApplicationState
+          description="Se încarcă instrumentele pentru generarea perioadelor."
+          loading
+          title="Se încarcă generatorul"
+        />
+      }
+    >
+      <CoursePlannerGeneratorPage />
     </Suspense>
   );
 }
@@ -135,8 +156,30 @@ export const router = createBrowserRouter([
         element: <CoursePlannerRoute />,
       },
       {
+        path: "planificator-cursuri/generator",
+        element: <CoursePlannerGeneratorRoute />,
+      },
+      {
         path: "planificator-cursuri/istoric",
         element: <CoursePlannerHistoryRoute />,
+      },
+      {
+        path: "planificator-cursuri/xml",
+        element: (
+          <ModulePlaceholderPage
+            title="XML cursuri"
+            description="Modulul pentru pregătirea și validarea fișierelor XML va fi disponibil aici."
+          />
+        ),
+      },
+      {
+        path: "planificator-cursuri/word-matcher",
+        element: (
+          <ModulePlaceholderPage
+            title="Word Matcher"
+            description="Modulul pentru potrivirea datelor cursurilor cu documentele Word va fi disponibil aici."
+          />
+        ),
       },
       {
         path: "settings",
