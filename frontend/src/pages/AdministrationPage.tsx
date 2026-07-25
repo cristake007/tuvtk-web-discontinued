@@ -37,9 +37,10 @@ const administrationGroups: AdministrationGroup[] = [
     description: "Setările generale și identitatea platformei.",
     entries: [
       {
-        description: "Configurează sigla și elementele vizuale ale aplicației.",
-        href: "/administrare/sistem",
-        name: "Identitate vizuală",
+        description:
+          "Configurează identitatea vizuală și opțiunile de prezentare ale platformei.",
+        href: "/administrare/sistem/interfata-utilizator",
+        name: "Interfață utilizator",
       },
       {
         description: "Parametrii generali utilizați în întreaga platformă.",
