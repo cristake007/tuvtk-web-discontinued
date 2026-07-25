@@ -182,7 +182,7 @@ function AdministrationEntryRow({ entry }: { entry: AdministrationEntry }) {
   );
 
   const className =
-    "group grid min-h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-t px-4 py-3 text-left first:border-t-0 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)_auto]";
+    "group grid min-h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-t bg-background px-4 py-3 text-left first:border-t-0 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)_auto]";
 
   return entry.href ? (
     <Link className={`${className} transition-colors hover:bg-muted/40`} to={entry.href}>
@@ -222,7 +222,7 @@ export function AdministrationPage() {
   }, [searchQuery]);
 
   return (
-    <section className="flex min-w-0 flex-1 flex-col gap-6">
+    <section className="flex min-w-0 flex-1 flex-col gap-6 bg-background">
       <header>
         <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
           Administrare
@@ -254,17 +254,14 @@ export function AdministrationPage() {
 
           return (
             <section className="grid min-w-0 gap-3" key={group.name}>
-              <div className="flex items-center gap-3 px-1">
-                <span className="grid size-8 shrink-0 place-items-center rounded-md bg-primary/10 text-primary">
-                  <Icon aria-hidden="true" className="size-4" />
-                </span>
+              <div className="flex items-center gap-2 px-1">
+                <Icon aria-hidden="true" className="size-5 shrink-0 text-primary" />
                 <h2 className="text-lg font-semibold tracking-tight text-primary">
                   {group.name}
                 </h2>
-                <span aria-hidden="true" className="h-px flex-1 bg-border" />
               </div>
 
-              <Card className="gap-0 rounded-md py-0">
+              <Card className="gap-0 rounded-md bg-background py-0">
                 {group.entries.map((entry) => (
                   <AdministrationEntryRow entry={entry} key={entry.name} />
                 ))}
@@ -274,7 +271,7 @@ export function AdministrationPage() {
         })}
 
         {filteredGroups.length === 0 ? (
-          <Card className="border-dashed">
+          <Card className="border-dashed bg-background">
             <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
               <Search aria-hidden="true" className="size-5 text-muted-foreground" />
               <p className="font-medium">Nu am găsit rezultate</p>
