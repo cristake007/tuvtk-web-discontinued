@@ -1,5 +1,5 @@
 import type { FormEvent } from "react";
-import { CalendarDays, FileSpreadsheet, Save, Sparkles } from "lucide-react";
+import { CalendarCheck2, FileSpreadsheet, Save, Sparkles } from "lucide-react";
 
 import { FileUploadField } from "@/components/FileUploadField";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { Spinner } from "@/components/ui/spinner";
-import { Textarea } from "@/components/ui/textarea";
 
 import { monthNames } from "../constants";
 import type { CoursePlannerSettings } from "../types";
@@ -38,13 +37,9 @@ function getPlannerYears(selectedYear: number): number[] {
 type PlannerConfigurationCardProps = {
   file: File | null;
   generatePending: boolean;
-  holidaysPending: boolean;
-  holidaysText: string;
   onClearMonths: () => void;
-  onFetchHolidays: () => void;
   onFileChange: (file: File | undefined) => void;
   onGenerate: (event: FormEvent<HTMLFormElement>) => void;
-  onHolidaysChange: (value: string) => void;
   onRandomnessChange: (value: number) => void;
   onSave: () => void;
   onSelectAllMonths: () => void;
@@ -57,13 +52,9 @@ type PlannerConfigurationCardProps = {
 export function PlannerConfigurationCard({
   file,
   generatePending,
-  holidaysPending,
-  holidaysText,
   onClearMonths,
-  onFetchHolidays,
   onFileChange,
   onGenerate,
-  onHolidaysChange,
   onRandomnessChange,
   onSave,
   onSelectAllMonths,
@@ -186,42 +177,23 @@ export function PlannerConfigurationCard({
             </div>
           </fieldset>
 
-          <div className="grid gap-2">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <label className="text-sm font-medium" htmlFor="holidays">
-                Zile libere
-              </label>
-              <Button
-                disabled={busy || holidaysPending || settings.months.length === 0}
-                onClick={onFetchHolidays}
-                size="sm"
-                type="button"
-                variant="outline"
-              >
-                {holidaysPending ? <Spinner /> : <CalendarDays aria-hidden="true" />}
-                {holidaysPending ? "Se preiau…" : "Preia zilele libere"}
-              </Button>
+          <div className="flex gap-3 rounded-lg border bg-muted/20 p-4">
+            <CalendarCheck2 aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-primary" />
+            <div className="grid gap-1">
+              <p className="text-sm font-medium">Zile libere administrate automat</p>
+              <p className="text-xs leading-5 text-muted-foreground">
+                Backend-ul folosește direct zilele legale și zilele interne salvate pentru anul și lunile selectate.
+              </p>
             </div>
-            <Textarea
-              className="min-h-28 resize-y"
-              disabled={busy || holidaysPending}
-              id="holidays"
-              onChange={(event) => onHolidaysChange(event.target.value)}
-              placeholder={"01.01.2027\n02.01.2027"}
-              value={holidaysText}
-            />
-            <span className="text-xs font-normal leading-5 text-muted-foreground">
-              Butonul preia zilele legale și interne pentru anul și lunile selectate. Poți modifica apoi lista manual, folosind formatul ZZ.LL.AAAA.
-            </span>
           </div>
         </CardContent>
 
         <CardFooter className="flex flex-wrap justify-between gap-3">
-          <Button disabled={busy || holidaysPending} onClick={onSave} type="button" variant="outline">
+          <Button disabled={busy} onClick={onSave} type="button" variant="outline">
             {savePending ? <Spinner /> : <Save aria-hidden="true" />}
             {savePending ? "Se salvează…" : "Salvează setările"}
           </Button>
-          <Button disabled={busy || holidaysPending} size="lg" type="submit">
+          <Button disabled={busy} size="lg" type="submit">
             {generatePending ? <Spinner /> : <FileSpreadsheet aria-hidden="true" />}
             {generatePending ? "Se generează…" : "Generează planificarea"}
           </Button>
