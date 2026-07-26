@@ -2,21 +2,20 @@ import { useEffect, useState, type FormEvent } from "react";
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { DialogFooter } from "@/components/ui/dialog";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
-import { formatApiError, getApiFieldError } from "@/lib/api-errors";
+import { Checkbox } from "@/components/ui/checkbox";
 
-import type { Utilizator, UtilizatorFormValues, UtilizatorWrite } from "./types";
+import type {
+  AplicatieAcces,
+  GrupAplicatii,
+  Utilizator,
+  UtilizatorFormValues,
+  UtilizatorWrite,
+} from "./types";
 
 const emptyValues: UtilizatorFormValues = {
   username: "",
@@ -26,6 +25,8 @@ const emptyValues: UtilizatorFormValues = {
   password: "",
   is_active: true,
   is_staff: false,
+  group_ids: [],
+  direct_application_ids: [],
 };
 
 function valuesForUser(user: Utilizator | null): UtilizatorFormValues {
@@ -40,24 +41,26 @@ function valuesForUser(user: Utilizator | null): UtilizatorFormValues {
     password: "",
     is_active: user.is_active ?? false,
     is_staff: user.is_staff ?? false,
+    group_ids: user.groups.map((group) => group.id),
+    direct_application_ids: user.direct_applications.map((application) => application.id),
   };
 }
 
-export function UtilizatorDialog({
+export function UtilizatorForm({
   canManageStaff,
-  error,
-  onOpenChange,
+  onCancel,
   onSubmit,
-  open,
   pending,
+  groups,
+  applications,
   user,
 }: {
   canManageStaff: boolean;
-  error: unknown;
-  onOpenChange: (open: boolean) => void;
+  onCancel: () => void;
   onSubmit: (values: UtilizatorWrite) => void;
-  open: boolean;
   pending: boolean;
+  groups: GrupAplicatii[];
+  applications: AplicatieAcces[];
   user: Utilizator | null;
 }) {
   const [values, setValues] = useState<UtilizatorFormValues>(emptyValues);
@@ -65,11 +68,9 @@ export function UtilizatorDialog({
   const editing = Boolean(user);
 
   useEffect(() => {
-    if (open) {
-      setValues(valuesForUser(user));
-      setLocalErrors({});
-    }
-  }, [open, user]);
+    setValues(valuesForUser(user));
+    setLocalErrors({});
+  }, [user]);
 
   function setValue<Key extends keyof UtilizatorFormValues>(
     field: Key,
@@ -108,36 +109,42 @@ export function UtilizatorDialog({
       is_active: values.is_active,
       is_staff: values.is_staff,
     };
+    if (!user?.is_superuser) {
+      payload.group_ids = values.group_ids;
+      payload.direct_application_ids = values.direct_application_ids;
+    }
     if (values.password) {
       payload.password = values.password;
     }
     onSubmit(payload);
   }
 
-  const usernameError = localErrors.username ?? getApiFieldError(error, "username");
-  const passwordError = localErrors.password ?? getApiFieldError(error, "password");
+  const usernameError = localErrors.username;
+  const passwordError = localErrors.password;
+  const isSuperuser = Boolean(user?.is_superuser);
+  const inheritedApplications = [
+    ...new Map(
+      groups
+        .filter((group) => values.group_ids.includes(group.id))
+        .flatMap((group) => group.applications.map((application) => [application.id, application])),
+    ).values(),
+  ];
 
   return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent className="sm:max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>{editing ? "Editează utilizatorul" : "Adaugă utilizator"}</DialogTitle>
-          <DialogDescription>
+    <section className="flex min-w-0 flex-1 flex-col gap-6">
+      <header>
+        <p className="text-sm font-medium text-primary">Administrare</p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
+          {editing ? "Editează utilizatorul" : "Adaugă utilizator"}
+        </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
             {editing
               ? "Actualizează datele contului, starea și accesul administrativ."
               : "Creează un cont nou pentru accesul la platformă."}
-          </DialogDescription>
-        </DialogHeader>
+        </p>
+      </header>
 
-        <form className="grid gap-5" onSubmit={handleSubmit}>
-          {error ? (
-            <Alert variant="destructive">
-              <AlertDescription>
-                {formatApiError(error, "Contul nu a putut fi salvat.")}
-              </AlertDescription>
-            </Alert>
-          ) : null}
-
+      <form className="grid max-w-4xl gap-5" onSubmit={handleSubmit}>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field data-invalid={Boolean(usernameError)}>
               <FieldLabel htmlFor="utilizator-username">Nume de utilizator</FieldLabel>
@@ -163,7 +170,6 @@ export function UtilizatorDialog({
                 type="email"
                 value={values.email}
               />
-              <FieldError>{getApiFieldError(error, "email")}</FieldError>
             </Field>
 
             <Field>
@@ -175,7 +181,6 @@ export function UtilizatorDialog({
                 onChange={(event) => setValue("first_name", event.currentTarget.value)}
                 value={values.first_name}
               />
-              <FieldError>{getApiFieldError(error, "first_name")}</FieldError>
             </Field>
 
             <Field>
@@ -187,7 +192,6 @@ export function UtilizatorDialog({
                 onChange={(event) => setValue("last_name", event.currentTarget.value)}
                 value={values.last_name}
               />
-              <FieldError>{getApiFieldError(error, "last_name")}</FieldError>
             </Field>
           </div>
 
@@ -244,10 +248,112 @@ export function UtilizatorDialog({
             </div>
           </div>
 
-          <DialogFooter>
+          {isSuperuser ? (
+            <Field>
+              <FieldLabel>Acces aplicații</FieldLabel>
+              <Alert>
+                <AlertDescription>
+                  Acces complet — superutilizatorii au acces la toate aplicațiile.
+                </AlertDescription>
+              </Alert>
+              <div className="flex min-h-10 flex-wrap gap-2 rounded-md border p-3 text-sm">
+                {user?.effective_applications.map((application) => (
+                  <span className="rounded-md bg-muted px-2 py-1" key={application.id}>
+                    {application.name}
+                  </span>
+                ))}
+              </div>
+            </Field>
+          ) : (
+            <>
+          <Field>
+            <FieldLabel>Grupuri</FieldLabel>
+            <FieldDescription>
+              Accesul la aplicații se cumulează între grupurile selectate.
+            </FieldDescription>
+            <div className="grid max-h-44 gap-2 overflow-y-auto rounded-md border p-3 sm:grid-cols-2">
+              {groups.map((group) => {
+                const checked = values.group_ids.includes(group.id);
+                return (
+                  <label className="flex cursor-pointer items-center gap-2 text-sm" key={group.id}>
+                    <Checkbox
+                      checked={checked}
+                      disabled={pending}
+                      onCheckedChange={(nextChecked) =>
+                        setValue(
+                          "group_ids",
+                          nextChecked
+                            ? [...values.group_ids, group.id]
+                            : values.group_ids.filter((groupId) => groupId !== group.id),
+                        )
+                      }
+                    />
+                    {group.name}
+                  </label>
+                );
+              })}
+              {groups.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nu există grupuri create.</p>
+              ) : null}
+            </div>
+          </Field>
+
+          <Field>
+            <FieldLabel>Acces moștenit din grupuri</FieldLabel>
+            <FieldDescription>
+              Aplicațiile de mai jos sunt acordate de grupurile selectate și nu pot fi
+              retrase din acest formular.
+            </FieldDescription>
+            <div className="flex min-h-10 flex-wrap gap-2 rounded-md border p-3 text-sm">
+              {inheritedApplications.length ? (
+                inheritedApplications.map((application) => (
+                  <span className="rounded-md bg-muted px-2 py-1" key={application.id}>
+                    {application.name}
+                  </span>
+                ))
+              ) : (
+                <span className="text-muted-foreground">Niciun acces moștenit.</span>
+              )}
+            </div>
+          </Field>
+
+          <Field>
+            <FieldLabel>Acces direct la aplicații</FieldLabel>
+            <FieldDescription>
+              Acest acces se adaugă celui moștenit din grupuri.
+            </FieldDescription>
+            <div className="grid max-h-44 gap-2 overflow-y-auto rounded-md border p-3 sm:grid-cols-2">
+              {applications.map((application) => {
+                const checked = values.direct_application_ids.includes(application.id);
+                return (
+                  <label className="flex cursor-pointer items-center gap-2 text-sm" key={application.id}>
+                    <Checkbox
+                      checked={checked}
+                      disabled={pending}
+                      onCheckedChange={(nextChecked) =>
+                        setValue(
+                          "direct_application_ids",
+                          nextChecked
+                            ? [...values.direct_application_ids, application.id]
+                            : values.direct_application_ids.filter(
+                                (applicationId) => applicationId !== application.id,
+                              ),
+                        )
+                      }
+                    />
+                    {application.name}
+                  </label>
+                );
+              })}
+            </div>
+          </Field>
+            </>
+          )}
+
+          <DialogFooter className="mx-0 mb-0">
             <Button
               disabled={pending}
-              onClick={() => onOpenChange(false)}
+              onClick={onCancel}
               type="button"
               variant="outline"
             >
@@ -258,8 +364,7 @@ export function UtilizatorDialog({
               {pending ? "Se salvează…" : editing ? "Salvează modificările" : "Creează contul"}
             </Button>
           </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      </form>
+    </section>
   );
 }

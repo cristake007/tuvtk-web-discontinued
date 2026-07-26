@@ -21,6 +21,7 @@ class UtilizatorFilter(django_filters.FilterSet):
         ),
         method="filter_role",
     )
+    group = django_filters.NumberFilter(field_name="groups__id")
 
     class Meta:
         model = get_user_model()

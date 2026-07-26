@@ -8,6 +8,7 @@ import { TablouDeBordPage } from "@/pages/TablouDeBordPage";
 import { WorkspaceCardPage } from "@/pages/WorkspaceCardPage";
 
 import { AuthenticationGate } from "./AuthenticationGate";
+import { ApplicationAccessRoute } from "./ApplicationAccessRoute";
 
 const CoursePlannerPage = lazy(async () => {
   const module = await import("@/pages/CoursePlannerPage");
@@ -37,6 +38,16 @@ const AdministrationUserInterfacePage = lazy(async () => {
 const UtilizatoriPage = lazy(async () => {
   const module = await import("@/pages/UtilizatoriPage");
   return { default: module.UtilizatoriPage };
+});
+
+const UtilizatorFormPage = lazy(async () => {
+  const module = await import("@/pages/UtilizatorFormPage");
+  return { default: module.UtilizatorFormPage };
+});
+
+const GrupuriAplicatiiPage = lazy(async () => {
+  const module = await import("@/pages/GrupuriAplicatiiPage");
+  return { default: module.GrupuriAplicatiiPage };
 });
 
 const IntegrationsPage = lazy(async () => {
@@ -145,6 +156,30 @@ function UtilizatoriRoute() {
   );
 }
 
+function UtilizatorFormRoute() {
+  return (
+    <Suspense
+      fallback={
+        <ApplicationState
+          description="Se încarcă formularul utilizatorului."
+          loading
+          title="Se încarcă utilizatorul"
+        />
+      }
+    >
+      <UtilizatorFormPage />
+    </Suspense>
+  );
+}
+
+function GrupuriAplicatiiRoute() {
+  return (
+    <Suspense fallback={<ApplicationState description="Se încarcă grupurile și accesul la aplicații." loading title="Se încarcă grupurile" />}>
+      <GrupuriAplicatiiPage />
+    </Suspense>
+  );
+}
+
 function IntegrationsRoute() {
   return (
     <Suspense
@@ -201,7 +236,11 @@ export const router = createBrowserRouter([
       },
       {
         path: "crm/companii",
-        element: <WorkspaceCardPage ariaLabel="Conținut companii" />,
+        element: <ApplicationAccessRoute applicationKey="companies"><WorkspaceCardPage ariaLabel="Conținut companii" /></ApplicationAccessRoute>,
+      },
+      {
+        path: "companies",
+        element: <ApplicationAccessRoute applicationKey="companies"><WorkspaceCardPage ariaLabel="Conținut companii" /></ApplicationAccessRoute>,
       },
       {
         path: "crm/contacte",
@@ -259,46 +298,46 @@ export const router = createBrowserRouter([
       },
       {
         path: "documente",
-        element: <DocumentePage />,
+        element: <ApplicationAccessRoute applicationKey="documents"><DocumentePage /></ApplicationAccessRoute>,
       },
       {
         path: "planificator-cursuri",
-        element: <CoursePlannerRoute />,
+        element: <ApplicationAccessRoute applicationKey="course-planner"><CoursePlannerRoute /></ApplicationAccessRoute>,
       },
       {
         path: "planificator-cursuri/generator",
-        element: <CoursePlannerGeneratorRoute />,
+        element: <ApplicationAccessRoute applicationKey="course-planner"><CoursePlannerGeneratorRoute /></ApplicationAccessRoute>,
       },
       {
         path: "planificator-cursuri/istoric",
-        element: <CoursePlannerHistoryRoute />,
+        element: <ApplicationAccessRoute applicationKey="course-planner"><CoursePlannerHistoryRoute /></ApplicationAccessRoute>,
       },
       {
         path: "planificator-cursuri/xml",
-        element: (
+        element: <ApplicationAccessRoute applicationKey="course-planner">
           <ModulePlaceholderPage
             title="XML cursuri"
             description="Modulul pentru pregătirea și validarea fișierelor XML va fi disponibil aici."
           />
-        ),
+        </ApplicationAccessRoute>,
       },
       {
         path: "planificator-cursuri/word-matcher",
-        element: (
+        element: <ApplicationAccessRoute applicationKey="course-planner">
           <ModulePlaceholderPage
             title="Word Matcher"
             description="Modulul pentru potrivirea datelor cursurilor cu documentele Word va fi disponibil aici."
           />
-        ),
+        </ApplicationAccessRoute>,
       },
       {
         path: "planificator-cursuri/update-wordpress",
-        element: (
+        element: <ApplicationAccessRoute applicationKey="course-planner">
           <ModulePlaceholderPage
             title="Update WordPress"
             description="Modulul pentru actualizarea conținutului WordPress va fi disponibil aici."
           />
-        ),
+        </ApplicationAccessRoute>,
       },
       {
         path: "administrare",
@@ -311,6 +350,18 @@ export const router = createBrowserRouter([
       {
         path: "administrare/utilizatori",
         element: <UtilizatoriRoute />,
+      },
+      {
+        path: "administrare/utilizatori/adaugare",
+        element: <UtilizatorFormRoute />,
+      },
+      {
+        path: "administrare/utilizatori/:userId",
+        element: <UtilizatorFormRoute />,
+      },
+      {
+        path: "administrare/grupuri",
+        element: <GrupuriAplicatiiRoute />,
       },
       {
         path: "administrare/integrari",

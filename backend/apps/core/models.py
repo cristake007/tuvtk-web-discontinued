@@ -1,3 +1,5 @@
+from django.conf import settings
+from django.contrib.auth.models import Group
 from django.db import models
 
 
@@ -8,6 +10,17 @@ class ApplicationDefinition(models.Model):
     route_prefix = models.CharField(max_length=240, blank=True)
     position = models.PositiveIntegerField(default=0)
     is_enabled = models.BooleanField(default=True)
+    allowed_groups = models.ManyToManyField(
+        Group,
+        blank=True,
+        related_name="allowed_applications",
+    )
+    allowed_users = models.ManyToManyField(
+        settings.AUTH_USER_MODEL,
+        blank=True,
+        related_name="directly_allowed_applications",
+    )
+    is_access_controlled = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

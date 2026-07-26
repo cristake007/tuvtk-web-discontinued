@@ -1,8 +1,9 @@
+from django.db.models import Q
 from django.http import HttpRequest
 
 from apps.authentication.services import serialize_session_user
 
-from .models import ApplicationConfiguration, NavigationItem
+from .models import ApplicationConfiguration, ApplicationDefinition, NavigationItem
 
 DEFAULT_CONFIGURATION = {
     "site_name": "TUVTK",
@@ -58,6 +59,49 @@ def serialize_shell_configuration(
     }
 
 
+def user_has_application_access(user, application_key: str) -> bool:
+    if not user or not user.is_authenticated or not user.is_active:
+        return False
+
+    application = (
+        ApplicationDefinition.objects.filter(key=application_key, is_enabled=True)
+        .only("id", "is_access_controlled")
+        .first()
+    )
+    if application is None:
+        return False
+    if user.is_superuser:
+        return True
+    if not application.is_access_controlled:
+        return True
+    return application.allowed_groups.filter(user=user).exists() or application.allowed_users.filter(
+        pk=user.pk
+    ).exists()
+
+
+def get_user_accessible_application_keys(user) -> set[str]:
+    if not user or not user.is_authenticated or not user.is_active:
+        return set()
+
+    if user.is_superuser:
+        return set(
+            ApplicationDefinition.objects.filter(is_enabled=True).values_list(
+                "key", flat=True
+            )
+        )
+    applications = ApplicationDefinition.objects.filter(
+        is_enabled=True,
+        is_access_controlled=True,
+    )
+    return set(
+        applications.filter(
+            Q(allowed_groups__user=user) | Q(allowed_users=user)
+        )
+        .values_list("key", flat=True)
+        .distinct()
+    )
+
+
 def get_core_bootstrap(request: HttpRequest) -> dict[str, object]:
     configuration_payload = serialize_shell_configuration(get_active_configuration())
     user = request.user
@@ -73,12 +117,39 @@ def get_core_bootstrap(request: HttpRequest) -> dict[str, object]:
             .select_related("application", "parent")
         )
 
+        accessible_application_keys = get_user_accessible_application_keys(user)
+        permitted_items: list[NavigationItem] = []
         for item in items:
             if item.requires_staff and not user.is_staff:
                 continue
-
-            if item.permission_code and not user.has_perm(item.permission_code):
+            if item.key == "dashboard":
+                permitted_items.append(item)
                 continue
+            if (
+                item.application.is_access_controlled
+                and item.application.key not in accessible_application_keys
+            ):
+                continue
+            permitted_items.append(item)
+
+        permitted_item_keys = {item.key for item in permitted_items}
+        for item in permitted_items:
+            if item.parent and item.parent.key not in permitted_item_keys:
+                # A container is retained when it has at least one accessible child.
+                parent = item.parent
+                navigation_payload.append(
+                    {
+                        "key": parent.key,
+                        "label": parent.label,
+                        "path": parent.path,
+                        "icon": parent.icon,
+                        "position": parent.position,
+                        "parent_key": parent.parent.key if parent.parent else None,
+                        "application_key": parent.application.key,
+                        "is_separator": parent.is_separator,
+                    }
+                )
+                permitted_item_keys.add(parent.key)
 
             navigation_payload.append(
                 {
@@ -98,4 +169,7 @@ def get_core_bootstrap(request: HttpRequest) -> dict[str, object]:
         "configuration": configuration_payload,
         "user": serialize_session_user(user) if authenticated else None,
         "navigation": navigation_payload,
+        "accessible_application_keys": sorted(accessible_application_keys)
+        if authenticated
+        else [],
     }

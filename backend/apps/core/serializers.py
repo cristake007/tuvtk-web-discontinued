@@ -54,6 +54,7 @@ class CoreBootstrapSerializer(serializers.Serializer):
     configuration = ShellConfigurationSerializer()
     user = SessionUserSerializer(allow_null=True)
     navigation = NavigationItemSerializer(many=True)
+    accessible_application_keys = serializers.ListField(child=serializers.CharField())
 
 
 class CompanyLogoUploadSerializer(serializers.Serializer):

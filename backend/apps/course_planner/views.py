@@ -10,13 +10,13 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.core.permissions import HasApplicationAccess
 from apps.public_holidays.calendar import get_holiday_dates
 from config.error_serializers import first_serializer_error
 from config.formats import ROMANIAN_DATE_FORMAT
 
 from .files import CourseFileError, create_excel_export, parse_course_file
 from .models import CoursePlanGeneration
-from .permissions import CanUseCoursePlanner
 from .serializers import (
     CoursePlanGenerationSerializer,
     CoursePlanHistoryResponseSerializer,
@@ -47,7 +47,8 @@ class CoursePlanHistoryPagination(PageNumberPagination):
 
 
 class CoursePlannerSettingsView(APIView):
-    permission_classes = [CanUseCoursePlanner]
+    application_key = "course-planner"
+    permission_classes = [HasApplicationAccess]
 
     @extend_schema(
         operation_id="course_planner_settings_read",
@@ -82,7 +83,8 @@ class CoursePlannerSettingsView(APIView):
 
 
 class CoursePlannerHolidaysView(APIView):
-    permission_classes = [CanUseCoursePlanner]
+    application_key = "course-planner"
+    permission_classes = [HasApplicationAccess]
 
     @extend_schema(
         operation_id="course_planner_holidays_list",
@@ -112,7 +114,8 @@ class CoursePlannerHolidaysView(APIView):
 
 class GenerateScheduleView(APIView):
     parser_classes = [MultiPartParser, FormParser]
-    permission_classes = [CanUseCoursePlanner]
+    application_key = "course-planner"
+    permission_classes = [HasApplicationAccess]
 
     @extend_schema(
         operation_id="course_planner_generate",
@@ -203,7 +206,8 @@ class GenerateScheduleView(APIView):
 
 
 class CoursePlanHistoryView(APIView):
-    permission_classes = [CanUseCoursePlanner]
+    application_key = "course-planner"
+    permission_classes = [HasApplicationAccess]
 
     @extend_schema(
         operation_id="course_planner_history_list",
@@ -220,7 +224,8 @@ class CoursePlanHistoryView(APIView):
 
 
 class CoursePlanFileDownloadView(APIView):
-    permission_classes = [CanUseCoursePlanner]
+    application_key = "course-planner"
+    permission_classes = [HasApplicationAccess]
 
     file_types = {
         "excel": (
@@ -277,7 +282,8 @@ class CoursePlanFileDownloadView(APIView):
 
 
 class ExportScheduleView(APIView):
-    permission_classes = [CanUseCoursePlanner]
+    application_key = "course-planner"
+    permission_classes = [HasApplicationAccess]
 
     @extend_schema(
         operation_id="course_planner_export",

@@ -1,8 +1,11 @@
 import json
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.test import Client, TestCase
 from rest_framework.test import APIClient
+
+from apps.core.models import ApplicationDefinition
 
 
 class UtilizatoriApiTests(TestCase):
@@ -161,3 +164,122 @@ class UtilizatoriApiTests(TestCase):
         self.regular_user.refresh_from_db()
         self.assertEqual(self.regular_user.first_name, "Mariana")
         self.assertFalse(self.regular_user.is_active)
+
+    def test_superuser_can_manage_group_application_access(self):
+        application = ApplicationDefinition.objects.create(
+            key="test-application",
+            name="Aplicație test",
+        )
+
+        response = self.client.post(
+            "/api/v1/utilizatori/grupuri",
+            {
+                "name": "Operatori",
+                "application_ids": [application.id, application.id],
+                "user_ids": [self.regular_user.id, self.regular_user.id],
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.data["applications"][0]["key"], "test-application")
+        self.assertEqual(response.data["users"][0]["username"], "maria.popescu")
+        group = Group.objects.get(name="Operatori")
+        self.assertTrue(application.allowed_groups.filter(pk=group.pk).exists())
+        self.assertTrue(self.regular_user.groups.filter(pk=group.pk).exists())
+
+    def test_group_rejects_uncontrolled_or_inactive_application(self):
+        application = ApplicationDefinition.objects.create(
+            key="uncontrolled",
+            name="Necontrolată",
+            is_access_controlled=False,
+        )
+
+        response = self.client.post(
+            "/api/v1/utilizatori/grupuri",
+            {"name": "Fără acces", "application_ids": [application.id], "user_ids": []},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("application_ids", response.data)
+
+    def test_user_list_includes_and_filters_django_groups(self):
+        group = Group.objects.create(name="Planificator")
+        self.regular_user.groups.add(group)
+
+        response = self.client.get("/api/v1/utilizatori/", {"group": group.id})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["results"][0]["groups"], [{"id": group.id, "name": "Planificator"}])
+
+    def test_user_api_returns_direct_inherited_and_effective_applications(self):
+        inherited_application = ApplicationDefinition.objects.create(
+            key="inherited", name="Moștenită"
+        )
+        direct_application = ApplicationDefinition.objects.create(
+            key="direct", name="Directă"
+        )
+        group = Group.objects.create(name="Cu acces moștenit")
+        inherited_application.allowed_groups.add(group)
+        self.regular_user.groups.add(group)
+        direct_application.allowed_users.add(self.regular_user)
+
+        response = self.client.get(f"/api/v1/utilizatori/{self.regular_user.pk}")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["direct_applications"][0]["key"], "direct")
+        self.assertEqual(response.data["inherited_applications"][0]["key"], "inherited")
+        self.assertEqual(
+            {application["key"] for application in response.data["effective_applications"]},
+            {"direct", "inherited"},
+        )
+
+    def test_removing_direct_access_does_not_remove_group_access(self):
+        application = ApplicationDefinition.objects.create(
+            key="combined-access", name="Acces combinat"
+        )
+        group = Group.objects.create(name="Acces grup")
+        application.allowed_groups.add(group)
+        application.allowed_users.add(self.regular_user)
+        self.regular_user.groups.add(group)
+
+        response = self.client.patch(
+            f"/api/v1/utilizatori/{self.regular_user.pk}",
+            {"direct_application_ids": []},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["direct_applications"], [])
+        self.assertEqual(
+            [application_data["key"] for application_data in response.data["effective_applications"]],
+            ["combined-access"],
+        )
+
+    def test_superuser_cannot_modify_direct_application_access(self):
+        application = ApplicationDefinition.objects.create(
+            key="superuser-direct", name="Acces superutilizator"
+        )
+
+        response = self.client.patch(
+            f"/api/v1/utilizatori/{self.superuser.pk}",
+            {"direct_application_ids": [application.id]},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("direct_application_ids", response.data)
+        self.assertNotEqual(response.status_code, 404)
+
+    def test_promoting_user_to_superuser_clears_direct_application_access(self):
+        application = ApplicationDefinition.objects.create(
+            key="promotion-direct", name="Acces înainte de promovare"
+        )
+        application.allowed_users.add(self.regular_user)
+
+        self.regular_user.is_superuser = True
+        self.regular_user.is_staff = True
+        self.regular_user.save(update_fields=("is_superuser", "is_staff"))
+
+        self.assertFalse(self.regular_user.directly_allowed_applications.exists())

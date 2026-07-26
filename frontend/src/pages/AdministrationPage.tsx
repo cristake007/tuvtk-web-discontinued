@@ -60,12 +60,14 @@ const administrationGroups: AdministrationGroup[] = [
         name: "Utilizatori",
       },
       {
-        description: "Organizarea utilizatorilor în echipe și departamente.",
-        name: "Echipe",
+        description:
+          "Creează grupuri, atribuie utilizatori și stabilește aplicațiile disponibile.",
+        href: "/administrare/grupuri",
+        name: "Grupuri și acces aplicații",
       },
       {
-        description: "Rolurile și permisiunile disponibile în fiecare modul.",
-        name: "Roluri și permisiuni",
+        description: "Organizarea utilizatorilor în echipe și departamente.",
+        name: "Echipe și departamente",
       },
       {
         description: "Istoricul autentificărilor și al sesiunilor utilizatorilor.",

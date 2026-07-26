@@ -4,11 +4,12 @@ from datetime import date
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import Permission
+from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from openpyxl import load_workbook
 
+from apps.core.models import ApplicationDefinition
 from apps.public_holidays.models import PublicHoliday
 
 from .files import create_excel_export
@@ -42,11 +43,16 @@ class CoursePlannerApiTests(TestCase):
             username="planner-user",
             password="test-password-123",
         )
-        permission = Permission.objects.get(
-            codename="use_course_planner",
-            content_type__app_label="course_planner",
+        application, _ = ApplicationDefinition.objects.get_or_create(
+            key="course-planner",
+            defaults={"name": "Planificator cursuri"},
         )
-        self.user.user_permissions.add(permission)
+        application.is_enabled = True
+        application.is_access_controlled = True
+        application.save(update_fields=("is_enabled", "is_access_controlled", "updated_at"))
+        group = Group.objects.create(name="Planificator test")
+        application.allowed_groups.add(group)
+        self.user.groups.add(group)
         self.client.force_login(self.user)
 
     def tearDown(self):
@@ -83,7 +89,7 @@ class CoursePlannerApiTests(TestCase):
 
         self.assertEqual(response.status_code, 401)
 
-    def test_authenticated_user_without_module_permission_receives_forbidden(self):
+    def test_authenticated_user_without_application_group_receives_forbidden(self):
         user_without_permission = get_user_model().objects.create_user(
             username="no-planner-access",
             password="test-password-123",

@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
@@ -26,6 +27,7 @@ class CoreBootstrapApiTests(TestCase):
             name="Core",
             route_prefix="/",
             position=10,
+            is_access_controlled=False,
         )
         self.companies_application = ApplicationDefinition.objects.create(
             key="companies",
@@ -82,6 +84,9 @@ class CoreBootstrapApiTests(TestCase):
 
     def test_regular_user_receives_permitted_navigation(self):
         user = self.create_user("regular-user")
+        group = Group.objects.create(name="Companii")
+        self.companies_application.allowed_groups.add(group)
+        user.groups.add(group)
         self.client.force_login(user)
 
         response = self.client.get("/api/v1/core/bootstrap")
@@ -98,9 +103,79 @@ class CoreBootstrapApiTests(TestCase):
         )
         self.assertIsNone(response.json()["configuration"]["logo_url"])
         self.assertEqual(response.json()["user"]["username"], "regular-user")
+        self.assertEqual(response.json()["accessible_application_keys"], ["companies"])
+
+    def test_user_without_group_sees_only_dashboard(self):
+        user = self.create_user("without-group")
+        self.client.force_login(user)
+
+        response = self.client.get("/api/v1/core/bootstrap")
+
+        self.assertEqual(
+            [item["key"] for item in response.json()["navigation"]],
+            ["dashboard"],
+        )
+        self.assertEqual(response.json()["accessible_application_keys"], [])
+
+    def test_user_with_direct_access_receives_application_navigation(self):
+        user = self.create_user("direct-user")
+        self.companies_application.allowed_users.add(user)
+        self.client.force_login(user)
+
+        response = self.client.get("/api/v1/core/bootstrap")
+
+        self.assertEqual(
+            [item["key"] for item in response.json()["navigation"]],
+            ["dashboard", "companies"],
+        )
+        self.assertEqual(response.json()["accessible_application_keys"], ["companies"])
+
+    def test_group_and_direct_access_are_combined(self):
+        documents_application = ApplicationDefinition.objects.create(
+            key="documents",
+            name="Documente",
+            route_prefix="/documente",
+            position=30,
+        )
+        NavigationItem.objects.create(
+            application=documents_application,
+            key="documents",
+            label="Documente",
+            path="/documente",
+            position=30,
+        )
+        user = self.create_user("combined-user")
+        group = Group.objects.create(name="Companii")
+        self.companies_application.allowed_groups.add(group)
+        user.groups.add(group)
+        documents_application.allowed_users.add(user)
+        self.client.force_login(user)
+
+        response = self.client.get("/api/v1/core/bootstrap")
+
+        self.assertEqual(
+            response.json()["accessible_application_keys"],
+            ["companies", "documents"],
+        )
+
+    def test_removing_direct_access_removes_application_navigation(self):
+        user = self.create_user("direct-removal-user")
+        self.companies_application.allowed_users.add(user)
+        self.companies_application.allowed_users.remove(user)
+        self.client.force_login(user)
+
+        response = self.client.get("/api/v1/core/bootstrap")
+
+        self.assertEqual(
+            [item["key"] for item in response.json()["navigation"]],
+            ["dashboard"],
+        )
 
     def test_staff_user_receives_staff_navigation(self):
         user = self.create_user("staff-user", is_staff=True)
+        group = Group.objects.create(name="Companii")
+        self.companies_application.allowed_groups.add(group)
+        user.groups.add(group)
         self.client.force_login(user)
 
         response = self.client.get("/api/v1/core/bootstrap")
@@ -109,6 +184,75 @@ class CoreBootstrapApiTests(TestCase):
         self.assertEqual(
             [item["key"] for item in response.json()["navigation"]],
             ["dashboard", "companies", "administration"],
+        )
+
+    def test_superuser_sees_all_active_applications(self):
+        user = get_user_model().objects.create_superuser(
+            username="superuser",
+            password="test-password-123",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get("/api/v1/core/bootstrap")
+
+        self.assertEqual(
+            [item["key"] for item in response.json()["navigation"]],
+            ["dashboard", "companies", "administration"],
+        )
+        self.assertIn("companies", response.json()["accessible_application_keys"])
+
+    def test_staff_user_without_groups_sees_administration_but_not_business_apps(self):
+        user = self.create_user("staff-without-groups", is_staff=True)
+        self.client.force_login(user)
+
+        response = self.client.get("/api/v1/core/bootstrap")
+
+        self.assertEqual(
+            [item["key"] for item in response.json()["navigation"]],
+            ["dashboard", "administration"],
+        )
+
+    def test_staff_user_with_contact_access_sees_only_contacts_and_administration(self):
+        contacts_application = ApplicationDefinition.objects.create(
+            key="contacts",
+            name="Contacte",
+            route_prefix="/contacts",
+            position=30,
+        )
+        NavigationItem.objects.create(
+            application=contacts_application,
+            key="contacts",
+            label="Contacte",
+            path="/contacts",
+            position=30,
+        )
+        user = self.create_user("staff-contacts", is_staff=True)
+        group = Group.objects.create(name="Contacte")
+        contacts_application.allowed_groups.add(group)
+        user.groups.add(group)
+        self.client.force_login(user)
+
+        response = self.client.get("/api/v1/core/bootstrap")
+
+        self.assertEqual(
+            [item["key"] for item in response.json()["navigation"]],
+            ["dashboard", "contacts", "administration"],
+        )
+
+    def test_removing_superuser_status_reactivates_regular_acl(self):
+        user = get_user_model().objects.create_superuser(
+            username="former-superuser",
+            password="test-password-123",
+        )
+        self.client.force_login(user)
+        user.is_superuser = False
+        user.save(update_fields=("is_superuser",))
+
+        response = self.client.get("/api/v1/core/bootstrap")
+
+        self.assertEqual(
+            [item["key"] for item in response.json()["navigation"]],
+            ["dashboard", "administration"],
         )
 
     def test_disabled_application_hides_its_navigation(self):

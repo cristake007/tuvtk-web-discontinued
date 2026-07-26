@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { Pencil, Plus, Search, Users } from "lucide-react";
-import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 import { coreBootstrapQueryKey, fetchCoreBootstrap } from "@/api/core";
 import { ApplicationState } from "@/components/ApplicationState";
@@ -37,15 +37,16 @@ import { formatApiError } from "@/lib/api-errors";
 import { formatRomanianDateTime } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 
-import { createUtilizator, fetchUtilizatori, updateUtilizator } from "./api";
+import {
+  fetchGrupuri,
+  fetchUtilizatori,
+} from "./api";
 import { utilizatoriQueryKeys } from "./queryKeys";
 import type {
   Utilizator,
   UtilizatorRoleFilter,
   UtilizatorStatusFilter,
-  UtilizatorWrite,
 } from "./types";
-import { UtilizatorDialog } from "./UtilizatorDialog";
 
 const pageSize = 20;
 
@@ -59,7 +60,7 @@ function initials(user: Utilizator): string {
     .join("");
 }
 
-function RoleBadge({ user }: { user: Utilizator }) {
+function AccountTypeBadge({ user }: { user: Utilizator }) {
   if (user.is_superuser) {
     return <Badge>Superutilizator</Badge>;
   }
@@ -70,14 +71,13 @@ function RoleBadge({ user }: { user: Utilizator }) {
 }
 
 export function UtilizatoriPanel() {
-  const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [searchValue, setSearchValue] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<UtilizatorStatusFilter>("all");
   const [roleFilter, setRoleFilter] = useState<UtilizatorRoleFilter>("all");
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<Utilizator | null>(null);
+  const [groupFilter, setGroupFilter] = useState<string>("all");
 
   useEffect(() => {
     const timeout = window.setTimeout(() => {
@@ -94,6 +94,7 @@ export function UtilizatoriPanel() {
   });
 
   const listQueryInput = {
+    group: groupFilter === "all" ? undefined : Number(groupFilter),
     page,
     role: roleFilter,
     search: debouncedSearch,
@@ -104,38 +105,10 @@ export function UtilizatoriPanel() {
     queryFn: () => fetchUtilizatori(listQueryInput),
     placeholderData: (previous) => previous,
   });
-
-  const saveMutation = useMutation({
-    mutationFn: ({
-      user,
-      values,
-    }: {
-      user: Utilizator | null;
-      values: UtilizatorWrite;
-    }) => (user ? updateUtilizator(user.id, values) : createUtilizator(values)),
-    onSuccess: (savedUser, variables) => {
-      setDialogOpen(false);
-      setSelectedUser(null);
-      void queryClient.invalidateQueries({ queryKey: utilizatoriQueryKeys.all });
-      toast.success(
-        variables.user ? "Utilizatorul a fost actualizat." : "Utilizatorul a fost creat.",
-        { description: savedUser.full_name },
-      );
-    },
+  const groupsQuery = useQuery({
+    queryKey: utilizatoriQueryKeys.grupuri(),
+    queryFn: fetchGrupuri,
   });
-
-  function openCreateDialog() {
-    saveMutation.reset();
-    setSelectedUser(null);
-    setDialogOpen(true);
-  }
-
-  function openEditDialog(user: Utilizator) {
-    saveMutation.reset();
-    setSelectedUser(user);
-    setDialogOpen(true);
-  }
-
   const count = usersQuery.data?.count ?? 0;
   const pageCount = Math.max(1, Math.ceil(count / pageSize));
   const previousDisabled = page <= 1 || usersQuery.isFetching;
@@ -179,14 +152,14 @@ export function UtilizatoriPanel() {
             accesul administrativ.
           </p>
         </div>
-        <Button className="shrink-0" onClick={openCreateDialog} type="button">
+        <Button className="shrink-0" onClick={() => navigate("/administrare/utilizatori/adaugare")} type="button">
           <Plus aria-hidden="true" />
           Adaugă utilizator
         </Button>
       </header>
 
       <Card className="gap-0 py-0">
-        <CardContent className="grid gap-3 border-b p-4 lg:grid-cols-[minmax(18rem,1fr)_13rem_13rem_auto]">
+        <CardContent className="grid gap-3 border-b p-4 xl:grid-cols-[minmax(18rem,1fr)_12rem_12rem_12rem_auto]">
           <div className="relative">
             <Search
               aria-hidden="true"
@@ -221,6 +194,26 @@ export function UtilizatoriPanel() {
 
           <Select
             onValueChange={(value) => {
+              setGroupFilter(value ?? "all");
+              setPage(1);
+            }}
+            value={groupFilter}
+          >
+            <SelectTrigger className="w-full cursor-pointer">
+              <SelectValue placeholder="Toate grupurile" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Toate grupurile</SelectItem>
+              {groupsQuery.data?.map((group) => (
+                <SelectItem key={group.id} value={String(group.id)}>
+                  {group.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select
+            onValueChange={(value) => {
               setRoleFilter(value as UtilizatorRoleFilter);
               setPage(1);
             }}
@@ -230,7 +223,7 @@ export function UtilizatoriPanel() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Toate rolurile</SelectItem>
+              <SelectItem value="all">Toate tipurile de cont</SelectItem>
               <SelectItem value="staff">Administratori</SelectItem>
               <SelectItem value="user">Utilizatori standard</SelectItem>
             </SelectContent>
@@ -248,7 +241,8 @@ export function UtilizatoriPanel() {
               <TableRow className="hover:bg-transparent">
                 <TableHead>Utilizator</TableHead>
                 <TableHead>E-mail</TableHead>
-                <TableHead>Rol</TableHead>
+                <TableHead>Tip cont</TableHead>
+                <TableHead>Grupuri</TableHead>
                 <TableHead>Stare</TableHead>
                 <TableHead>Ultima autentificare</TableHead>
                 <TableHead>Creat la</TableHead>
@@ -278,7 +272,20 @@ export function UtilizatoriPanel() {
                       {user.email || "—"}
                     </TableCell>
                     <TableCell>
-                      <RoleBadge user={user} />
+                      <AccountTypeBadge user={user} />
+                    </TableCell>
+                    <TableCell className="max-w-52">
+                      <div className="flex flex-wrap gap-1">
+                        {user.groups.length ? (
+                          user.groups.map((group) => (
+                            <Badge key={group.id} variant="outline">
+                              {group.name}
+                            </Badge>
+                          ))
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </div>
                     </TableCell>
                     <TableCell>
                       <Badge variant={user.is_active ? "secondary" : "destructive"}>
@@ -298,7 +305,7 @@ export function UtilizatoriPanel() {
                         <Button
                           aria-label={`Editează utilizatorul ${user.full_name}`}
                           disabled={editDisabled}
-                          onClick={() => openEditDialog(user)}
+                          onClick={() => navigate(`/administrare/utilizatori/${user.id}`)}
                           size="icon-sm"
                           title={
                             editDisabled
@@ -375,21 +382,6 @@ export function UtilizatoriPanel() {
         </Alert>
       ) : null}
 
-      <UtilizatorDialog
-        canManageStaff={Boolean(currentUser?.is_superuser)}
-        error={saveMutation.error}
-        onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) {
-            setSelectedUser(null);
-            saveMutation.reset();
-          }
-        }}
-        onSubmit={(values) => saveMutation.mutate({ user: selectedUser, values })}
-        open={dialogOpen}
-        pending={saveMutation.isPending}
-        user={selectedUser}
-      />
     </section>
   );
 }
