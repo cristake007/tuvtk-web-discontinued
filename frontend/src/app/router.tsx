@@ -1,9 +1,10 @@
 import { lazy, Suspense } from "react";
-import { createBrowserRouter } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { ApplicationState } from "@/components/ApplicationState";
-import { DashboardPage } from "@/pages/DashboardPage";
+import { DocumentePage } from "@/pages/DocumentePage";
 import { ModulePlaceholderPage } from "@/pages/ModulePlaceholderPage";
+import { TablouDeBordPage } from "@/pages/TablouDeBordPage";
 import { WorkspaceCardPage } from "@/pages/WorkspaceCardPage";
 
 import { AuthenticationGate } from "./AuthenticationGate";
@@ -183,15 +184,19 @@ export const router = createBrowserRouter([
     children: [
       {
         index: true,
-        element: <DashboardPage />,
+        element: <Navigate replace to="/tablou-de-bord" />,
+      },
+      {
+        path: "tablou-de-bord",
+        element: <TablouDeBordPage />,
       },
       {
         path: "companies",
         element: <WorkspaceCardPage ariaLabel="Conținut companii" />,
       },
       {
-        path: "documents",
-        element: <WorkspaceCardPage ariaLabel="Conținut documente" />,
+        path: "documente",
+        element: <DocumentePage />,
       },
       {
         path: "planificator-cursuri",

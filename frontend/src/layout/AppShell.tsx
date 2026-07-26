@@ -77,7 +77,7 @@ export function AppShell({ bootstrap }: { bootstrap: CoreBootstrap }) {
 
           <SidebarInset className="min-h-0 overflow-hidden bg-muted/30">
             <div
-              className="flex min-h-0 flex-1 flex-col overflow-auto bg-muted/30 p-[15px]"
+              className="flex min-h-0 flex-1 flex-col overflow-auto bg-background p-[15px]"
               onScroll={(event) => {
                 const compact = event.currentTarget.scrollTop > 24;
                 setHeaderCompact((current) =>

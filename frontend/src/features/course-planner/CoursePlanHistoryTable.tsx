@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { FileCode, FileSpreadsheet, FileText } from "lucide-react";
+import { FileCode, FileSpreadsheet, FileText, History } from "lucide-react";
 
+import { AntetAplicatie } from "@/components/AntetAplicatie";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -146,15 +147,7 @@ export function CoursePlanHistoryTable() {
 
   return (
     <div className="flex min-w-0 flex-col gap-5">
-      <header>
-        <p className="text-sm font-medium text-primary">Planificator cursuri</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-          Istoric generări
-        </h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-          Fiecare planificare reușită este păstrată împreună cu fișierele generate.
-        </p>
-      </header>
+      <AntetAplicatie pictograma={History} titlu="Istoric generări" />
 
       {error ? (
         <Alert aria-live="polite" variant="destructive">

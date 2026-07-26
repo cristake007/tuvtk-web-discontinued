@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
+import { AntetAplicatie } from "@/components/AntetAplicatie";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -65,21 +66,7 @@ const plannerModules = [
 export function CoursePlannerPage() {
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6">
-      <header className="flex items-start gap-4">
-        <span className="grid size-12 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">
-          <CalendarRange aria-hidden="true" className="size-6" />
-        </span>
-        <div>
-          <p className="text-sm font-medium text-primary">Instrumente cursuri</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-            Planificator cursuri
-          </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Alege instrumentul pe care vrei să îl folosești. Fiecare modul are propria pagină,
-            propriul flux de lucru și propriile rezultate.
-          </p>
-        </div>
-      </header>
+      <AntetAplicatie pictograma={CalendarRange} titlu="Planificator cursuri" />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {plannerModules.map((module) => {
