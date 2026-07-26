@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "apps.contacte.apps.ContacteConfig",
     "apps.oportunitati.apps.OportunitatiConfig",
     "apps.activitati.apps.ActivitatiConfig",
+    "apps.firme_onrc.apps.FirmeOnrcConfig",
     "apps.course_planner.apps.CoursePlannerConfig",
     "apps.update_wordpress.apps.UpdateWordpressConfig",
     "apps.public_holidays.apps.PublicHolidaysConfig",
@@ -120,6 +121,22 @@ CACHES = {
         "LOCATION": os.environ.get("DJANGO_CACHE_URL", "redis://redis:6379/2"),
     }
 }
+
+OPENSEARCH_URL = os.environ.get("OPENSEARCH_URL", "")
+OPENSEARCH_USERNAME = os.environ.get("OPENSEARCH_USERNAME", "")
+OPENSEARCH_PASSWORD = os.environ.get("OPENSEARCH_PASSWORD", "")
+OPENSEARCH_VERIFY_CERTS = env_bool("OPENSEARCH_VERIFY_CERTS", default=True)
+OPENSEARCH_CA_CERTS = os.environ.get("OPENSEARCH_CA_CERTS") or None
+OPENSEARCH_REQUEST_TIMEOUT = int(
+    os.environ.get("OPENSEARCH_REQUEST_TIMEOUT", "5")
+)
+OPENSEARCH_FIRME_ONRC_ALIAS = os.environ.get(
+    "OPENSEARCH_FIRME_ONRC_ALIAS",
+    "firme-onrc-companies",
+)
+ONRC_DATA_DIR = Path(os.environ.get("ONRC_DATA_DIR", "/data/onrc"))
+
+DATABASE_ROUTERS = ["config.database_routers.RegistryRouter"]
 
 
 AUTH_PASSWORD_VALIDATORS = [

@@ -6,5 +6,6 @@ drf-spectacular==0.30.0
 drf-spectacular-sidecar==2026.7.1
 gunicorn==26.0.0
 openpyxl==3.1.5
+opensearch-py==3.2.0
 psycopg[binary]==3.3.4
 xlrd==2.0.2
