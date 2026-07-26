@@ -191,8 +191,71 @@ export const router = createBrowserRouter([
         element: <TablouDeBordPage />,
       },
       {
-        path: "companies",
+        path: "crm",
+        element: (
+          <ModulePlaceholderPage
+            title="CRM"
+            description="Alege un modul CRM din meniul lateral pentru a continua."
+          />
+        ),
+      },
+      {
+        path: "crm/companii",
         element: <WorkspaceCardPage ariaLabel="Conținut companii" />,
+      },
+      {
+        path: "crm/contacte",
+        element: (
+          <ModulePlaceholderPage
+            title="Contacte"
+            description="Modulul pentru gestionarea contactelor va fi disponibil aici."
+          />
+        ),
+      },
+      {
+        path: "crm/oportunitati",
+        element: (
+          <ModulePlaceholderPage
+            title="Oportunități"
+            description="Modulul pentru gestionarea oportunităților va fi disponibil aici."
+          />
+        ),
+      },
+      {
+        path: "crm/activitati",
+        element: (
+          <ModulePlaceholderPage
+            title="Activități"
+            description="Modulul pentru gestionarea activităților va fi disponibil aici."
+          />
+        ),
+      },
+      {
+        path: "training/in-pregatire",
+        element: (
+          <ModulePlaceholderPage
+            title="Training"
+            description="Modulele pentru Training vor fi definite ulterior."
+          />
+        ),
+      },
+      {
+        path: "certificari/in-pregatire",
+        element: (
+          <ModulePlaceholderPage
+            title="Certificări"
+            description="Modulele pentru Certificări vor fi definite ulterior."
+          />
+        ),
+      },
+      {
+        path: "industrial/in-pregatire",
+        element: (
+          <ModulePlaceholderPage
+            title="Industrial"
+            description="Modulele pentru Industrial vor fi definite ulterior."
+          />
+        ),
       },
       {
         path: "documente",
@@ -225,6 +288,15 @@ export const router = createBrowserRouter([
           <ModulePlaceholderPage
             title="Word Matcher"
             description="Modulul pentru potrivirea datelor cursurilor cu documentele Word va fi disponibil aici."
+          />
+        ),
+      },
+      {
+        path: "planificator-cursuri/update-wordpress",
+        element: (
+          <ModulePlaceholderPage
+            title="Update WordPress"
+            description="Modulul pentru actualizarea conținutului WordPress va fi disponibil aici."
           />
         ),
       },

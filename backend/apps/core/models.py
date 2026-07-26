@@ -27,6 +27,9 @@ class ApplicationConfiguration(models.Model):
     )
     sidebar_title = models.CharField(max_length=120, default="Workspace")
     company_logo_svg = models.TextField(blank=True, default="")
+    culoare_primara = models.CharField(max_length=7, default="#164194")
+    culoare_accent = models.CharField(max_length=7, default="#d41131")
+    culoare_fundal = models.CharField(max_length=7, default="#ffffff")
     is_active = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -59,6 +62,7 @@ class NavigationItem(models.Model):
     permission_code = models.CharField(max_length=160, blank=True)
     requires_staff = models.BooleanField(default=False)
     is_enabled = models.BooleanField(default=True)
+    is_separator = models.BooleanField(default=False)
 
     class Meta:
         ordering = ("position", "label")

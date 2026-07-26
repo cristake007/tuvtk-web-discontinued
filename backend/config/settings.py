@@ -42,7 +42,12 @@ INSTALLED_APPS = [
     "apps.core.apps.CoreConfig",
     "apps.tablou_de_bord.apps.TablouDeBordConfig",
     "apps.documente.apps.DocumenteConfig",
+    "apps.companii.apps.CompaniiConfig",
+    "apps.contacte.apps.ContacteConfig",
+    "apps.oportunitati.apps.OportunitatiConfig",
+    "apps.activitati.apps.ActivitatiConfig",
     "apps.course_planner.apps.CoursePlannerConfig",
+    "apps.update_wordpress.apps.UpdateWordpressConfig",
     "apps.public_holidays.apps.PublicHolidaysConfig",
     "apps.utilizatori.apps.UtilizatoriConfig",
 ]

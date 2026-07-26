@@ -1,16 +1,9 @@
 import type { FormEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { CalendarCheck2, FileSpreadsheet, Save, Sparkles } from "lucide-react";
 
 import { FileUploadField } from "@/components/FileUploadField";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -21,6 +14,7 @@ import {
 import { Slider } from "@/components/ui/slider";
 import { Spinner } from "@/components/ui/spinner";
 
+import { coursePlannerHolidaysQueryKey, fetchCoursePlannerHolidays } from "../api";
 import { monthNames } from "../constants";
 import type { CoursePlannerSettings } from "../types";
 
@@ -65,21 +59,27 @@ export function PlannerConfigurationCard({
 }: PlannerConfigurationCardProps) {
   const busy = generatePending || savePending;
   const plannerYears = getPlannerYears(settings.year);
+  const holidaysQuery = useQuery({
+    queryKey: coursePlannerHolidaysQueryKey(settings.year, settings.months),
+    queryFn: () => fetchCoursePlannerHolidays(settings.year, settings.months),
+    enabled: settings.months.length > 0,
+    staleTime: 60_000,
+  });
 
   return (
-    <form noValidate onSubmit={onGenerate}>
-      <Card className="shadow-sm">
-        <CardHeader className="border-b">
-          <CardTitle className="flex items-center gap-2">
+    <form className="grid gap-8" noValidate onSubmit={onGenerate}>
+      <section className="grid gap-6">
+        <div>
+          <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
             <Sparkles aria-hidden="true" className="size-4 text-primary" />
             Configurare planificare
-          </CardTitle>
-          <CardDescription>
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
             Fișierul, lunile și regulile de distribuție folosite pentru această generare.
-          </CardDescription>
-        </CardHeader>
+          </p>
+        </div>
 
-        <CardContent className="grid gap-7 pt-1">
+        <div className="grid gap-7">
           <FileUploadField
             accept=".csv,.xlsx,.xls"
             description="Coloane obligatorii: Title, Durata Curs și Permalink. Coloana investitie este opțională."
@@ -93,7 +93,7 @@ export function PlannerConfigurationCard({
             onFileChange={onFileChange}
           />
 
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-5 border-y py-6 sm:grid-cols-2">
             <div className="grid content-start gap-2 text-sm font-medium">
               <label htmlFor="planner-year">Anul planificării</label>
               <Select
@@ -119,7 +119,7 @@ export function PlannerConfigurationCard({
 
             <div className="grid content-start gap-2 text-sm font-medium">
               <label htmlFor="randomness">Nivel de distribuție</label>
-              <div className="flex items-center gap-3 rounded-lg border bg-muted/20 px-3 py-3">
+              <div className="flex items-center gap-3 py-2">
                 <Slider
                   aria-label="Nivel de distribuție"
                   className="min-w-0 flex-1 cursor-pointer"
@@ -143,7 +143,7 @@ export function PlannerConfigurationCard({
             </div>
           </div>
 
-          <fieldset className="grid gap-3" disabled={busy}>
+          <fieldset className="grid gap-3 border-b pb-7" disabled={busy}>
             <legend className="text-sm font-medium">Lunile incluse</legend>
             <div className="flex justify-end gap-2">
               <Button onClick={onSelectAllMonths} size="xs" type="button" variant="outline">
@@ -179,28 +179,78 @@ export function PlannerConfigurationCard({
             </div>
           </fieldset>
 
-          <div className="flex gap-3 rounded-lg border bg-muted/20 p-4">
+          <section className="flex gap-3 border-l-2 border-primary pl-4">
             <CalendarCheck2 aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-primary" />
-            <div className="grid gap-1">
+            <div className="min-w-0 flex-1">
               <p className="text-sm font-medium">Zile libere administrate automat</p>
               <p className="text-xs leading-5 text-muted-foreground">
-                Backend-ul folosește direct zilele legale și zilele interne salvate pentru anul și lunile selectate.
+                Acestea sunt zilele legale și interne pe care generatorul le va exclude
+                pentru anul și lunile selectate.
               </p>
+              {settings.months.length === 0 ? (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Selectează cel puțin o lună pentru a verifica zilele libere.
+                </p>
+              ) : null}
+              {holidaysQuery.isPending ? (
+                <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+                  <Spinner className="size-3" />
+                  Se încarcă zilele libere…
+                </div>
+              ) : null}
+              {holidaysQuery.isError ? (
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  Zilele libere nu au putut fi încărcate.
+                  <Button
+                    onClick={() => void holidaysQuery.refetch()}
+                    size="xs"
+                    type="button"
+                    variant="outline"
+                  >
+                    Reîncearcă
+                  </Button>
+                </div>
+              ) : null}
+              {holidaysQuery.isSuccess ? (
+                <div className="mt-3 grid gap-2">
+                  <p className="text-xs font-medium text-foreground">
+                    {holidaysQuery.data.length === 1
+                      ? "1 zi liberă preluată"
+                      : `${holidaysQuery.data.length} zile libere preluate`}
+                  </p>
+                  {holidaysQuery.data.length > 0 ? (
+                    <ul className="grid max-h-40 divide-y overflow-y-auto border-y text-xs">
+                      {holidaysQuery.data.map((holiday) => (
+                        <li className="flex items-center justify-between gap-3 px-3 py-2" key={`${holiday.date}-${holiday.name}`}>
+                          <span className="min-w-0 truncate">
+                            <span className="font-medium">{holiday.date}</span> — {holiday.name}
+                          </span>
+                          <span className="shrink-0 text-muted-foreground">{holiday.source_label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Nu există zile libere salvate pentru această selecție.
+                    </p>
+                  )}
+                </div>
+              ) : null}
             </div>
-          </div>
-        </CardContent>
+          </section>
+        </div>
+      </section>
 
-        <CardFooter className="flex flex-wrap justify-between gap-3">
-          <Button disabled={busy} onClick={onSave} type="button" variant="outline">
-            {savePending ? <Spinner /> : <Save aria-hidden="true" />}
-            {savePending ? "Se salvează…" : "Salvează setările"}
-          </Button>
-          <Button disabled={busy} size="lg" type="submit">
-            {generatePending ? <Spinner /> : <FileSpreadsheet aria-hidden="true" />}
-            {generatePending ? "Se generează…" : "Generează planificarea"}
-          </Button>
-        </CardFooter>
-      </Card>
+      <div className="flex flex-wrap justify-between gap-3 border-t pt-6">
+        <Button disabled={busy} onClick={onSave} type="button" variant="outline">
+          {savePending ? <Spinner /> : <Save aria-hidden="true" />}
+          {savePending ? "Se salvează…" : "Salvează setările"}
+        </Button>
+        <Button disabled={busy} size="lg" type="submit">
+          {generatePending ? <Spinner /> : <FileSpreadsheet aria-hidden="true" />}
+          {generatePending ? "Se generează…" : "Generează planificarea"}
+        </Button>
+      </div>
     </form>
   );
 }

@@ -74,11 +74,15 @@ export interface components {
       position: number;
       parent_key: string | null;
       application_key: string;
+      is_separator: boolean;
     };
     PublicBranding: {
       site_name: string;
       organization_name: string;
       logo_url: string | null;
+      culoare_primara: string;
+      culoare_accent: string;
+      culoare_fundal: string;
     };
     PublicHoliday: {
       id: string;
@@ -134,6 +138,9 @@ export interface components {
       organization_name: string;
       sidebar_title: string;
       logo_url: string | null;
+      culoare_primara: string;
+      culoare_accent: string;
+      culoare_fundal: string;
     };
     SynchronizationResult: {
       status: "success" | "skipped" | "failed";

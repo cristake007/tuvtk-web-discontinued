@@ -6,6 +6,8 @@ from .views import (
     PublicBrandingView,
     UserInterfaceAdministrationView,
     UserInterfaceCompanyLogoView,
+    UserInterfaceNavigationSeparatorView,
+    UserInterfaceNavigationView,
 )
 
 app_name = "core-api"
@@ -23,5 +25,15 @@ urlpatterns = [
         "administration/user-interface/company-logo",
         UserInterfaceCompanyLogoView.as_view(),
         name="administration-user-interface-company-logo",
+    ),
+    path(
+        "administration/user-interface/navigation",
+        UserInterfaceNavigationView.as_view(),
+        name="administration-user-interface-navigation",
+    ),
+    path(
+        "administration/user-interface/navigation/separators/<slug:key>",
+        UserInterfaceNavigationSeparatorView.as_view(),
+        name="administration-user-interface-navigation-separator",
     ),
 ]

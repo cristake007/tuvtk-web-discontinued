@@ -9,6 +9,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from openpyxl import load_workbook
 
+from apps.public_holidays.models import PublicHoliday
+
 from .files import create_excel_export
 from .models import CoursePlanGeneration
 from .scheduler import CourseScheduler
@@ -91,6 +93,7 @@ class CoursePlannerApiTests(TestCase):
 
         responses = [
             self.client.get("/api/v1/course-planner/settings"),
+            self.client.get("/api/v1/course-planner/holidays?year=2028&months=3"),
             self.client.put(
                 "/api/v1/course-planner/settings",
                 data={"year": 2028, "months": [3], "randomness": 5},
@@ -111,6 +114,45 @@ class CoursePlannerApiTests(TestCase):
         self.assertTrue(responses)
         for response in responses:
             self.assertEqual(response.status_code, 403)
+
+    def test_holidays_lists_only_the_selected_planner_period(self):
+        PublicHoliday.objects.create(
+            date=date(2027, 1, 1),
+            local_name="Anul Nou",
+            source=PublicHoliday.Source.NAGER,
+            is_internal=False,
+        )
+        PublicHoliday.objects.create(
+            date=date(2027, 2, 2),
+            local_name="Zi internă companie",
+            source=PublicHoliday.Source.INTERNAL,
+            is_internal=True,
+        )
+        PublicHoliday.objects.create(
+            date=date(2027, 3, 8),
+            local_name="Zi în afara selecției",
+            source=PublicHoliday.Source.INTERNAL,
+            is_internal=True,
+        )
+
+        response = self.client.get("/api/v1/course-planner/holidays?year=2027&months=1,2")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            [
+                {
+                    "date": "01.01.2027",
+                    "name": "Anul Nou",
+                    "source_label": "Zi legală",
+                },
+                {
+                    "date": "02.02.2027",
+                    "name": "Zi internă companie",
+                    "source_label": "Zi internă",
+                },
+            ],
+        )
 
     @patch(
         "apps.course_planner.views.get_holiday_dates",

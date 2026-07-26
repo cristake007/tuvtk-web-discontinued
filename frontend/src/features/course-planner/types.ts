@@ -12,3 +12,9 @@ export type CoursePlanFileType = "excel" | "word" | "xml";
 export type CoursePlannerInput = CoursePlannerSettings & {
   inputFile: File;
 };
+
+export type CoursePlannerHoliday = {
+  date: string;
+  name: string;
+  source_label: string;
+};

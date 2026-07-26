@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
+import { useEffect, useMemo, type CSSProperties } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
 import { Outlet } from "react-router-dom";
@@ -21,8 +21,7 @@ type AppShellStyle = CSSProperties & {
 
 export function AppShell({ bootstrap }: { bootstrap: CoreBootstrap }) {
   const queryClient = useQueryClient();
-  const [headerCompact, setHeaderCompact] = useState(false);
-  const headerHeight = headerCompact ? "4rem" : "5rem";
+  const headerHeight = "4rem";
 
   const logoutMutation = useMutation({
     mutationFn: logout,
@@ -44,6 +43,20 @@ export function AppShell({ bootstrap }: { bootstrap: CoreBootstrap }) {
     };
   }, [headerHeight]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    const { culoare_accent, culoare_fundal, culoare_primara } = bootstrap.configuration;
+    root.style.setProperty("--primary", culoare_primara);
+    root.style.setProperty("--brand-red", culoare_accent);
+    root.style.setProperty("--background", culoare_fundal);
+
+    return () => {
+      root.style.removeProperty("--primary");
+      root.style.removeProperty("--brand-red");
+      root.style.removeProperty("--background");
+    };
+  }, [bootstrap.configuration]);
+
   const navigation = useMemo(
     () => buildNavigationTree(bootstrap.navigation),
     [bootstrap.navigation],
@@ -64,7 +77,6 @@ export function AppShell({ bootstrap }: { bootstrap: CoreBootstrap }) {
         style={shellStyle}
       >
         <AppHeader
-          compact={headerCompact}
           configuration={bootstrap.configuration}
           logoutPending={logoutMutation.isPending}
           navigation={bootstrap.navigation}
@@ -76,15 +88,7 @@ export function AppShell({ bootstrap }: { bootstrap: CoreBootstrap }) {
           <AppSidebar navigation={navigation} />
 
           <SidebarInset className="min-h-0 overflow-hidden bg-muted/30">
-            <div
-              className="flex min-h-0 flex-1 flex-col overflow-auto bg-background p-[15px]"
-              onScroll={(event) => {
-                const compact = event.currentTarget.scrollTop > 24;
-                setHeaderCompact((current) =>
-                  current === compact ? current : compact,
-                );
-              }}
-            >
+            <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-background p-[15px]">
               <div className="flex min-h-full w-full flex-1 flex-col bg-background">
                 {logoutMutation.isError ? (
                   <Alert className="m-4 mb-0 border-warning/40 bg-warning/10 sm:m-6 sm:mb-0 lg:m-8 lg:mb-0">

@@ -1,9 +1,12 @@
+import json
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from .models import ApplicationConfiguration
+from .models import ApplicationConfiguration, NavigationItem
 
 USER_INTERFACE_PATH = "/api/v1/core/administration/user-interface"
+USER_INTERFACE_NAVIGATION_PATH = f"{USER_INTERFACE_PATH}/navigation"
 
 
 class UserInterfaceAdministrationApiTests(TestCase):
@@ -45,6 +48,79 @@ class UserInterfaceAdministrationApiTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json()["code"], "permission_denied")
+
+    def test_staff_user_can_update_application_name_and_colors(self):
+        user = get_user_model().objects.create_user(
+            username="interface-editor",
+            password="test-password-123",
+            is_staff=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.patch(
+            USER_INTERFACE_PATH,
+            data=json.dumps(
+                {
+                    "site_name": "Platforma mea",
+                    "culoare_primara": "#123456",
+                    "culoare_accent": "#654321",
+                    "culoare_fundal": "#fafafa",
+                }
+            ),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["site_name"], "Platforma mea")
+        self.configuration.refresh_from_db()
+        self.assertEqual(self.configuration.culoare_primara, "#123456")
+        self.assertEqual(self.configuration.culoare_accent, "#654321")
+        self.assertEqual(self.configuration.culoare_fundal, "#fafafa")
+
+    def test_staff_user_can_reorder_main_navigation(self):
+        user = get_user_model().objects.create_user(
+            username="navigation-editor",
+            password="test-password-123",
+            is_staff=True,
+        )
+        self.client.force_login(user)
+        initial_response = self.client.get(USER_INTERFACE_NAVIGATION_PATH)
+        self.assertEqual(initial_response.status_code, 200)
+        chei = [item["key"] for item in initial_response.json()]
+
+        response = self.client.put(
+            USER_INTERFACE_NAVIGATION_PATH,
+            data=json.dumps({"chei": list(reversed(chei))}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([item["key"] for item in response.json()], list(reversed(chei)))
+        first_item = NavigationItem.objects.get(key=chei[-1])
+        last_item = NavigationItem.objects.get(key=chei[0])
+        self.assertLess(first_item.position, last_item.position)
+
+    def test_staff_user_can_create_and_remove_menu_separator(self):
+        user = get_user_model().objects.create_user(
+            username="separator-editor",
+            password="test-password-123",
+            is_staff=True,
+        )
+        self.client.force_login(user)
+
+        create_response = self.client.post(USER_INTERFACE_NAVIGATION_PATH)
+
+        self.assertEqual(create_response.status_code, 201)
+        separator_key = create_response.json()["key"]
+        self.assertTrue(create_response.json()["is_separator"])
+        self.assertTrue(NavigationItem.objects.filter(key=separator_key).exists())
+
+        remove_response = self.client.delete(
+            f"{USER_INTERFACE_NAVIGATION_PATH}/separators/{separator_key}"
+        )
+
+        self.assertEqual(remove_response.status_code, 204)
+        self.assertFalse(NavigationItem.objects.filter(key=separator_key).exists())
 
     def test_legacy_settings_endpoint_is_not_available(self):
         user = get_user_model().objects.create_user(

@@ -8,12 +8,34 @@ class ShellConfigurationSerializer(serializers.Serializer):
     organization_name = serializers.CharField()
     sidebar_title = serializers.CharField()
     logo_url = serializers.CharField(allow_null=True)
+    culoare_primara = serializers.CharField()
+    culoare_accent = serializers.CharField()
+    culoare_fundal = serializers.CharField()
 
 
 class PublicBrandingSerializer(serializers.Serializer):
     site_name = serializers.CharField()
     organization_name = serializers.CharField()
     logo_url = serializers.CharField(allow_null=True)
+    culoare_primara = serializers.CharField()
+    culoare_accent = serializers.CharField()
+    culoare_fundal = serializers.CharField()
+
+
+class ActualizareInterfataUtilizatorSerializer(serializers.Serializer):
+    site_name = serializers.CharField(max_length=120, required=False, trim_whitespace=True)
+    culoare_primara = serializers.RegexField(r"^#[0-9A-Fa-f]{6}$", required=False)
+    culoare_accent = serializers.RegexField(r"^#[0-9A-Fa-f]{6}$", required=False)
+    culoare_fundal = serializers.RegexField(r"^#[0-9A-Fa-f]{6}$", required=False)
+
+    def validate(self, attrs):
+        if not attrs:
+            raise serializers.ValidationError("Transmite cel puțin o setare de actualizat.")
+        return attrs
+
+
+class OrdineMeniuSerializer(serializers.Serializer):
+    chei = serializers.ListField(child=serializers.CharField(), allow_empty=False)
 
 
 class NavigationItemSerializer(serializers.Serializer):
@@ -24,6 +46,7 @@ class NavigationItemSerializer(serializers.Serializer):
     position = serializers.IntegerField()
     parent_key = serializers.CharField(allow_null=True)
     application_key = serializers.CharField()
+    is_separator = serializers.BooleanField()
 
 
 class CoreBootstrapSerializer(serializers.Serializer):
@@ -39,9 +62,11 @@ class CompanyLogoUploadSerializer(serializers.Serializer):
 
 __all__ = [
     "CompanyLogoUploadSerializer",
+    "ActualizareInterfataUtilizatorSerializer",
     "CoreBootstrapSerializer",
     "ErrorDetailSerializer",
     "NavigationItemSerializer",
     "PublicBrandingSerializer",
+    "OrdineMeniuSerializer",
     "ShellConfigurationSerializer",
 ]

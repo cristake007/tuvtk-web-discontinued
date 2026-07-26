@@ -25,6 +25,30 @@ class CoursePlannerSettingsSerializer(serializers.Serializer):
         return list(dict.fromkeys(value))
 
 
+class CoursePlannerHolidayQuerySerializer(serializers.Serializer):
+    year = serializers.IntegerField(min_value=2024, max_value=2100)
+    months = serializers.CharField(max_length=64)
+
+    def validate_months(self, value):
+        try:
+            months = [int(item.strip()) for item in value.split(",") if item.strip()]
+        except ValueError as exc:
+            raise serializers.ValidationError("Lunile selectate nu sunt valide.") from exc
+
+        months = list(dict.fromkeys(months))
+        if not months:
+            raise serializers.ValidationError("Selectează cel puțin o lună.")
+        if len(months) > 12 or any(month < 1 or month > 12 for month in months):
+            raise serializers.ValidationError("Lunile trebuie să fie între 1 și 12.")
+        return months
+
+
+class CoursePlannerHolidaySerializer(serializers.Serializer):
+    date = serializers.CharField()
+    name = serializers.CharField()
+    source_label = serializers.CharField()
+
+
 class GenerateScheduleSerializer(serializers.Serializer):
     input_file = serializers.FileField()
     year = serializers.IntegerField(min_value=2024, max_value=2100)

@@ -21,6 +21,8 @@ from .serializers import (
     CoursePlanGenerationSerializer,
     CoursePlanHistoryResponseSerializer,
     CoursePlannerErrorDetailSerializer,
+    CoursePlannerHolidayQuerySerializer,
+    CoursePlannerHolidaySerializer,
     CoursePlannerSettingsSerializer,
     ExportScheduleSerializer,
     GenerateScheduleResponseSerializer,
@@ -31,6 +33,7 @@ from .services import (
     ScheduleGenerationError,
     create_course_plan_generation,
     generate_schedule,
+    get_course_planner_holidays,
     get_course_planner_settings,
     serialize_settings,
     update_course_planner_settings,
@@ -76,6 +79,35 @@ class CoursePlannerSettingsView(APIView):
 
         settings = update_course_planner_settings(**serializer.validated_data)
         return Response(CoursePlannerSettingsSerializer(serialize_settings(settings)).data)
+
+
+class CoursePlannerHolidaysView(APIView):
+    permission_classes = [CanUseCoursePlanner]
+
+    @extend_schema(
+        operation_id="course_planner_holidays_list",
+        parameters=[CoursePlannerHolidayQuerySerializer],
+        responses={
+            200: CoursePlannerHolidaySerializer(many=True),
+            400: CoursePlannerErrorDetailSerializer,
+        },
+        summary="List holidays used by the course planner",
+        tags=["course-planner"],
+    )
+    def get(self, request):
+        serializer = CoursePlannerHolidayQuerySerializer(data=request.query_params)
+        if not serializer.is_valid():
+            return Response(
+                {"detail": first_serializer_error(serializer.errors)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        values = serializer.validated_data
+        holidays = get_course_planner_holidays(
+            year=values["year"],
+            months=values["months"],
+        )
+        return Response(CoursePlannerHolidaySerializer(holidays, many=True).data)
 
 
 class GenerateScheduleView(APIView):

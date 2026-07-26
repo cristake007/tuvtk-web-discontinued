@@ -9,6 +9,9 @@ DEFAULT_CONFIGURATION = {
     "organization_name": "TÜV Thüringen Karpat",
     "sidebar_title": "Workspace",
     "logo_url": None,
+    "culoare_primara": "#164194",
+    "culoare_accent": "#d41131",
+    "culoare_fundal": "#ffffff",
 }
 
 
@@ -49,6 +52,9 @@ def serialize_shell_configuration(
         "organization_name": configuration.organization_name,
         "sidebar_title": configuration.sidebar_title,
         "logo_url": logo_url,
+        "culoare_primara": configuration.culoare_primara,
+        "culoare_accent": configuration.culoare_accent,
+        "culoare_fundal": configuration.culoare_fundal,
     }
 
 
@@ -83,6 +89,7 @@ def get_core_bootstrap(request: HttpRequest) -> dict[str, object]:
                     "position": item.position,
                     "parent_key": item.parent.key if item.parent else None,
                     "application_key": item.application.key,
+                    "is_separator": item.is_separator,
                 }
             )
 

@@ -69,6 +69,9 @@ export function AuthenticationGate() {
             logo_url: configuration.logo_url,
             organization_name: configuration.organization_name,
             site_name: configuration.site_name,
+            culoare_primara: configuration.culoare_primara,
+            culoare_accent: configuration.culoare_accent,
+            culoare_fundal: configuration.culoare_fundal,
           }}
         />
       </DeferredView>

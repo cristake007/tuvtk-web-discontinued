@@ -1,5 +1,9 @@
+from uuid import uuid4
+
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.db import transaction
 from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -8,10 +12,14 @@ from rest_framework.permissions import AllowAny, IsAdminUser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from .models import ApplicationDefinition, NavigationItem
 from .serializers import (
+    ActualizareInterfataUtilizatorSerializer,
     CompanyLogoUploadSerializer,
     CoreBootstrapSerializer,
     ErrorDetailSerializer,
+    NavigationItemSerializer,
+    OrdineMeniuSerializer,
     PublicBrandingSerializer,
     ShellConfigurationSerializer,
 )
@@ -40,6 +48,9 @@ class PublicBrandingView(APIView):
             "site_name": configuration["site_name"],
             "organization_name": configuration["organization_name"],
             "logo_url": configuration["logo_url"],
+            "culoare_primara": configuration["culoare_primara"],
+            "culoare_accent": configuration["culoare_accent"],
+            "culoare_fundal": configuration["culoare_fundal"],
         }
         return Response(PublicBrandingSerializer(payload).data)
 
@@ -108,6 +119,136 @@ class UserInterfaceAdministrationView(APIView):
         configuration = get_or_create_active_configuration()
         payload = serialize_shell_configuration(configuration)
         return Response(ShellConfigurationSerializer(payload).data)
+
+    @extend_schema(
+        operation_id="core_administration_user_interface_update",
+        request=ActualizareInterfataUtilizatorSerializer,
+        responses={200: ShellConfigurationSerializer, 400: ErrorDetailSerializer},
+        summary="Actualizează setările interfeței utilizator",
+        tags=["administration"],
+    )
+    def patch(self, request):
+        serializer = ActualizareInterfataUtilizatorSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        configuration = get_or_create_active_configuration()
+        for camp, valoare in serializer.validated_data.items():
+            setattr(configuration, camp, valoare)
+        configuration.save(update_fields=[*serializer.validated_data.keys(), "updated_at"])
+        return Response(ShellConfigurationSerializer(serialize_shell_configuration(configuration)).data)
+
+
+class UserInterfaceNavigationView(APIView):
+    permission_classes = [IsAdminUser]
+    serializer_class = NavigationItemSerializer
+
+    def get_queryset(self):
+        return NavigationItem.objects.filter(
+            parent__isnull=True,
+            is_enabled=True,
+            application__is_enabled=True,
+        ).select_related("application", "parent").order_by("position", "label")
+
+    @staticmethod
+    def serialize_navigation(items):
+        return [
+            {
+                "key": item.key,
+                "label": item.label,
+                "path": item.path,
+                "icon": item.icon,
+                "position": item.position,
+                "parent_key": item.parent.key if item.parent else None,
+                "application_key": item.application.key,
+                "is_separator": item.is_separator,
+            }
+            for item in items
+        ]
+
+    @extend_schema(
+        operation_id="core_administration_user_interface_navigation_read",
+        responses=NavigationItemSerializer(many=True),
+        summary="Returnează elementele principale ale meniului",
+        tags=["administration"],
+    )
+    def get(self, request):
+        payload = self.serialize_navigation(self.get_queryset())
+        return Response(NavigationItemSerializer(payload, many=True).data)
+
+    @extend_schema(
+        operation_id="core_administration_user_interface_navigation_separator_create",
+        responses={201: NavigationItemSerializer, 403: ErrorDetailSerializer},
+        summary="Adaugă un separator în meniul principal",
+        tags=["administration"],
+    )
+    def post(self, request):
+        aplicatie_core = ApplicationDefinition.objects.get(key="core")
+        ultima_pozitie = (
+            NavigationItem.objects.filter(parent__isnull=True)
+            .order_by("-position")
+            .values_list("position", flat=True)
+            .first()
+            or 0
+        )
+        separator = NavigationItem.objects.create(
+            application=aplicatie_core,
+            key=f"separator-{uuid4().hex[:12]}",
+            label="Separator",
+            path="",
+            position=ultima_pozitie + 10,
+            is_separator=True,
+        )
+        payload = self.serialize_navigation([separator])[0]
+        return Response(NavigationItemSerializer(payload).data, status=status.HTTP_201_CREATED)
+
+    @extend_schema(
+        operation_id="core_administration_user_interface_navigation_reorder",
+        request=OrdineMeniuSerializer,
+        responses={200: NavigationItemSerializer(many=True), 400: ErrorDetailSerializer},
+        summary="Reordonează elementele principale ale meniului",
+        tags=["administration"],
+    )
+    def put(self, request):
+        serializer = OrdineMeniuSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        items = list(self.get_queryset())
+        chei = serializer.validated_data["chei"]
+        chei_curente = {item.key for item in items}
+
+        if len(chei) != len(set(chei)) or set(chei) != chei_curente:
+            return Response(
+                {"detail": "Lista transmisă trebuie să conțină exact elementele meniului."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        items_dupa_cheie = {item.key: item for item in items}
+        with transaction.atomic():
+            for index, cheie in enumerate(chei, start=1):
+                item = items_dupa_cheie[cheie]
+                item.position = index * 10
+                item.save(update_fields=("position",))
+
+        payload = self.serialize_navigation(self.get_queryset())
+        return Response(NavigationItemSerializer(payload, many=True).data)
+
+
+class UserInterfaceNavigationSeparatorView(APIView):
+    permission_classes = [IsAdminUser]
+
+    @extend_schema(
+        operation_id="core_administration_user_interface_navigation_separator_remove",
+        responses={204: None, 404: ErrorDetailSerializer},
+        summary="Elimină un separator din meniul principal",
+        tags=["administration"],
+    )
+    def delete(self, request, key):
+        separator = get_object_or_404(
+            NavigationItem,
+            key=key,
+            parent__isnull=True,
+            is_separator=True,
+        )
+        separator.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class UserInterfaceCompanyLogoView(APIView):

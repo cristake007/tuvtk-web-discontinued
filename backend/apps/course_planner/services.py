@@ -6,6 +6,7 @@ from typing import Any, Sequence
 from django.core.files.base import ContentFile
 from django.db import transaction
 
+from apps.public_holidays.calendar import get_holidays
 from config.formats import ROMANIAN_DATE_FORMAT
 
 from .files import CourseInput, create_excel_export
@@ -93,6 +94,17 @@ def serialize_settings(settings: CoursePlannerSettings) -> dict[str, Any]:
         "months": settings.months,
         "randomness": settings.randomness,
     }
+
+
+def get_course_planner_holidays(*, year: int, months: list[int]) -> list[dict[str, str]]:
+    return [
+        {
+            "date": holiday.date.strftime(ROMANIAN_DATE_FORMAT),
+            "name": holiday.local_name,
+            "source_label": "Zi internă" if holiday.is_internal else "Zi legală",
+        }
+        for holiday in get_holidays(year=year, months=months)
+    ]
 
 
 def create_course_plan_generation(

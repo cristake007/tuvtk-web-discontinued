@@ -3,6 +3,7 @@ import { apiDownload, apiRequest } from "@/api/http";
 import type {
   CoursePlanFileType,
   CoursePlanHistoryResponse,
+  CoursePlannerHoliday,
   CoursePlannerInput,
   CoursePlannerSettings,
   GenerateScheduleResponse,
@@ -12,6 +13,10 @@ const coursePlannerPath = "/api/v1/course-planner";
 
 export const coursePlannerQueryKey = ["course-planner", "settings"] as const;
 export const coursePlannerHistoryQueryKey = ["course-planner", "history"] as const;
+
+export function coursePlannerHolidaysQueryKey(year: number, months: number[]) {
+  return ["course-planner", "holidays", year, ...months] as const;
+}
 
 export function fetchCoursePlannerSettings(): Promise<CoursePlannerSettings> {
   return apiRequest<CoursePlannerSettings>(`${coursePlannerPath}/settings`, {
@@ -25,6 +30,19 @@ export function saveCoursePlannerSettings(
   return apiRequest<CoursePlannerSettings>(`${coursePlannerPath}/settings`, {
     method: "PUT",
     body: JSON.stringify(settings),
+  });
+}
+
+export function fetchCoursePlannerHolidays(
+  year: number,
+  months: number[],
+): Promise<CoursePlannerHoliday[]> {
+  const search = new URLSearchParams({
+    year: String(year),
+    months: months.join(","),
+  });
+  return apiRequest<CoursePlannerHoliday[]>(`${coursePlannerPath}/holidays?${search}`, {
+    cache: "no-store",
   });
 }
 

@@ -13,6 +13,9 @@ function normalizePath(path: string): string {
 }
 
 export function isNavigationPathActive(pathname: string, itemPath: string): boolean {
+  if (!itemPath) {
+    return false;
+  }
   const normalizedPathname = normalizePath(pathname);
   const normalizedItemPath = normalizePath(itemPath);
 

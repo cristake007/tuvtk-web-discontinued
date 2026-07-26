@@ -18,6 +18,7 @@ const items: NavigationItem[] = [
     position: 30,
     parent_key: null,
     application_key: "core",
+    is_separator: false,
   },
   {
     key: "companies",
@@ -27,6 +28,7 @@ const items: NavigationItem[] = [
     position: 20,
     parent_key: null,
     application_key: "companies",
+    is_separator: false,
   },
   {
     key: "dashboard",
@@ -36,6 +38,7 @@ const items: NavigationItem[] = [
     position: 10,
     parent_key: null,
     application_key: "core",
+    is_separator: false,
   },
   {
     key: "company-detail",
@@ -45,6 +48,7 @@ const items: NavigationItem[] = [
     position: 10,
     parent_key: "companies",
     application_key: "companies",
+    is_separator: false,
   },
 ];
 
