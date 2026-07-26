@@ -22,6 +22,7 @@ from .serializers import (
     OrdineMeniuSerializer,
     PublicBrandingSerializer,
     ShellConfigurationSerializer,
+    TitluSeparatorMeniuSerializer,
 )
 from .services import (
     get_active_configuration,
@@ -176,11 +177,18 @@ class UserInterfaceNavigationView(APIView):
 
     @extend_schema(
         operation_id="core_administration_user_interface_navigation_separator_create",
-        responses={201: NavigationItemSerializer, 403: ErrorDetailSerializer},
+        request=TitluSeparatorMeniuSerializer,
+        responses={
+            201: NavigationItemSerializer,
+            400: ErrorDetailSerializer,
+            403: ErrorDetailSerializer,
+        },
         summary="Adaugă un separator în meniul principal",
         tags=["administration"],
     )
     def post(self, request):
+        serializer = TitluSeparatorMeniuSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
         aplicatie_core = ApplicationDefinition.objects.get(key="core")
         ultima_pozitie = (
             NavigationItem.objects.filter(parent__isnull=True)
@@ -192,7 +200,7 @@ class UserInterfaceNavigationView(APIView):
         separator = NavigationItem.objects.create(
             application=aplicatie_core,
             key=f"separator-{uuid4().hex[:12]}",
-            label="Separator",
+            label=serializer.validated_data["label"],
             path="",
             position=ultima_pozitie + 10,
             is_separator=True,
@@ -233,6 +241,31 @@ class UserInterfaceNavigationView(APIView):
 
 class UserInterfaceNavigationSeparatorView(APIView):
     permission_classes = [IsAdminUser]
+
+    @extend_schema(
+        operation_id="core_administration_user_interface_navigation_separator_update",
+        request=TitluSeparatorMeniuSerializer,
+        responses={
+            200: NavigationItemSerializer,
+            400: ErrorDetailSerializer,
+            404: ErrorDetailSerializer,
+        },
+        summary="Redenumește un separator din meniul principal",
+        tags=["administration"],
+    )
+    def patch(self, request, key):
+        serializer = TitluSeparatorMeniuSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        separator = get_object_or_404(
+            NavigationItem,
+            key=key,
+            parent__isnull=True,
+            is_separator=True,
+        )
+        separator.label = serializer.validated_data["label"]
+        separator.save(update_fields=("label",))
+        payload = UserInterfaceNavigationView.serialize_navigation([separator])[0]
+        return Response(NavigationItemSerializer(payload).data)
 
     @extend_schema(
         operation_id="core_administration_user_interface_navigation_separator_remove",

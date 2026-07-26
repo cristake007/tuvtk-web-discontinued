@@ -38,6 +38,10 @@ class OrdineMeniuSerializer(serializers.Serializer):
     chei = serializers.ListField(child=serializers.CharField(), allow_empty=False)
 
 
+class TitluSeparatorMeniuSerializer(serializers.Serializer):
+    label = serializers.CharField(max_length=60, trim_whitespace=True)
+
+
 class NavigationItemSerializer(serializers.Serializer):
     key = serializers.CharField()
     label = serializers.CharField()
@@ -70,4 +74,5 @@ __all__ = [
     "PublicBrandingSerializer",
     "OrdineMeniuSerializer",
     "ShellConfigurationSerializer",
+    "TitluSeparatorMeniuSerializer",
 ]

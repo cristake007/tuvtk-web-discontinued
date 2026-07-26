@@ -42,8 +42,21 @@ export function updateUserInterfaceNavigation(
   });
 }
 
-export function createUserInterfaceSeparator(): Promise<NavigationItem> {
-  return apiRequest<NavigationItem>(`${userInterfacePath}/navigation`, { method: "POST" });
+export function createUserInterfaceSeparator(label: string): Promise<NavigationItem> {
+  return apiRequest<NavigationItem>(`${userInterfacePath}/navigation`, {
+    method: "POST",
+    body: JSON.stringify({ label }),
+  });
+}
+
+export function renameUserInterfaceSeparator(
+  key: string,
+  label: string,
+): Promise<NavigationItem> {
+  return apiRequest<NavigationItem>(`${userInterfacePath}/navigation/separators/${key}`, {
+    method: "PATCH",
+    body: JSON.stringify({ label }),
+  });
 }
 
 export function removeUserInterfaceSeparator(key: string): Promise<void> {

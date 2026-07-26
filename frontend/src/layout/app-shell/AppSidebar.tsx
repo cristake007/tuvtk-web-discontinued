@@ -72,8 +72,24 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
 
   if (item.is_separator) {
     return (
-      <SidebarMenuItem aria-hidden="true" className="px-4 py-2 group-data-[collapsible=icon]:px-2">
-        <div className="h-px w-full bg-sidebar-border/80" role="separator" />
+      <SidebarMenuItem className="px-4 py-2.5 group-data-[collapsible=icon]:px-2">
+        <div
+          aria-label={item.label}
+          className="flex w-full items-center gap-2"
+          role="separator"
+        >
+          <span
+            aria-hidden="true"
+            className="h-px min-w-3 flex-1 bg-sidebar-border"
+          />
+          <span className="max-w-28 truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground group-data-[collapsible=icon]:hidden">
+            {item.label}
+          </span>
+          <span
+            aria-hidden="true"
+            className="h-px min-w-3 flex-1 bg-sidebar-border group-data-[collapsible=icon]:hidden"
+          />
+        </div>
       </SidebarMenuItem>
     );
   }

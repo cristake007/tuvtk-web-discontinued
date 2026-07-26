@@ -25,11 +25,13 @@ import {
   fetchUserInterfaceNavigation,
   fetchUserInterfaceSettings,
   removeUserInterfaceSeparator,
+  renameUserInterfaceSeparator,
   updateUserInterfaceNavigation,
   updateUserInterfaceSettings,
 } from "./api";
 import { CompanyLogoSettings } from "./CompanyLogoSettings";
 import { userInterfaceQueryKeys } from "./queryKeys";
+import { SeparatorTitleDialog } from "./SeparatorTitleDialog";
 import { ListaMeniuSortabila } from "./SortableMenuList";
 
 type CuloriInterfata = Pick<
@@ -47,6 +49,20 @@ function actualizeazaConfiguratiaDinCache(
   );
 }
 
+function actualizeazaNavigatiaDinCache(
+  queryClient: ReturnType<typeof useQueryClient>,
+  actualizare: (elemente: NavigationItem[]) => NavigationItem[],
+) {
+  queryClient.setQueryData<NavigationItem[]>(
+    userInterfaceQueryKeys.navigation(),
+    (current) => (current ? actualizare(current) : current),
+  );
+  queryClient.setQueryData<CoreBootstrap>(coreBootstrapQueryKey, (current) =>
+    current ? { ...current, navigation: actualizare(current.navigation) } : current,
+  );
+  void queryClient.invalidateQueries({ queryKey: coreBootstrapQueryKey });
+}
+
 export function UserInterfaceSettingsTabs() {
   const queryClient = useQueryClient();
   const settingsQuery = useQuery({
@@ -56,7 +72,7 @@ export function UserInterfaceSettingsTabs() {
     staleTime: 60_000,
   });
   const navigationQuery = useQuery({
-    queryKey: [...userInterfaceQueryKeys.all, "navigation"],
+    queryKey: userInterfaceQueryKeys.navigation(),
     queryFn: fetchUserInterfaceNavigation,
     retry: false,
     staleTime: 60_000,
@@ -68,6 +84,8 @@ export function UserInterfaceSettingsTabs() {
     culoare_fundal: "#ffffff",
   });
   const [elementeMeniu, setElementeMeniu] = useState<NavigationItem[]>([]);
+  const [dialogSeparatorDeschis, setDialogSeparatorDeschis] = useState(false);
+  const [separatorEditat, setSeparatorEditat] = useState<NavigationItem | null>(null);
 
   useEffect(() => {
     if (!settingsQuery.data) {
@@ -113,7 +131,10 @@ export function UserInterfaceSettingsTabs() {
   const separatorMutation = useMutation({
     mutationFn: createUserInterfaceSeparator,
     onSuccess: (separator) => {
-      setElementeMeniu((curente) => [...curente, separator]);
+      const actualizare = (curente: NavigationItem[]) => [...curente, separator];
+      setElementeMeniu(actualizare);
+      actualizeazaNavigatiaDinCache(queryClient, actualizare);
+      setDialogSeparatorDeschis(false);
       toast.success("Separatorul a fost adăugat.");
     },
     onError: (error) =>
@@ -121,10 +142,29 @@ export function UserInterfaceSettingsTabs() {
         description: formatApiError(error, "Încearcă din nou."),
       }),
   });
+  const redenumesteSeparatorMutation = useMutation({
+    mutationFn: ({ key, label }: { key: string; label: string }) =>
+      renameUserInterfaceSeparator(key, label),
+    onSuccess: (separator) => {
+      const actualizare = (curente: NavigationItem[]) =>
+        curente.map((element) => (element.key === separator.key ? separator : element));
+      setElementeMeniu(actualizare);
+      actualizeazaNavigatiaDinCache(queryClient, actualizare);
+      setDialogSeparatorDeschis(false);
+      toast.success("Separatorul a fost redenumit.");
+    },
+    onError: (error) =>
+      toast.error("Separatorul nu a putut fi redenumit", {
+        description: formatApiError(error, "Încearcă din nou."),
+      }),
+  });
   const stergeSeparatorMutation = useMutation({
     mutationFn: removeUserInterfaceSeparator,
     onSuccess: (_, key) => {
-      setElementeMeniu((curente) => curente.filter((element) => element.key !== key));
+      const actualizare = (curente: NavigationItem[]) =>
+        curente.filter((element) => element.key !== key);
+      setElementeMeniu(actualizare);
+      actualizeazaNavigatiaDinCache(queryClient, actualizare);
       toast.success("Separatorul a fost eliminat.");
     },
     onError: (error) =>
@@ -195,10 +235,23 @@ export function UserInterfaceSettingsTabs() {
         <Card className="max-w-2xl">
           <CardHeader><CardTitle>Ordinea meniului</CardTitle><CardDescription>Trage elementele principale în poziția dorită, apoi salvează noua ordine.</CardDescription></CardHeader>
           <CardContent>
-            {navigationQuery.isError ? <p className="text-sm text-destructive">Meniul nu a putut fi încărcat.</p> : <ListaMeniuSortabila disabled={ordineMutation.isPending || separatorMutation.isPending || stergeSeparatorMutation.isPending} elemente={elementeMeniu} onSchimbaOrdinea={setElementeMeniu} onStergeSeparator={(key) => stergeSeparatorMutation.mutate(key)} />}
+            {navigationQuery.isError ? <p className="text-sm text-destructive">Meniul nu a putut fi încărcat.</p> : <ListaMeniuSortabila disabled={ordineMutation.isPending || separatorMutation.isPending || redenumesteSeparatorMutation.isPending || stergeSeparatorMutation.isPending} elemente={elementeMeniu} onRedenumesteSeparator={(element) => { setSeparatorEditat(element); setDialogSeparatorDeschis(true); }} onSchimbaOrdinea={setElementeMeniu} onStergeSeparator={(key) => stergeSeparatorMutation.mutate(key)} />}
           </CardContent>
-          <CardFooter className="flex flex-wrap gap-2"><Button disabled={separatorMutation.isPending || stergeSeparatorMutation.isPending} onClick={() => separatorMutation.mutate()} type="button" variant="outline"><Plus aria-hidden="true" />Adaugă separator</Button><Button disabled={elementeMeniu.length === 0 || ordineMutation.isPending || separatorMutation.isPending || stergeSeparatorMutation.isPending} onClick={() => ordineMutation.mutate(elementeMeniu.map((element) => element.key))} type="button"><Save aria-hidden="true" />Salvează ordinea</Button></CardFooter>
+          <CardFooter className="flex flex-wrap gap-2"><Button disabled={separatorMutation.isPending || redenumesteSeparatorMutation.isPending || stergeSeparatorMutation.isPending} onClick={() => { setSeparatorEditat(null); setDialogSeparatorDeschis(true); }} type="button" variant="outline"><Plus aria-hidden="true" />Adaugă separator</Button><Button disabled={elementeMeniu.length === 0 || ordineMutation.isPending || separatorMutation.isPending || redenumesteSeparatorMutation.isPending || stergeSeparatorMutation.isPending} onClick={() => ordineMutation.mutate(elementeMeniu.map((element) => element.key))} type="button"><Save aria-hidden="true" />Salvează ordinea</Button></CardFooter>
         </Card>
+        <SeparatorTitleDialog
+          initialTitle={separatorEditat?.label}
+          isPending={separatorMutation.isPending || redenumesteSeparatorMutation.isPending}
+          onOpenChange={setDialogSeparatorDeschis}
+          onSave={(label) => {
+            if (separatorEditat) {
+              redenumesteSeparatorMutation.mutate({ key: separatorEditat.key, label });
+              return;
+            }
+            separatorMutation.mutate(label);
+          }}
+          open={dialogSeparatorDeschis}
+        />
       </TabsContent>
     </Tabs>
   );

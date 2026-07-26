@@ -29,6 +29,7 @@ type ElementSortabil = {
 type ListaMeniuSortabilaProps<Element extends ElementSortabil> = {
   disabled?: boolean;
   elemente: Element[];
+  onRedenumesteSeparator?: (element: Element) => void;
   onSchimbaOrdinea: (elemente: Element[]) => void;
   onStergeSeparator?: (key: string) => void;
 };
@@ -36,6 +37,7 @@ type ListaMeniuSortabilaProps<Element extends ElementSortabil> = {
 export function ListaMeniuSortabila<Element extends ElementSortabil>({
   disabled = false,
   elemente,
+  onRedenumesteSeparator,
   onSchimbaOrdinea,
   onStergeSeparator,
 }: ListaMeniuSortabilaProps<Element>) {
@@ -75,6 +77,7 @@ export function ListaMeniuSortabila<Element extends ElementSortabil>({
               disabled={disabled}
               element={element}
               key={element.key}
+              onRedenumesteSeparator={onRedenumesteSeparator}
               onStergeSeparator={onStergeSeparator}
             />
           ))}
@@ -87,10 +90,12 @@ export function ListaMeniuSortabila<Element extends ElementSortabil>({
 function ElementMeniuSortabil<Element extends ElementSortabil>({
   disabled,
   element,
+  onRedenumesteSeparator,
   onStergeSeparator,
 }: {
   disabled: boolean;
   element: Element;
+  onRedenumesteSeparator?: (element: Element) => void;
   onStergeSeparator?: (key: string) => void;
 }) {
   const {
@@ -127,8 +132,19 @@ function ElementMeniuSortabil<Element extends ElementSortabil>({
         <GripVertical aria-hidden="true" className="size-5" />
       </button>
       <span className={cn("min-w-0 flex-1 font-medium", element.is_separator && "text-muted-foreground")}>
-        {element.is_separator ? "Separator" : element.label}
+        {element.label}
       </span>
+      {element.is_separator && onRedenumesteSeparator ? (
+        <Button
+          disabled={disabled}
+          onClick={() => onRedenumesteSeparator(element)}
+          size="sm"
+          type="button"
+          variant="ghost"
+        >
+          Redenumește
+        </Button>
+      ) : null}
       {element.is_separator && onStergeSeparator ? (
         <Button
           disabled={disabled}

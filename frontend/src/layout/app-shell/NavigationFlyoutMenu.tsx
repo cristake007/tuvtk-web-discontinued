@@ -18,7 +18,7 @@ import {
 } from "./navigation";
 
 const flyoutLinkClassName = [
-  "relative min-h-8 cursor-pointer rounded-none px-4 py-0.5 text-primary",
+  "relative min-h-8 cursor-pointer whitespace-nowrap rounded-none px-4 py-0.5 text-primary",
   "transition-[padding,color,background-color] duration-200 ease-linear",
   "before:absolute before:inset-y-0 before:left-0 before:w-[3px]",
   "before:origin-center before:scale-y-0 before:bg-brand-red",
@@ -64,7 +64,12 @@ export function MeniuFlyoutNavigatie({
           <Icon aria-hidden="true" />
           <span className="whitespace-nowrap">{item.label}</span>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="start" side="right" sideOffset={8}>
+        <DropdownMenuContent
+          align="start"
+          className="w-max min-w-40"
+          side="right"
+          sideOffset={8}
+        >
           {item.children.map((copil) => {
             const copilEsteActiv = isNavigationPathActive(caleCurenta, copil.path);
 

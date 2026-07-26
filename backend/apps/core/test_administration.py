@@ -3,7 +3,7 @@ import json
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from .models import ApplicationConfiguration, NavigationItem
+from .models import ApplicationConfiguration, ApplicationDefinition, NavigationItem
 
 USER_INTERFACE_PATH = "/api/v1/core/administration/user-interface"
 USER_INTERFACE_NAVIGATION_PATH = f"{USER_INTERFACE_PATH}/navigation"
@@ -108,12 +108,19 @@ class UserInterfaceAdministrationApiTests(TestCase):
         )
         self.client.force_login(user)
 
-        create_response = self.client.post(USER_INTERFACE_NAVIGATION_PATH)
+        create_response = self.client.post(
+            USER_INTERFACE_NAVIGATION_PATH,
+            data=json.dumps({"label": "  CRM  "}),
+            content_type="application/json",
+        )
 
         self.assertEqual(create_response.status_code, 201)
         separator_key = create_response.json()["key"]
         self.assertTrue(create_response.json()["is_separator"])
-        self.assertTrue(NavigationItem.objects.filter(key=separator_key).exists())
+        self.assertEqual(create_response.json()["label"], "CRM")
+        self.assertTrue(
+            NavigationItem.objects.filter(key=separator_key, label="CRM").exists()
+        )
 
         remove_response = self.client.delete(
             f"{USER_INTERFACE_NAVIGATION_PATH}/separators/{separator_key}"
@@ -121,6 +128,88 @@ class UserInterfaceAdministrationApiTests(TestCase):
 
         self.assertEqual(remove_response.status_code, 204)
         self.assertFalse(NavigationItem.objects.filter(key=separator_key).exists())
+
+    def test_separator_title_cannot_be_empty(self):
+        user = get_user_model().objects.create_user(
+            username="separator-empty-title",
+            password="test-password-123",
+            is_staff=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            USER_INTERFACE_NAVIGATION_PATH,
+            data=json.dumps({"label": "   "}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_separator_title_cannot_exceed_60_characters(self):
+        user = get_user_model().objects.create_user(
+            username="separator-long-title",
+            password="test-password-123",
+            is_staff=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.post(
+            USER_INTERFACE_NAVIGATION_PATH,
+            data=json.dumps({"label": "a" * 61}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_staff_user_can_rename_menu_separator(self):
+        user = get_user_model().objects.create_user(
+            username="separator-renamer",
+            password="test-password-123",
+            is_staff=True,
+        )
+        self.client.force_login(user)
+        separator = NavigationItem.objects.create(
+            application=ApplicationDefinition.objects.get(key="core"),
+            key="separator-de-redenumit",
+            label="CRM",
+            path="",
+            position=100,
+            is_separator=True,
+        )
+
+        response = self.client.patch(
+            f"{USER_INTERFACE_NAVIGATION_PATH}/separators/{separator.key}",
+            data=json.dumps({"label": "  Operațional  "}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["label"], "Operațional")
+        separator.refresh_from_db()
+        self.assertEqual(separator.label, "Operațional")
+
+    def test_normal_navigation_item_cannot_be_updated_as_separator(self):
+        user = get_user_model().objects.create_user(
+            username="separator-restriction",
+            password="test-password-123",
+            is_staff=True,
+        )
+        self.client.force_login(user)
+        item = NavigationItem.objects.filter(
+            parent__isnull=True,
+            is_separator=False,
+        ).first()
+        self.assertIsNotNone(item)
+
+        response = self.client.patch(
+            f"{USER_INTERFACE_NAVIGATION_PATH}/separators/{item.key}",
+            data=json.dumps({"label": "Titlu nou"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 404)
+        item.refresh_from_db()
+        self.assertNotEqual(item.label, "Titlu nou")
 
     def test_legacy_settings_endpoint_is_not_available(self):
         user = get_user_model().objects.create_user(
