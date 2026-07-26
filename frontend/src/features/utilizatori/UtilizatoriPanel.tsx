@@ -3,9 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Pencil, Plus, Search, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import { coreBootstrapQueryKey, fetchCoreBootstrap } from "@/api/core";
+import { useAuthenticatedBootstrap } from "@/app/AuthenticatedBootstrapContext";
 import { ApplicationState } from "@/components/ApplicationState";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -87,11 +86,7 @@ export function UtilizatoriPanel() {
     return () => window.clearTimeout(timeout);
   }, [searchValue]);
 
-  const bootstrapQuery = useQuery({
-    queryKey: coreBootstrapQueryKey,
-    queryFn: fetchCoreBootstrap,
-    staleTime: 60_000,
-  });
+  const bootstrap = useAuthenticatedBootstrap();
 
   const listQueryInput = {
     group: groupFilter === "all" ? undefined : Number(groupFilter),
@@ -113,7 +108,7 @@ export function UtilizatoriPanel() {
   const pageCount = Math.max(1, Math.ceil(count / pageSize));
   const previousDisabled = page <= 1 || usersQuery.isFetching;
   const nextDisabled = page >= pageCount || usersQuery.isFetching;
-  const currentUser = bootstrapQuery.data?.user;
+  const currentUser = bootstrap.user;
 
   if (usersQuery.isPending) {
     return (
@@ -372,15 +367,6 @@ export function UtilizatoriPanel() {
           </PaginationContent>
         </Pagination>
       </div>
-
-      {bootstrapQuery.isError ? (
-        <Alert variant="destructive">
-          <AlertDescription>
-            Drepturile contului curent nu au putut fi reîncărcate. Conturile pot fi
-            gestionate, dar schimbarea rolului administrativ este dezactivată.
-          </AlertDescription>
-        </Alert>
-      ) : null}
 
     </section>
   );

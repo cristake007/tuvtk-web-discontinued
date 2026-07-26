@@ -1,7 +1,7 @@
 import { useEffect, useMemo, type CSSProperties } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 
 import { coreBootstrapQueryKey } from "@/api/core";
 import { ApiError } from "@/api/http";
@@ -21,17 +21,30 @@ type AppShellStyle = CSSProperties & {
 
 export function AppShell({ bootstrap }: { bootstrap: CoreBootstrap }) {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const headerHeight = "4rem";
 
   const logoutMutation = useMutation({
     mutationFn: logout,
-    onSuccess: () => {
+    onMutate: async () => {
+      await queryClient.cancelQueries();
+      queryClient.removeQueries({
+        predicate: (query) => query.queryKey[0] !== coreBootstrapQueryKey[0],
+      });
       queryClient.setQueryData<CoreBootstrap>(coreBootstrapQueryKey, {
         ...bootstrap,
         authenticated: false,
+        accessible_application_keys: [],
         navigation: [],
         user: null,
       });
+      navigate("/tablou-de-bord", { replace: true });
+    },
+    onSuccess: async () => {
+      await queryClient.resetQueries({ queryKey: coreBootstrapQueryKey });
+    },
+    onError: async () => {
+      await queryClient.resetQueries({ queryKey: coreBootstrapQueryKey });
     },
   });
 

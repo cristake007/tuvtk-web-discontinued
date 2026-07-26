@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "sonner";
 
-import { coreBootstrapQueryKey, fetchCoreBootstrap } from "@/api/core";
+import { useAuthenticatedBootstrap } from "@/app/AuthenticatedBootstrapContext";
 import { ApplicationState } from "@/components/ApplicationState";
 import {
   createUtilizator,
@@ -22,7 +22,7 @@ export function UtilizatorFormPage() {
   const { userId } = useParams();
   const parsedUserId = userId ? Number(userId) : null;
   const editing = parsedUserId !== null && Number.isInteger(parsedUserId);
-  const bootstrapQuery = useQuery({ queryKey: coreBootstrapQueryKey, queryFn: fetchCoreBootstrap });
+  const bootstrap = useAuthenticatedBootstrap();
   const groupsQuery = useQuery({ queryKey: utilizatoriQueryKeys.grupuri(), queryFn: fetchGrupuri });
   const applicationsQuery = useQuery({
     queryKey: [...utilizatoriQueryKeys.all, "aplicatii-acces"],
@@ -51,16 +51,16 @@ export function UtilizatorFormPage() {
   if (!editing && userId) {
     return <ApplicationState description="Identificatorul utilizatorului nu este valid." title="Utilizator indisponibil" />;
   }
-  if (groupsQuery.isPending || applicationsQuery.isPending || bootstrapQuery.isPending || (editing && userQuery.isPending)) {
+  if (groupsQuery.isPending || applicationsQuery.isPending || (editing && userQuery.isPending)) {
     return <ApplicationState description="Se încarcă formularul utilizatorului." loading title="Se încarcă utilizatorul" />;
   }
-  if (groupsQuery.isError || applicationsQuery.isError || bootstrapQuery.isError || userQuery.isError) {
+  if (groupsQuery.isError || applicationsQuery.isError || userQuery.isError) {
     return <ApplicationState description="Formularul utilizatorului nu a putut fi încărcat." title="Utilizator indisponibil" />;
   }
   return (
     <UtilizatorForm
       applications={applicationsQuery.data}
-      canManageStaff={Boolean(bootstrapQuery.data.user?.is_superuser)}
+      canManageStaff={Boolean(bootstrap.user?.is_superuser)}
       groups={groupsQuery.data}
       onCancel={() => navigate("/administrare/utilizatori")}
       onSubmit={(values) => saveMutation.mutate(values)}

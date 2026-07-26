@@ -5,6 +5,8 @@ import { coreBootstrapQueryKey, fetchCoreBootstrap } from "@/api/core";
 import { ApplicationState } from "@/components/ApplicationState";
 import { AppShell } from "@/layout/AppShell";
 
+import { AuthenticatedBootstrapProvider } from "./AuthenticatedBootstrapContext";
+
 const LoginPage = lazy(async () => {
   const module = await import("@/pages/LoginPage");
   return { default: module.LoginPage };
@@ -78,5 +80,9 @@ export function AuthenticationGate() {
     );
   }
 
-  return <AppShell bootstrap={bootstrapQuery.data} />;
+  return (
+    <AuthenticatedBootstrapProvider value={bootstrapQuery.data}>
+      <AppShell bootstrap={bootstrapQuery.data} />
+    </AuthenticatedBootstrapProvider>
+  );
 }
