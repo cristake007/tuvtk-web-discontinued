@@ -11,5 +11,5 @@
     "allowImportingTsExtensions": false,
     "sourceMap": false
   },
-  "include": ["src/**/*.test.ts"]
+  "include": ["src/**/*.test.ts", "src/**/*.test.tsx"]
 }

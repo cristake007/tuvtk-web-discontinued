@@ -15,7 +15,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 import { formatApiError } from "@/lib/api-errors";
 
 import { InternalHolidayForm } from "./components/InternalHolidayForm";
@@ -169,7 +168,7 @@ export function PublicHolidaysIntegrationPanel() {
               onClick={confirmDelete}
               variant="destructive"
             >
-              {deletePending ? <Spinner /> : <Trash2 aria-hidden="true" />}
+              <Trash2 aria-hidden="true" />
               Șterge ziua
             </AlertDialogAction>
           </AlertDialogFooter>

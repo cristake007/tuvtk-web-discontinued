@@ -12,7 +12,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Spinner } from "@/components/ui/spinner";
 
 import { coursePlannerHolidaysQueryKey, fetchCoursePlannerHolidays } from "../api";
 import { monthNames } from "../constants";
@@ -192,12 +191,6 @@ export function PlannerConfigurationCard({
                   Selectează cel puțin o lună pentru a verifica zilele libere.
                 </p>
               ) : null}
-              {holidaysQuery.isPending ? (
-                <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                  <Spinner className="size-3" />
-                  Se încarcă zilele libere…
-                </div>
-              ) : null}
               {holidaysQuery.isError ? (
                 <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   Zilele libere nu au putut fi încărcate.
@@ -243,11 +236,11 @@ export function PlannerConfigurationCard({
 
       <div className="flex flex-wrap justify-between gap-3 border-t pt-6">
         <Button disabled={busy} onClick={onSave} type="button" variant="outline">
-          {savePending ? <Spinner /> : <Save aria-hidden="true" />}
+          <Save aria-hidden="true" />
           {savePending ? "Se salvează…" : "Salvează setările"}
         </Button>
         <Button disabled={busy} size="lg" type="submit">
-          {generatePending ? <Spinner /> : <FileSpreadsheet aria-hidden="true" />}
+          <FileSpreadsheet aria-hidden="true" />
           {generatePending ? "Se generează…" : "Generează planificarea"}
         </Button>
       </div>

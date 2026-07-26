@@ -13,7 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Spinner } from "@/components/ui/spinner";
 import type { ShellUser } from "@/features/auth/types";
 
 type UserMenuProps = {
@@ -109,7 +108,7 @@ export function UserMenu({ user, logoutPending, onLogout }: UserMenuProps) {
           onClick={onLogout}
           variant="destructive"
         >
-          {logoutPending ? <Spinner /> : <LogOut aria-hidden="true" />}
+          <LogOut aria-hidden="true" />
           {logoutPending ? "Se deconectează…" : "Deconectare"}
         </DropdownMenuItem>
       </DropdownMenuContent>

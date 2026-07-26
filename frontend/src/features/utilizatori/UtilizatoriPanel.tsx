@@ -23,7 +23,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -225,7 +224,6 @@ export function UtilizatoriPanel() {
           </Select>
 
           <div className="flex min-h-9 items-center justify-end gap-2 text-sm text-muted-foreground">
-            {usersQuery.isFetching ? <Spinner className="size-4" /> : null}
             <span>{count} conturi</span>
           </div>
         </CardContent>

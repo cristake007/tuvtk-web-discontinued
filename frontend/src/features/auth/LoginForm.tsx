@@ -9,7 +9,6 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 
 import { login } from "./api";
 import {
@@ -215,11 +214,7 @@ export function LoginForm() {
             disabled={loginMutation.isPending}
             type="submit"
           >
-            {loginMutation.isPending ? (
-              <Spinner />
-            ) : (
-              <LockKeyhole aria-hidden="true" className="size-3.5" />
-            )}
+            <LockKeyhole aria-hidden="true" className="size-3.5" />
             {loginMutation.isPending ? "Se autentifică…" : "Autentificare"}
           </Button>
         </FieldGroup>

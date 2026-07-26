@@ -13,7 +13,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
 
 import { useCompanyLogoSettings } from "./useCompanyLogoSettings";
 
@@ -136,7 +135,7 @@ export function CompanyLogoSettings() {
           onClick={uploadSelectedLogo}
           type="button"
         >
-          {uploadPending ? <Spinner /> : <ImageUp aria-hidden="true" />}
+          <ImageUp aria-hidden="true" />
           {uploadPending ? "Se încarcă…" : "Încarcă sigla"}
         </Button>
         <Button
@@ -145,7 +144,7 @@ export function CompanyLogoSettings() {
           type="button"
           variant="destructive"
         >
-          {removePending ? <Spinner /> : <Trash2 aria-hidden="true" />}
+          <Trash2 aria-hidden="true" />
           {removePending ? "Se elimină…" : "Elimină sigla"}
         </Button>
       </CardFooter>

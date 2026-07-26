@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Group
 from django.db import transaction
+from django.db.models import Prefetch, Q
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -20,6 +21,9 @@ from .serializers import (
     UserAccountSerializer,
     UserListResponseSerializer,
     UserQuerySerializer,
+    UserSelectionListResponseSerializer,
+    UserSelectionQuerySerializer,
+    UserSelectionSerializer,
     UserWriteSerializer,
 )
 
@@ -28,6 +32,44 @@ class UserPagination(PageNumberPagination):
     page_size = 20
     page_size_query_param = "page_size"
     max_page_size = 100
+
+
+class UserSelectionPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = "page_size"
+    max_page_size = 50
+
+
+def user_access_context(users):
+    """Compute inherited and effective application access in bounded batch queries."""
+    from apps.core.models import ApplicationDefinition
+
+    user_ids = [user.pk for user in users]
+    if not user_ids:
+        return {}
+    applications = ApplicationDefinition.objects.filter(
+        is_enabled=True, is_access_controlled=True
+    ).prefetch_related(
+        Prefetch("allowed_groups__user_set", queryset=get_user_model().objects.filter(pk__in=user_ids)),
+        Prefetch("allowed_users", queryset=get_user_model().objects.filter(pk__in=user_ids)),
+    )
+    inherited = {user_id: [] for user_id in user_ids}
+    direct = {user_id: [] for user_id in user_ids}
+    for application in applications:
+        for group in application.allowed_groups.all():
+            for user in group.user_set.all():
+                inherited[user.pk].append(application)
+        for user in application.allowed_users.all():
+            direct[user.pk].append(application)
+    effective = {
+        user.pk: list({application.pk: application for application in inherited[user.pk] + direct[user.pk]}.values())
+        for user in users
+    }
+    all_active_applications = list(ApplicationDefinition.objects.filter(is_enabled=True))
+    for user in users:
+        if user.is_superuser:
+            effective[user.pk] = all_active_applications
+    return {"inherited_applications": inherited, "effective_applications": effective}
 
 
 class UserCollectionView(APIView):
@@ -58,7 +100,7 @@ class UserCollectionView(APIView):
         )
         paginator = UserPagination()
         page = paginator.paginate_queryset(queryset, request, view=self)
-        serializer = UserAccountSerializer(page, many=True)
+        serializer = UserAccountSerializer(page, many=True, context=user_access_context(page))
         return paginator.get_paginated_response(serializer.data)
 
     @extend_schema(
@@ -102,7 +144,8 @@ class UserDetailView(APIView):
         tags=["utilizatori"],
     )
     def get(self, request, user_id: int):
-        return Response(UserAccountSerializer(self.get_user(user_id)).data)
+        user = self.get_user(user_id)
+        return Response(UserAccountSerializer(user, context=user_access_context([user])).data)
 
     @extend_schema(
         operation_id="utilizatori_update",
@@ -127,7 +170,33 @@ class UserDetailView(APIView):
         serializer.is_valid(raise_exception=True)
         with transaction.atomic():
             user = serializer.save()
-        return Response(UserAccountSerializer(user).data)
+        return Response(UserAccountSerializer(user, context=user_access_context([user])).data)
+
+
+class UserSelectionView(APIView):
+    permission_classes = [IsAdminUser]
+
+    @extend_schema(
+        operation_id="utilizatori_selection_list",
+        parameters=[UserSelectionQuerySerializer],
+        responses={200: UserSelectionListResponseSerializer, 403: ApiErrorSerializer},
+        summary="Listează utilizatori pentru selectarea membrilor de grup",
+        tags=["utilizatori"],
+    )
+    def get(self, request):
+        search = request.query_params.get("search", "").strip()
+        queryset = get_user_model().objects.all()
+        if search:
+            queryset = queryset.filter(
+                Q(username__icontains=search)
+                | Q(first_name__icontains=search)
+                | Q(last_name__icontains=search)
+                | Q(email__icontains=search)
+            )
+        queryset = queryset.order_by("last_name", "first_name", "username", "pk")
+        paginator = UserSelectionPagination()
+        page = paginator.paginate_queryset(queryset, request, view=self)
+        return paginator.get_paginated_response(UserSelectionSerializer(page, many=True).data)
 
 
 class ApplicationGroupCollectionView(APIView):
@@ -182,6 +251,7 @@ class AvailableApplicationCollectionView(APIView):
         applications = ApplicationDefinition.objects.filter(
             is_enabled=True,
             is_access_controlled=True,
+            is_assignable=True,
         ).order_by("position", "name")
         payload = [
             {"id": application.id, "key": application.key, "name": application.name}

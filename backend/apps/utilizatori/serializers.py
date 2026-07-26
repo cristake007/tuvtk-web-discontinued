@@ -75,6 +75,9 @@ class UserAccountSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(ApplicationAccessSerializer(many=True))
     def get_inherited_applications(self, obj):
+        inherited = self.context.get("inherited_applications")
+        if inherited is not None:
+            return self.serialize_applications(inherited.get(obj.pk, []))
         from apps.core.models import ApplicationDefinition
 
         applications = ApplicationDefinition.objects.filter(
@@ -86,6 +89,9 @@ class UserAccountSerializer(serializers.ModelSerializer):
 
     @extend_schema_field(ApplicationAccessSerializer(many=True))
     def get_effective_applications(self, obj):
+        effective = self.context.get("effective_applications")
+        if effective is not None:
+            return self.serialize_applications(effective.get(obj.pk, []))
         from apps.core.models import ApplicationDefinition
         from apps.core.services import get_user_accessible_application_keys
 
@@ -239,6 +245,7 @@ class UserWriteSerializer(serializers.ModelSerializer):
                 pk__in=application_ids,
                 is_enabled=True,
                 is_access_controlled=True,
+                is_assignable=True,
             )
             if applications.count() != len(application_ids):
                 raise serializers.ValidationError(
@@ -292,6 +299,31 @@ class GroupUserSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     username = serializers.CharField()
     full_name = serializers.CharField()
+    is_active = serializers.BooleanField()
+
+
+class UserSelectionSerializer(serializers.ModelSerializer):
+    full_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = get_user_model()
+        fields = ("id", "username", "full_name", "email", "is_active")
+
+    def get_full_name(self, obj) -> str:
+        return obj.get_full_name().strip() or obj.get_username()
+
+
+class UserSelectionQuerySerializer(serializers.Serializer):
+    search = serializers.CharField(allow_blank=True, max_length=150, required=False)
+    page = serializers.IntegerField(min_value=1, required=False)
+    page_size = serializers.IntegerField(min_value=1, max_value=50, required=False)
+
+
+class UserSelectionListResponseSerializer(serializers.Serializer):
+    count = serializers.IntegerField(min_value=0)
+    next = serializers.CharField(allow_null=True)
+    previous = serializers.CharField(allow_null=True)
+    results = UserSelectionSerializer(many=True)
 
 
 class ApplicationGroupSerializer(serializers.ModelSerializer):
@@ -317,6 +349,7 @@ class ApplicationGroupSerializer(serializers.ModelSerializer):
                 "id": user.id,
                 "username": user.username,
                 "full_name": user.get_full_name().strip() or user.get_username(),
+                "is_active": user.is_active,
             }
             for user in group.user_set.all()
         ]
@@ -352,6 +385,7 @@ class ApplicationGroupWriteSerializer(serializers.Serializer):
                     pk__in=application_ids,
                     is_enabled=True,
                     is_access_controlled=True,
+                    is_assignable=True,
                 )
             )
             if len(applications) != len(application_ids):

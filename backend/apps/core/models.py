@@ -21,6 +21,7 @@ class ApplicationDefinition(models.Model):
         related_name="directly_allowed_applications",
     )
     is_access_controlled = models.BooleanField(default=True)
+    is_assignable = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -72,7 +73,6 @@ class NavigationItem(models.Model):
         on_delete=models.CASCADE,
         related_name="children",
     )
-    permission_code = models.CharField(max_length=160, blank=True)
     requires_staff = models.BooleanField(default=False)
     is_enabled = models.BooleanField(default=True)
     is_separator = models.BooleanField(default=False)

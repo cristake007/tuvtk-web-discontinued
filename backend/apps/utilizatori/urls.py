@@ -6,12 +6,14 @@ from .views import (
     AvailableApplicationCollectionView,
     UserCollectionView,
     UserDetailView,
+    UserSelectionView,
 )
 
 app_name = "utilizatori"
 
 urlpatterns = [
     path("", UserCollectionView.as_view(), name="list-create"),
+    path("selectie", UserSelectionView.as_view(), name="selection-list"),
     path("grupuri", ApplicationGroupCollectionView.as_view(), name="group-list-create"),
     path(
         "grupuri/aplicatii",

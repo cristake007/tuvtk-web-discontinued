@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Spinner } from "@/components/ui/spinner";
 
 import { formatSelectedMonths } from "../constants";
 import type { GenerateScheduleResponse } from "../types";
@@ -127,7 +126,7 @@ export function PlannerSummaryCard({
         type="button"
         variant="outline"
       >
-        {downloadPending ? <Spinner /> : <Download aria-hidden="true" />}
+        <Download aria-hidden="true" />
         {downloadPending ? "Se descarcă…" : "Descarcă Excel"}
       </Button>
     </aside>

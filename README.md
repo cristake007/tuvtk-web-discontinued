@@ -400,6 +400,7 @@ Files under `frontend/src/components/ui/` are generated primitives. Compose them
 ./dev frontend lint
 ./dev frontend typecheck
 ./dev frontend test
+./dev frontend api-types-check
 ./dev frontend build
 ./dev frontend npm <arguments>
 ./dev frontend shell
@@ -410,7 +411,15 @@ Files under `frontend/src/components/ui/` are generated primitives. Compose them
 ./dev validate
 ```
 
-`./dev validate` runs Django checks, Ruff, OpenAPI validation, Django tests, frontend dependency synchronization, React convention checks, TypeScript validation, frontend tests, theme-token validation, and the Vite build.
+`./dev validate` runs migration-drift checking, Django checks, Ruff, OpenAPI validation, Django tests, frontend dependency synchronization, OpenAPI-to-TypeScript drift checking, React convention checks, TypeScript validation, frontend tests, theme-token validation, and the Vite build.
+
+## Administrare și acces
+
+`Administrare` este punctul de configurare pentru utilizatori, grupuri și integrări, inclusiv `/administrare/integrari`. Accesul este simplu, la nivel de aplicație, construit peste utilizatorii și grupurile Django: grupurile și atribuirea directă pot acorda acces unei aplicații, iar superutilizatorii au acces complet. Nu este descris și nu funcționează ca un sistem CRUD bazat pe `auth.Permission`.
+
+Planificatorul cursuri este disponibil la `/planificator-cursuri`, `/planificator-cursuri/generator` și `/planificator-cursuri/istoric`. Modulele CRM, Dashboard și Documente care nu au încă fluxuri complete sunt marcate ca schelete/placeholder. `db_registry` este infrastructură pregătită pentru date de registru, nu o implementare ONRC finalizată.
+
+Tipurile TypeScript ale API-ului se regenerează cu `./scripts/generate-frontend-api-types.sh`; `./dev frontend api-types-check` verifică driftul fără a modifica fișierul versionat.
 
 ## Dependency workflow
 

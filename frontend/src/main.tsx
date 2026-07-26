@@ -4,6 +4,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { RouterProvider } from "react-router-dom";
 
 import { ApiAuthorizationHandler } from "@/app/ApiAuthorizationHandler";
+import { GlobalLoadingOverlay } from "@/app/GlobalLoadingOverlay";
+import { LoadingOverlayProvider } from "@/app/LoadingOverlayContext";
 import { Toaster } from "@/components/ui/sonner";
 
 import { router } from "./app/router";
@@ -28,9 +30,12 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <ApiAuthorizationHandler />
-      <RouterProvider router={router} />
-      <Toaster />
+      <LoadingOverlayProvider>
+        <ApiAuthorizationHandler />
+        <RouterProvider router={router} />
+        <GlobalLoadingOverlay />
+        <Toaster />
+      </LoadingOverlayProvider>
     </QueryClientProvider>
   </StrictMode>,
 );

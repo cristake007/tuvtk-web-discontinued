@@ -44,6 +44,54 @@ class UtilizatoriApiTests(TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json()["code"], "permission_denied")
 
+    def test_group_member_selection_is_paginated_searchable_and_includes_inactive_users(self):
+        user_model = get_user_model()
+        for index in range(30):
+            user_model.objects.create_user(
+                username=f"selectie-{index:02d}",
+                first_name="Selectie",
+                last_name=f"Utilizator {index:02d}",
+                email=f"selectie-{index:02d}@example.com",
+                password="temporary-test-password",
+                is_active=index != 25,
+            )
+
+        first_page = self.client.get("/api/v1/utilizatori/selectie", {"page_size": 20})
+        searched = self.client.get("/api/v1/utilizatori/selectie", {"search": "selectie-25"})
+
+        self.assertEqual(first_page.status_code, 200)
+        self.assertEqual(len(first_page.data["results"]), 20)
+        self.assertEqual(first_page.data["count"], 34)
+        self.assertEqual(searched.status_code, 200)
+        self.assertEqual(searched.data["results"][0]["username"], "selectie-25")
+        self.assertFalse(searched.data["results"][0]["is_active"])
+
+    def test_regular_user_cannot_use_group_member_selection(self):
+        self.client.force_authenticate(self.regular_user)
+        response = self.client.get("/api/v1/utilizatori/selectie")
+        self.assertEqual(response.status_code, 403)
+
+    def test_user_list_access_fields_use_a_bounded_query_count(self):
+        group = Group.objects.create(name="Acces în lot")
+        inherited = ApplicationDefinition.objects.create(key="lot-inherited", name="Moștenit")
+        direct = ApplicationDefinition.objects.create(key="lot-direct", name="Direct")
+        inherited.allowed_groups.add(group)
+        users = [
+            get_user_model().objects.create_user(
+                username=f"lot-{index}", password="temporary-test-password"
+            )
+            for index in range(20)
+        ]
+        for user in users:
+            user.groups.add(group)
+            direct.allowed_users.add(user)
+
+        with self.assertNumQueries(9):
+            response = self.client.get("/api/v1/utilizatori/", {"page_size": 20})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.data["results"]), 20)
+
     def test_staff_user_can_search_and_filter_users(self):
         self.client.force_authenticate(self.staff_user)
 

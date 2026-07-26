@@ -10,6 +10,7 @@ import { WorkspaceCardPage } from "@/pages/WorkspaceCardPage";
 import { AuthenticationGate } from "./AuthenticationGate";
 import { ApplicationAccessRoute } from "./ApplicationAccessRoute";
 import { StaffRoute } from "./StaffRoute";
+import { RouteErrorBoundary } from "./RouteErrorBoundary";
 
 const CoursePlannerPage = lazy(async () => {
   const module = await import("@/pages/CoursePlannerPage");
@@ -213,10 +214,11 @@ function PublicHolidaysIntegrationRoute() {
   );
 }
 
-export const router = createBrowserRouter([
+export const appRoutes = [
   {
     path: "/",
     element: <AuthenticationGate />,
+    errorElement: <RouteErrorBoundary />,
     children: [
       {
         index: true,
@@ -335,4 +337,6 @@ export const router = createBrowserRouter([
       },
     ],
   },
-]);
+];
+
+export const router = createBrowserRouter(appRoutes);

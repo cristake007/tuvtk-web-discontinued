@@ -19,7 +19,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { formatRomanianDateTime } from "@/lib/dates";
 
@@ -186,7 +185,7 @@ export function NagerDateSettingsCard({
           type="button"
           variant="outline"
         >
-          {savePending ? <Spinner /> : <Save aria-hidden="true" />}
+          <Save aria-hidden="true" />
           Salvează setările
         </Button>
         <Button
@@ -194,11 +193,7 @@ export function NagerDateSettingsCard({
           onClick={onSync}
           type="button"
         >
-          {syncPending || settings.sync_in_progress ? (
-            <Spinner />
-          ) : (
-            <RefreshCw aria-hidden="true" />
-          )}
+          <RefreshCw aria-hidden="true" />
           Preia zilele acum
         </Button>
       </CardFooter>

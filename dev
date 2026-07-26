@@ -153,6 +153,7 @@ Frontend (React/Vite):
   frontend lint                   Check React and TypeScript conventions
   frontend typecheck              Run TypeScript validation
   frontend test                   Run frontend unit tests
+  frontend api-types-check        Verify generated OpenAPI TypeScript types are current
   frontend build                  Build the React application
   frontend npm <arguments>        Run any npm command
   frontend shell                  Open /bin/sh in the frontend container
@@ -208,6 +209,7 @@ Commands:
   lint                            Check React and TypeScript conventions
   typecheck                       Run TypeScript validation
   test                            Run frontend unit tests
+  api-types-check                 Verify generated OpenAPI TypeScript types are current
   build                           Build the React application
   npm <arguments>                 Run any npm command
   shell                           Open /bin/sh in the frontend container
@@ -356,6 +358,9 @@ frontend_command() {
             ;;
         test)
             npm run test
+            ;;
+        api-types-check)
+            ./scripts/check-frontend-api-types.sh
             ;;
         build)
             npm run build
@@ -516,11 +521,13 @@ case "$command" in
         test_command "$@"
         ;;
     validate)
+        manage makemigrations --check --dry-run
         manage check
         run_backend ruff check .
         manage spectacular --validate --file /tmp/tuvtk-openapi.yaml
         manage test
         run_frontend sh ./scripts/sync-dependencies.sh
+        ./scripts/check-frontend-api-types.sh
         npm run lint
         npm run typecheck
         npm run test

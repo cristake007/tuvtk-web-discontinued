@@ -12,7 +12,6 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Spinner } from "@/components/ui/spinner";
 import {
   Table,
   TableBody,
@@ -117,7 +116,7 @@ function FileDownloadButton({
       type="button"
       variant="outline"
     >
-      {pending ? <Spinner /> : <Icon aria-hidden="true" />}
+      <Icon aria-hidden="true" />
     </Button>
   );
 }
@@ -158,11 +157,7 @@ export function CoursePlanHistoryTable() {
       ) : null}
 
       <section className="min-w-0 overflow-hidden rounded-sm border bg-background shadow-sm">
-        {historyQuery.isPending ? (
-          <div className="flex min-h-64 items-center justify-center" aria-live="polite">
-            <Spinner className="size-7 text-primary" />
-          </div>
-        ) : historyQuery.data?.results.length ? (
+        {historyQuery.isPending ? null : historyQuery.data?.results.length ? (
           <Table className="min-w-[58rem]">
             <TableHeader className="bg-muted/70">
               <TableRow className="hover:bg-transparent">

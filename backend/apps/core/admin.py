@@ -48,5 +48,4 @@ class NavigationItemAdmin(admin.ModelAdmin):
         "application__name",
         "application__key",
         "path",
-        "permission_code",
     )

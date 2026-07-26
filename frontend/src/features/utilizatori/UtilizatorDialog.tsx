@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -360,7 +359,6 @@ export function UtilizatorForm({
               Anulează
             </Button>
             <Button disabled={pending} type="submit">
-              {pending ? <Spinner /> : null}
               {pending ? "Se salvează…" : editing ? "Salvează modificările" : "Creează contul"}
             </Button>
           </DialogFooter>

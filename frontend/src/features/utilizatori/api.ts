@@ -35,6 +35,17 @@ export function fetchUtilizatori(input: {
   });
 }
 
+export function fetchUtilizatoriSelectie(input: {
+  page: number;
+  search: string;
+}): Promise<import("./types").UtilizatoriSelectieResponse> {
+  const searchParams = new URLSearchParams({ page: String(input.page), page_size: "20" });
+  if (input.search.trim()) {
+    searchParams.set("search", input.search.trim());
+  }
+  return apiRequest(`${basePath}/selectie?${searchParams}`, { cache: "no-store" });
+}
+
 export function fetchGrupuri(): Promise<import("./types").GrupAplicatii[]> {
   return apiRequest(`${basePath}/grupuri`, { cache: "no-store" });
 }
