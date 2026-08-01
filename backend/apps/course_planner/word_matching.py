@@ -10,7 +10,6 @@ from zipfile import BadZipFile
 
 from docx import Document
 from docx.opc.exceptions import PackageNotFoundError
-
 from rapidfuzz import fuzz
 
 from .files import CourseFileError, _display_value, _read_tabular_rows, _select_header_row

@@ -7,7 +7,6 @@ from uuid import UUID
 
 from django.core.exceptions import ValidationError
 
-
 EXPECTED_HEADERS = {
     "n_caen.csv": (
         "SECTIUNEA",

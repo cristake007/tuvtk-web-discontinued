@@ -50,7 +50,13 @@ from .services import (
     serialize_settings,
     update_course_planner_settings,
 )
-from .word_matching import ScheduleRow, apply_word_matches, build_word_match_preview, normalize_title, parse_schedule_file
+from .word_matching import (
+    ScheduleRow,
+    apply_word_matches,
+    build_word_match_preview,
+    normalize_title,
+    parse_schedule_file,
+)
 
 
 class CoursePlanHistoryPagination(PageNumberPagination):
