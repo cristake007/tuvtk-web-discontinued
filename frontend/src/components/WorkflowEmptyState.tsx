@@ -1,12 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-import {
-  Empty,
-  EmptyDescription,
-  EmptyHeader,
-  EmptyMedia,
-  EmptyTitle,
-} from "@/components/ui/empty";
+import { ContentEmptyState } from "@/components/ContentEmptyState";
 
 type WorkflowEmptyStateProps = {
   description: string;
@@ -20,14 +14,11 @@ export function WorkflowEmptyState({
   title,
 }: WorkflowEmptyStateProps) {
   return (
-    <Empty className="border bg-muted/10 py-10">
-      <EmptyHeader>
-        <EmptyMedia variant="icon">
-          <Icon aria-hidden="true" />
-        </EmptyMedia>
-        <EmptyTitle>{title}</EmptyTitle>
-        <EmptyDescription>{description}</EmptyDescription>
-      </EmptyHeader>
-    </Empty>
+    <ContentEmptyState
+      className="border bg-muted/10"
+      description={description}
+      icon={Icon}
+      title={title}
+    />
   );
 }

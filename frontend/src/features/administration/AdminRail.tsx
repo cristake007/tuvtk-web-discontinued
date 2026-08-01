@@ -16,6 +16,12 @@ function grupConineRutaActiva(group: AdministrationGroup, pathname: string) {
   return group.entries.some((entry) => entry.href && pathname.startsWith(entry.href));
 }
 
+function intrareaAreRutaDescendenta(group: AdministrationGroup, href: string) {
+  return group.entries.some(
+    (entry) => entry.href && entry.href.startsWith(`${href}/`),
+  );
+}
+
 function AdminRailGroup({
   group,
   pathname,
@@ -58,6 +64,7 @@ function AdminRailGroup({
                       isActive && "bg-primary/5 font-medium text-brand-red",
                     )
                   }
+                  end={intrareaAreRutaDescendenta(group, entry.href)}
                   to={entry.href}
                 >
                   {entry.name}

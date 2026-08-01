@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionTitle } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
+import { StaticCatalogPage } from "@/components/StaticCatalogPage";
 import {
   administrationGroups,
   type AdministrationEntry,
@@ -90,7 +91,7 @@ export function AdministrationPage() {
   }, [hasQuery, normalizedQuery]);
 
   return (
-    <section className="flex min-w-0 flex-1 flex-col gap-6">
+    <StaticCatalogPage>
       <div className="relative w-full">
         <Search
           aria-hidden="true"
@@ -149,6 +150,6 @@ export function AdministrationPage() {
           </CardContent>
         </Card>
       )}
-    </section>
+    </StaticCatalogPage>
   );
 }

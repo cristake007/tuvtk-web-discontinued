@@ -21,11 +21,6 @@ import { ApplicationAccessRoute } from "./ApplicationAccessRoute";
 import { StaffRoute } from "./StaffRoute";
 import { RouteErrorBoundary } from "./RouteErrorBoundary";
 
-const CoursePlannerPage = lazy(async () => {
-  const module = await import("@/pages/CoursePlannerPage");
-  return { default: module.CoursePlannerPage };
-});
-
 const CoursePlannerGeneratorPage = lazy(async () => {
   const module = await import("@/pages/CoursePlannerGeneratorPage");
   return { default: module.CoursePlannerGeneratorPage };
@@ -85,22 +80,6 @@ const PublicHolidaysIntegrationPage = lazy(async () => {
   const module = await import("@/pages/PublicHolidaysIntegrationPage");
   return { default: module.PublicHolidaysIntegrationPage };
 });
-
-function CoursePlannerRoute() {
-  return (
-    <Suspense
-      fallback={
-        <ApplicationState
-          description="Se încarcă instrumentele disponibile pentru cursuri."
-          loading
-          title="Se încarcă planificatorul"
-        />
-      }
-    >
-      <CoursePlannerPage />
-    </Suspense>
-  );
-}
 
 function CoursePlannerGeneratorRoute() {
   return (
@@ -376,7 +355,6 @@ export const appRoutes = [
       {
         element: <ApplicationAccessRoute applicationKey="course-planner" />,
         children: [
-          { path: "planificator-cursuri", element: <CoursePlannerRoute /> },
           { path: "planificator-cursuri/generator", element: <CoursePlannerGeneratorRoute /> },
           { path: "planificator-cursuri/istoric", element: <CoursePlannerHistoryRoute /> },
           { path: "planificator-cursuri/xml", element: <CoursePlannerXmlRoute /> },

@@ -4,11 +4,11 @@ import { Pencil, Plus, Search, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuthenticatedBootstrap } from "@/app/AuthenticatedBootstrapContext";
+import { ContentEmptyState } from "@/components/ContentEmptyState";
 import { QueryApplicationState } from "@/components/QueryApplicationState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { SectionTitle } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
 import {
   Pagination,
@@ -298,13 +298,12 @@ export function UtilizatoriPanel() {
             </TableBody>
           </Table>
         ) : (
-          <div className="flex min-h-72 flex-col items-center justify-center px-6 text-center">
-            <Users aria-hidden="true" className="size-9 text-muted-foreground" />
-            <SectionTitle className="mt-3">Nu am găsit utilizatori</SectionTitle>
-            <p className="mt-1 max-w-md text-base leading-6 text-muted-foreground">
-              Modifică termenul de căutare sau filtrele aplicate.
-            </p>
-          </div>
+          <ContentEmptyState
+            className="min-h-64"
+            description="Modifică termenul de căutare sau filtrele aplicate."
+            icon={Users}
+            title="Nu am găsit utilizatori"
+          />
         )}
       </Card>
 

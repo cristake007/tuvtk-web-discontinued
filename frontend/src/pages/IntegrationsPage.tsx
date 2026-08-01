@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { StaticCatalogPage } from "@/components/StaticCatalogPage";
 import {
   Card,
   CardAction,
@@ -27,7 +28,7 @@ const integrations = [
 
 export function IntegrationsPage() {
   return (
-    <section className="flex min-w-0 flex-1 flex-col gap-6">
+    <StaticCatalogPage>
       <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {integrations.map((integration) => {
           const Icon = integration.icon;
@@ -71,6 +72,6 @@ export function IntegrationsPage() {
           );
         })}
       </ul>
-    </section>
+    </StaticCatalogPage>
   );
 }

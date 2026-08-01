@@ -8,9 +8,8 @@
  *   node docs/page-structure/viewer/refresh-data.mjs --check
  *   node docs/page-structure/viewer/refresh-data.mjs --verbose
  *
- * Scannerul este intenționat conservator: păstrează analiza documentată existentă,
- * atașează un snapshot derivat din surse fiecărei rute și generează automat
- * înregistrări complete pentru rutele care nu există încă în data.json.
+ * Scannerul este intenționat conservator: generează raportul exclusiv din codul
+ * frontend/backend. data.json și snapshotul din app.js sunt numai artefacte output.
  */
 
 import { createHash } from "node:crypto";
@@ -20,7 +19,7 @@ import { readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, extname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const SCANNER_VERSION = 2;
+const SCANNER_VERSION = 4;
 const args = new Set(process.argv.slice(2));
 const checkOnly = args.has("--check");
 const verbose = args.has("--verbose");
@@ -48,10 +47,43 @@ const viewerDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(viewerDirectory, "../../..");
 const frontendSourceRoot = join(repositoryRoot, "frontend/src");
 const routerFile = join(frontendSourceRoot, "app/router.tsx");
+const frontendEntryFile = join(frontendSourceRoot, "main.tsx");
 const dataFile = join(viewerDirectory, "data.json");
 const viewerAppFile = join(viewerDirectory, "app.js");
 const backendScannerFile = join(viewerDirectory, "scan-backend.py");
-const sharedRuntimeReportFile = resolve(viewerDirectory, "../_runtime-comun.md");
+
+const labels = {
+  modules: {
+    core: "Core",
+    crm: "CRM",
+    training: "Training",
+    certificari: "Certificări",
+    industrial: "Industrial",
+    documente: "Documente",
+    "course-planner": "Planificator cursuri",
+    administrare: "Administrare",
+    other: "Altele",
+  },
+  pageTypes: {
+    redirect: "Redirect",
+    dashboard: "Rezumat",
+    placeholder: "Placeholder",
+    workspace: "Workspace",
+    catalog: "Catalog",
+    workflow: "Workflow",
+    table: "Tabel",
+    administration: "Administrare",
+    settings: "Setări",
+    form: "Formular",
+    integration: "Integrare",
+    "not-found": "Not found",
+    other: "Altele",
+  },
+  stateStatus: {
+    present: "Prezentă",
+    missing: "Lipsește",
+  },
+};
 
 const htmlTags = new Set([
   "a", "article", "aside", "blockquote", "button", "caption", "cite", "code",
@@ -64,7 +96,7 @@ const htmlTags = new Set([
 const voidTags = new Set(["img", "input"]);
 const ignoredSourceParts = [".test.", ".spec.", "/test/", "/__tests__/", "/node_modules/"];
 const genericComponents = new Set([
-  "ApplicationState", "QueryApplicationState", "Suspense", "Fragment", "Navigate",
+  "Suspense", "Fragment", "Navigate",
   "Outlet", "RouteErrorBoundary", "ApplicationAccessRoute", "StaffRoute",
 ]);
 
@@ -235,18 +267,21 @@ function inferModule(routePath) {
   return "other";
 }
 
-function inferPageType(routePath, componentName) {
+function inferPageType(routePath, componentName, scan = null) {
   const value = `${routePath} ${componentName}`.toLowerCase();
+  const components = new Set(scan?.components.map((component) => component.name) ?? []);
   if (componentName === "Navigate") return "redirect";
   if (routePath === "*" || routePath.endsWith("/*")) return "not-found";
   if (value.includes("placeholder")) return "placeholder";
-  if (value.includes("form")) return "form";
-  if (value.includes("history") || value.includes("istoric") || value.includes("table")) return "table";
+  if (components.has("WorkflowPage") || /generator|xml|matcher|wordpress|workflow/.test(value)) return "workflow";
   if (value.includes("integration") || value.includes("integrari")) return "integration";
+  if ([...components].some((name) => /Settings/.test(name)) || value.includes("settings")) return "settings";
+  if (value.includes("form")) return "form";
+  if (value.includes("history") || value.includes("istoric") || value.includes("table") || components.has("Table")) return "table";
   if (value.includes("administration") || value.includes("administrare")) return "administration";
   if (value.includes("dashboard") || value.includes("tablou") || value.includes("documente")) return "dashboard";
   if (value.includes("workspace")) return "workspace";
-  if (/generator|xml|matcher|wordpress/.test(value)) return "workflow";
+  if (components.has("CardAction") || (components.has("Card") && components.has("Link"))) return "catalog";
   return "other";
 }
 
@@ -582,6 +617,20 @@ function rootStructure(nodes) {
   return directComponent ? "componentă delegată direct" : "fără element JSX detectabil";
 }
 
+function resolvedRootStructure(nodes) {
+  const structures = [];
+  function visit(node) {
+    if (node.kind === "html") {
+      const classes = [...node.classes].sort().join(".");
+      structures.push(`${node.name}${classes ? `.${classes}` : ""}`);
+      return;
+    }
+    for (const child of node.children ?? []) visit(child);
+  }
+  for (const node of nodes) visit(node);
+  return stableUnique(structures).join(" | ") || rootStructure(nodes);
+}
+
 function collectTreeNodes(node, result = []) {
   result.push(node);
   for (const child of node.children ?? []) collectTreeNodes(child, result);
@@ -735,7 +784,7 @@ function detectStates(files, fileSources) {
   const source = files.map((filePath) => fileSources.get(filePath) ?? "").join("\n");
   const loading = /\bisLoading\b|\bisPending\b|\bloading\b|<Suspense\b|QueryApplicationState/.test(source);
   const error = /\bisError\b|\berror\b|<Alert\b|ApiError|onError/.test(source);
-  const empty = /\.length\s*===?\s*0|!\s*\w+\.length|<Empty\b|Nu există|Niciun(?:ă)?\s/.test(source);
+  const empty = /\.length\s*===?\s*0|!\s*\w+\.length|<Empty\b|nu există|niciun(?:ă)?\s/i.test(source);
   const forms = [];
   if (/<form\b/.test(source)) forms.push("Formular HTML detectat automat în graful rutei.");
   if (/<input\b|<Input\b/.test(source)) forms.push("Câmpuri input detectate automat.");
@@ -813,7 +862,7 @@ function buildScan(route, terminal, scanner, fileSources, importCache) {
     endpoints,
     detectedStates,
     routeTemplateSignature: jsxTemplateSignature(componentTree.jsxTree),
-    rootStructure: rootStructure(componentTree.jsxTree),
+    rootStructure: resolvedRootStructure(domChildren),
     wrappers: route.wrappers,
     terminalSource: componentTree.source,
     componentOutline,
@@ -821,219 +870,133 @@ function buildScan(route, terminal, scanner, fileSources, importCache) {
   };
 }
 
-function sameEndpointFamily(left, right) {
-  const leftSegments = left.split("?", 1)[0].split("/");
-  const rightSegments = right.split("?", 1)[0].split("/");
-  if (leftSegments.length !== rightSegments.length) return false;
-  return leftSegments.every((segment, index) => {
-    const other = rightSegments[index];
-    return segment === other || /{[^}]+}/.test(segment) || /{[^}]+}/.test(other);
-  });
-}
-
-function mergeEndpoints(documented, scanned) {
-  const result = [...documented];
-  for (const endpoint of scanned) {
-    const represented = result.some((candidate) =>
-      candidate.method === endpoint.method && sameEndpointFamily(candidate.path, endpoint.path),
-    );
-    if (!represented) result.push(endpoint);
+function staticRouteTitle(route, terminal, scan, fileSources, importCache) {
+  if (route.inlineTitle) return route.inlineTitle;
+  const headerPath = route.headerComponent ? importCache.get(routerFile)?.get(route.headerComponent)?.resolved : null;
+  const candidatePaths = [
+    headerPath,
+    terminal.sourceFile,
+    ...scan.sourceFiles
+      .filter((sourcePath) => !sourcePath.includes("/app/") && !sourcePath.includes("/components/ui/"))
+      .map((sourcePath) => join(repositoryRoot, sourcePath)),
+  ].filter(Boolean);
+  for (const [index, filePath] of [...new Set(candidatePaths)].entries()) {
+    const source = fileSources.get(filePath) ?? "";
+    const allowedComponents = index === 0 && headerPath
+      ? new Set(["AdminPageHeader"])
+      : new Set(["AntetAplicatie", "AdminPageHeader", "PageMessageFrame"]);
+    for (const tag of scanJsxTags(source)) {
+      if (tag.closing || !allowedComponents.has(tag.name)) continue;
+      const title = parseStaticAttribute(tag.attributes, tag.name === "AntetAplicatie" ? "titlu" : "title")?.trim();
+      if (title) return title;
+      const expression = tag.attributes.match(/\b(?:titlu|title)\s*=\s*{([^}]+)}/)?.[1] ?? "";
+      const alternatives = stableUnique([...expression.matchAll(/["']([^"']+)["']/g)].map((match) => match[1]));
+      if (alternatives.length) return alternatives.join(" / ");
+    }
+    const pageTitle = source.match(/<PageTitle\b[^>]*>\s*([^<{][^<]*)<\/PageTitle>/)?.[1]?.trim();
+    if (pageTitle) return pageTitle;
+    const landmarkLabel = source.match(/<(?:main|section)\b[^>]*\baria-label\s*=\s*["']([^"']+)["']/)?.[1]?.trim();
+    if (landmarkLabel) return landmarkLabel;
   }
-  return result;
+  return inferTitle(route.path, terminal.terminalComponent);
 }
 
-function mergeBadge(documented, scanned) {
-  if (documented === "present" || scanned !== "present") return documented;
-  if (documented === "common") return "partial";
-  return "present";
-}
-
-function markdownSection(markdown, heading) {
-  const escapedHeading = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-  return markdown.match(new RegExp(`## ${escapedHeading}\\s*([\\s\\S]*?)(?=\\n## |$)`))?.[1] ?? "";
-}
-
-function markdownCodeBlock(markdown, heading) {
-  return markdownSection(markdown, heading).match(/```(?:text)?\s*\n([\s\S]*?)\n```/)?.[1]?.trim() ?? null;
-}
-
-function markdownIssues(markdown) {
-  return [...markdownSection(markdown, "Probleme structurale").matchAll(/^-\s+(.+)$/gm)]
-    .map((match) => match[1].replace(/`/g, "").trim());
-}
-
-async function documentedRouteAnalysis(route) {
-  if (!route.report) return { domOutline: route.domOutline, issues: route.issues };
-  const reportPath = resolve(viewerDirectory, route.report);
-  if (!existsSync(reportPath)) return { domOutline: route.domOutline, issues: route.issues };
-  const markdown = await readFile(reportPath, "utf8");
-  const domOutline = markdownCodeBlock(markdown, "DOM outline estimat") ?? route.domOutline;
-  const issues = markdownIssues(markdown);
-  const hasIssuesSection = markdown.includes("## Probleme structurale");
-  return { domOutline, issues: hasIssuesSection ? issues : route.issues };
-}
-
-function componentRootLabel(scan, componentName) {
-  const marker = ` — ${componentName} — `;
-  return scan.domNodes.find((node) => node.includes(marker))?.split(marker, 1)[0] ?? null;
-}
-
-function isNestedMainClaim(text) {
-  return /al doilea\s+main|main\s+(?:i|î)mbricat|main\s*>\s*(?:[^.\n]*>\s*)?main/i.test(text);
-}
-
-function reconcileDomOutline(domOutline, scan) {
-  const applicationStateRoot = componentRootLabel(scan, "ApplicationState");
-  if (!applicationStateRoot || applicationStateRoot.startsWith("main")) return domOutline;
-
-  return domOutline.split("\n").map((line) => {
-    const markerIndex = line.indexOf("[ApplicationState]");
-    if (markerIndex < 0) return line;
-    const rootIndex = line.lastIndexOf("main", markerIndex);
-    if (rootIndex < 0) return line;
-    return `${line.slice(0, rootIndex)}${applicationStateRoot} ${line.slice(markerIndex)}`;
-  }).join("\n");
-}
-
-function reconcileIssues(issues, scan) {
-  const applicationStateRoot = componentRootLabel(scan, "ApplicationState");
-  if (!applicationStateRoot || applicationStateRoot.startsWith("main")) return issues;
-  return issues.filter((issue) => !isNestedMainClaim(issue));
-}
-
-function reconcileDocumentedPatterns(patterns, scans) {
-  const applicationStateRoot = scans.map((scan) => componentRootLabel(scan, "ApplicationState")).find(Boolean);
-  if (!applicationStateRoot || applicationStateRoot.startsWith("main")) return patterns;
-
-  return patterns.map((pattern) => {
-    if (!isNestedMainClaim(pattern.differences ?? "")) return pattern;
-    return {
-      ...pattern,
-      category: pattern.id === "async-page-state" ? "existent" : pattern.category,
-      differences: pattern.id === "async-page-state"
-        ? "Query-urile blocante folosesc retry; erorile operațiilor locale rămân inline sau în toast. ApplicationState produce o secțiune semantică în shell."
-        : pattern.differences.replace(/ApplicationState produce main\s+(?:i|î)mbricat în shell\.?/i, "ApplicationState produce o secțiune semantică în shell."),
-      candidate: pattern.id === "async-page-state"
-        ? "Păstrează contractul comun QueryApplicationState și separă erorile blocante de feedbackul operațiilor locale."
-        : pattern.candidate,
-    };
-  });
-}
-
-function assertNoContradictedApplicationStateMainClaims(data, scans) {
-  const applicationStateRoot = scans.map((scan) => componentRootLabel(scan, "ApplicationState")).find(Boolean);
-  if (!applicationStateRoot || applicationStateRoot.startsWith("main")) return;
-  const serialized = JSON.stringify(data);
-  if (isNestedMainClaim(serialized) || /main[^"\\n]*\[ApplicationState\]/i.test(serialized)) {
-    throw new Error("Analiza manuală contrazice scanarea actuală: ApplicationState are root section, dar viewerul păstrează o afirmație despre main imbricat.");
-  }
-}
-
-async function documentedEndpoints(route) {
-  if (!route.report) return route.api;
-  const reportPath = resolve(viewerDirectory, route.report);
-  if (!existsSync(reportPath)) return route.api;
-  const markdown = await readFile(reportPath, "utf8");
-  const section = markdown.match(/## Endpointuri Django\/API\s*([\s\S]*?)(?=\n## |$)/)?.[1] ?? "";
-  const found = new Map();
-  const currentByKey = new Map(route.api.map((endpoint) => [`${endpoint.method} ${endpoint.path}`, endpoint]));
-  const add = (method, path, consumer) => {
-    const key = `${method} ${path}`;
-    found.set(key, currentByKey.get(key) ?? { method, path, consumer: consumer || "raport Markdown" });
-  };
-  for (const match of section.matchAll(/`(GET|POST|PUT|PATCH|DELETE)\s+(\/api\/[^`]+)`(?:\s*(?:—|-)\s*([^\n]+))?/g)) {
-    add(match[1], match[2], match[3]?.replace(/`/g, "").trim());
-  }
-  for (const match of section.matchAll(/^\|\s*`(GET|POST|PUT|PATCH|DELETE)`\s*\|\s*`([^`]+)`\s*\|\s*(.*?)\|\s*$/gm)) {
-    add(match[1], match[2], match[3].replace(/`/g, "").trim());
-  }
-  return found.size ? [...found.values()] : route.api;
-}
-
-function automaticRouteRecord(route, terminal, scan, order, data) {
-  const title = route.inlineTitle ?? inferTitle(route.path, terminal.terminalComponent);
-  const module = inferModule(route.path);
-  const pageType = inferPageType(route.path, terminal.terminalComponent);
+function stateDetails(scan) {
+  const details = (kind, label) => scan.detectedStates.badges[kind] === "present"
+    ? [`${label} detectată automat în graful surselor rutei.`]
+    : [];
   return {
-    id: `auto-${slugify(route.path)}`,
+    loading: details("loading", "Stare loading"),
+    error: details("error", "Stare error"),
+    empty: details("empty", "Stare empty"),
+    forms: scan.detectedStates.forms,
+    actions: scan.detectedStates.actions,
+    all: [...scan.detectedStates.forms, ...scan.detectedStates.actions],
+  };
+}
+
+function scannedRouteIssues(scan, terminal) {
+  if (!terminal.sourceFile || scan.domNodes.length) return [];
+  return ["Scannerul static nu a putut rezolva un element DOM pentru componenta terminală; verifică importurile dinamice sau randarea exclusiv condițională."];
+}
+
+function scannedRouteRecord(route, terminal, scan, order, fileSources, importCache) {
+  const title = staticRouteTitle(route, terminal, scan, fileSources, importCache);
+  const module = inferModule(route.path);
+  const pageType = inferPageType(route.path, terminal.terminalComponent, scan);
+  return {
+    id: `route-${slugify(route.path)}`,
     order,
     path: route.path,
     title,
     module,
     pageType,
     terminalComponent: terminal.terminalComponent,
-    pageComponentDescription: `${terminal.terminalComponent} detectată automat din ${scan.components.find((item) => item.name === terminal.terminalComponent)?.source ?? "router"}.`,
+    pageComponentDescription: `${terminal.terminalComponent} și graful său JSX au fost detectate automat din ${scan.terminalSource ?? "router"}.`,
     access: route.access,
     lazy: terminal.lazy,
     report: null,
     componentOutline: scan.componentOutline,
     domOutline: scan.domOutline,
-    api: scan.endpoints.length ? scan.endpoints : [{ method: "GET", path: "/api/v1/core/bootstrap", consumer: "runtime comun" }],
+    api: scan.endpoints,
     stateBadges: scan.detectedStates.badges,
-    states: {
-      loading: scan.detectedStates.badges.loading === "present" ? ["Stare loading detectată automat în sursele rutei."] : [],
-      error: scan.detectedStates.badges.error === "present" ? ["Stare error detectată automat în sursele rutei."] : [],
-      empty: scan.detectedStates.badges.empty === "present" ? ["Stare empty detectată automat în sursele rutei."] : [],
-      forms: scan.detectedStates.forms,
-      actions: scan.detectedStates.actions,
-      all: [...scan.detectedStates.forms, ...scan.detectedStates.actions],
-    },
-    issues: ["Rută nouă documentată automat; nestingul, condițiile și stările trebuie confirmate manual pentru precizie semantică."],
+    states: stateDetails(scan),
+    issues: scannedRouteIssues(scan, terminal),
     sourceRefs: scan.sourceFiles.filter((sourcePath) => !/\/(?:types|constants)\.ts$/.test(sourcePath)),
-    similarRoutes: data.routes.filter((candidate) => candidate.module === module).map((candidate) => candidate.path).slice(0, 8),
-    patternIds: ["runtime-shell"],
+    similarRoutes: [],
+    patternIds: [],
     autoGenerated: true,
     autoScan: scan,
   };
 }
 
-function updateExistingRoute(existing, discovered, terminal, scan, documentedApi, documentedAnalysis) {
-  const sourceRefs = stableUnique([
-    ...existing.sourceRefs,
-    ...scan.sourceFiles.filter((sourcePath) => /\.tsx$/.test(sourcePath) || /\/api\.ts$/.test(sourcePath)),
-  ]);
-  const issues = reconcileIssues(
-    documentedAnalysis.issues.filter((issue) => !issue.startsWith("Scanner automat:")),
-    scan,
-  );
-  const previousComponents = new Set((existing.autoScan?.components ?? []).map((item) => `${item.name}@${item.source ?? ""}`));
-  const currentComponents = new Set(scan.components.map((item) => `${item.name}@${item.source ?? ""}`));
-  if (existing.autoScan) {
-    const removed = [...previousComponents].filter((key) => !currentComponents.has(key));
-    if (removed.length) issues.push(`Scanner automat: ${removed.length} componente din scanarea precedentă nu mai sunt detectate; consultă arborele „Scan actual”.`);
+function buildSourceCatalog(sourceFiles, fileSources) {
+  const catalog = {};
+  for (const filePath of sourceFiles) {
+    for (const componentName of declaredComponents(fileSources.get(filePath) ?? "")) {
+      const sourcePath = toPosix(filePath);
+      if (!catalog[componentName] || (catalog[componentName] === "frontend/src/app/router.tsx" && filePath !== routerFile)) {
+        catalog[componentName] = sourcePath;
+      }
+    }
   }
-  const previousScannedEndpoints = existing.autoScan?.endpoints ?? [];
-  const stillPresentDiscoveries = (existing.autoDiscoveredApi ?? []).filter((endpoint) =>
-    scan.endpoints.some((candidate) => candidate.method === endpoint.method && sameEndpointFamily(candidate.path, endpoint.path)),
+  return Object.fromEntries(Object.entries(catalog).sort(([left], [right]) => left.localeCompare(right, "ro")));
+}
+
+function buildSharedRuntime(scanner, fileSources, importCache) {
+  const authenticationFile = join(frontendSourceRoot, "app/AuthenticationGate.tsx");
+  const authenticationTree = scanner.expand("AuthenticationGate", authenticationFile);
+  const mainSource = fileSources.get(frontendEntryFile) ?? "";
+  const mainImports = importCache.get(frontendEntryFile) ?? new Map();
+  const directNames = stableUnique(scanJsxTags(mainSource)
+    .filter((tag) => !tag.closing && /^[A-Z]/.test(tag.name))
+    .map((tag) => tag.name));
+  const globalTrees = directNames
+    .map((name) => ({ name, imported: mainImports.get(name) }))
+    .filter(({ imported }) => imported?.resolved)
+    .map(({ name, imported }) => scanner.expand(name, imported.resolved));
+  const runtimeTree = {
+    name: "RuntimeEntry",
+    source: toPosix(frontendEntryFile),
+    children: [authenticationTree, ...globalTrees],
+    jsxTree: [],
+  };
+  const domChildren = runtimeTree.children.flatMap((tree) =>
+    normalizeDomTree(tree.jsxTree, tree.name, tree.source ?? toPosix(frontendEntryFile), tree.children),
   );
-  const newlyDiscoveredEndpoints = existing.autoScan
-    ? scan.endpoints.filter((endpoint) => !previousScannedEndpoints.some((previous) =>
-      previous.method === endpoint.method && sameEndpointFamily(previous.path, endpoint.path),
-    ))
-    : [];
-  const autoDiscoveredApi = mergeEndpoints(stillPresentDiscoveries, newlyDiscoveredEndpoints);
+  const domRoot = {
+    kind: "component",
+    name: runtimeTree.name,
+    source: runtimeTree.source,
+    children: domChildren,
+  };
   return {
-    ...existing,
-    path: discovered.path,
-    terminalComponent: terminal.terminalComponent,
-    access: discovered.access,
-    lazy: terminal.lazy,
-    domOutline: reconcileDomOutline(documentedAnalysis.domOutline, scan),
-    api: mergeEndpoints(documentedApi, autoDiscoveredApi),
-    autoDiscoveredApi,
-    stateBadges: {
-      loading: mergeBadge(existing.stateBadges.loading, scan.detectedStates.badges.loading),
-      error: mergeBadge(existing.stateBadges.error, scan.detectedStates.badges.error),
-      empty: mergeBadge(existing.stateBadges.empty, scan.detectedStates.badges.empty),
-    },
-    issues,
-    sourceRefs,
-    autoScan: scan,
+    componentOutline: renderOutline(runtimeTree, componentLabel),
+    domOutline: renderOutline(domRoot, domLabel),
   };
 }
 
-function automaticPatterns(routes, documentedPatterns) {
-  const documentedText = documentedPatterns.map((pattern) => `${pattern.component} ${pattern.title}`).join(" ").toLowerCase();
+function automaticPatterns(routes) {
   const usage = new Map();
   for (const route of routes) {
     for (const component of route.autoScan?.components ?? []) {
@@ -1045,17 +1008,16 @@ function automaticPatterns(routes, documentedPatterns) {
   }
   return [...usage.values()]
     .filter((entry) => new Set(entry.routes).size >= 2)
-    .filter((entry) => !documentedText.includes(entry.name.toLowerCase()))
     .map((entry) => ({
       id: `auto-component-${slugify(entry.name)}`,
-      title: `${entry.name} detectată pe mai multe rute`,
-      category: "scan automat",
+      title: `${entry.name} reutilizată pe mai multe rute`,
+      category: "existent",
       component: entry.name,
       source: entry.source,
       routes: stableUnique(entry.routes),
       evidence: `Scannerul a găsit componenta în graful JSX al ${new Set(entry.routes).size} rute.`,
-      differences: "Scannerul static nu poate confirma diferențele de props sau comportamentul runtime.",
-      candidate: "Verifică manual dacă folosirile reprezintă aceeași structură înainte de orice refactorizare.",
+      differences: "Props-urile și ramurile condiționale pot diferi; raportul descrie reutilizarea aceleiași implementări sursă.",
+      candidate: "Reutilizarea este deja centralizată în componenta detectată.",
     }));
 }
 
@@ -1149,7 +1111,7 @@ function generateInconsistencies(routes, patterns, labels) {
       title: `Stări asincrone neuniforme pentru paginile de tip „${labels.pageTypes[pageType] ?? pageType}”`,
       routes: members.map((route) => route.path),
       common: `Toate cele ${members.length} rute sunt clasificate ca ${labels.pageTypes[pageType] ?? pageType}.`,
-      differences: `${variants.length} combinații distincte de loading/error/empty sunt documentate.`,
+      differences: `${variants.length} combinații distincte de loading/error/empty sunt detectate în cod.`,
       recommendation: "Definește același contract loading/error/empty pentru paginile cu același rol și justifică explicit excepțiile.",
       sources: stableUnique(members.flatMap((route) => route.sourceRefs.slice(0, 1))),
       variants,
@@ -1753,17 +1715,16 @@ function buildDataFlows(routes, apiExplorer, backendExplorer) {
 }
 
 async function main() {
-  for (const requiredPath of [frontendSourceRoot, routerFile, dataFile, viewerAppFile, backendScannerFile, sharedRuntimeReportFile]) {
+  for (const requiredPath of [frontendSourceRoot, frontendEntryFile, routerFile, viewerAppFile, backendScannerFile]) {
     if (!existsSync(requiredPath)) throw new Error(`Lipsește calea necesară: ${requiredPath}`);
   }
 
   const [routerSource, existingDataSource, viewerAppSource, sourceFiles] = await Promise.all([
     readFile(routerFile, "utf8"),
-    readFile(dataFile, "utf8"),
+    existsSync(dataFile) ? readFile(dataFile, "utf8") : "",
     readFile(viewerAppFile, "utf8"),
     walkSourceFiles(frontendSourceRoot),
   ]);
-  const data = JSON.parse(existingDataSource);
   const fileSources = new Map(await Promise.all(sourceFiles.map(async (filePath) => [filePath, await readFile(filePath, "utf8")])));
   const importCache = new Map(sourceFiles.map((filePath) => [filePath, parseImports(fileSources.get(filePath), filePath)]));
   const discoveredRoutes = discoverRoutes(routerSource);
@@ -1771,86 +1732,69 @@ async function main() {
   const lazyMap = lazyComponents(routerSource);
   const wrapperMap = wrapperTerminals(routerSource);
   const scanner = buildComponentScanner(fileSources, importCache);
-  const existingByPath = new Map(data.routes.map((route) => [route.path, route]));
-  const nextRoutes = [];
-  let newRouteCount = 0;
+  const routes = [];
 
   for (const [index, discovered] of discoveredRoutes.entries()) {
     const terminal = resolveRouteTerminal(discovered, routerImports, lazyMap, wrapperMap);
     const scan = buildScan(discovered, terminal, scanner, fileSources, importCache);
-    const existing = existingByPath.get(discovered.path);
-    const documentedApi = existing ? await documentedEndpoints(existing) : [];
-    const documentedAnalysis = existing ? await documentedRouteAnalysis(existing) : null;
-    const route = existing
-      ? updateExistingRoute(existing, discovered, terminal, scan, documentedApi, documentedAnalysis)
-      : automaticRouteRecord(discovered, terminal, scan, index + 1, data);
-    if (!existing) newRouteCount += 1;
-    route.order = index + 1;
-    nextRoutes.push(route);
+    const route = scannedRouteRecord(discovered, terminal, scan, index + 1, fileSources, importCache);
+    routes.push(route);
     if (verbose) console.log(`${String(index + 1).padStart(2, "0")} ${discovered.path} → ${terminal.terminalComponent} (${scan.sourceFiles.length} fișiere)`);
   }
 
-  const removedRoutes = data.routes.filter((route) => !discoveredRoutes.some((discovered) => discovered.path === route.path));
-  const documentedPatterns = reconcileDocumentedPatterns(
-    data.patterns.filter((pattern) => !pattern.id.startsWith("auto-component-")),
-    nextRoutes.map((route) => route.autoScan),
-  );
-  const generatedPatterns = automaticPatterns(nextRoutes, documentedPatterns);
-  const patterns = [...documentedPatterns, ...generatedPatterns];
+  if (routes.length !== discoveredRoutes.length) {
+    throw new Error(`Inventarul generat are ${routes.length} rute, dar routerul conține ${discoveredRoutes.length}.`);
+  }
+  for (const route of routes) {
+    route.similarRoutes = routes
+      .filter((candidate) => candidate.path !== route.path && candidate.module === route.module)
+      .map((candidate) => candidate.path)
+      .slice(0, 8);
+  }
+
+  const patterns = automaticPatterns(routes);
   const patternByRoute = new Map();
-  for (const pattern of generatedPatterns) {
+  for (const pattern of patterns) {
     for (const routePath of pattern.routes) {
       if (!patternByRoute.has(routePath)) patternByRoute.set(routePath, []);
       patternByRoute.get(routePath).push(pattern.id);
     }
   }
-  for (const route of nextRoutes) {
-    route.patternIds = stableUnique([
-      ...route.patternIds.filter((id) => !id.startsWith("auto-component-")),
-      ...(patternByRoute.get(route.path) ?? []),
-    ]);
-  }
-  const runtimePattern = patterns.find((pattern) => pattern.id === "runtime-shell");
-  if (runtimePattern) runtimePattern.routes = nextRoutes.map((route) => route.path);
+  for (const route of routes) route.patternIds = stableUnique(patternByRoute.get(route.path) ?? []);
 
   const allSourceFingerprint = hashValue(sourceFiles.map((filePath) => `${toPosix(filePath)}\0${fileSources.get(filePath)}`).join("\0"));
-  const previousFingerprint = data.meta.scan?.sourceFingerprint;
-  const changedAt = previousFingerprint === allSourceFingerprint
-    ? data.meta.scan?.lastChangedAt
-    : new Date().toISOString();
-  data.meta = {
-    ...data.meta,
-    generatedFrom: "frontend/src/app/router.tsx + analiza documentată existentă",
-    routeCount: nextRoutes.length,
-    note: "Analiza documentată este recitită din rapoartele Markdown și reconciliată cu autoScan, regenerat direct din router și sursele TS/TSX.",
-    scan: {
-      version: SCANNER_VERSION,
-      sourceFingerprint: allSourceFingerprint,
-      lastChangedAt: changedAt,
-      scannedFiles: sourceFiles.length,
-      discoveredRoutes: discoveredRoutes.length,
-      automaticallyGeneratedRoutes: nextRoutes.filter((route) => route.autoGenerated).length,
-      removedRoutes: removedRoutes.map((route) => route.path),
-      unresolvedComponents: scanner.unresolved.size,
+  const data = {
+    meta: {
+      title: "Structura aplicației",
+      generatedFrom: "codul frontend și backend",
+      routerSource: "frontend/src/app/router.tsx",
+      routeCount: routes.length,
+      note: "Toate rutele, structurile, stările, endpointurile, patternurile și inconsistențele sunt regenerate din cod; data.json este numai output.",
+      scan: {
+        version: SCANNER_VERSION,
+        sourceFingerprint: allSourceFingerprint,
+        scannedFiles: sourceFiles.length,
+        discoveredRoutes: discoveredRoutes.length,
+        automaticallyGeneratedRoutes: routes.length,
+        removedRoutes: [],
+        unresolvedComponents: scanner.unresolved.size,
+      },
     },
+    labels,
+    sourceCatalog: buildSourceCatalog(sourceFiles, fileSources),
+    sourcePrefixes: {},
+    sharedRuntime: buildSharedRuntime(scanner, fileSources, importCache),
+    routes,
+    patterns,
+    inconsistencies: generateInconsistencies(routes, patterns, labels),
   };
-  data.routes = nextRoutes;
-  data.patterns = patterns;
-  const sharedRuntimeMarkdown = await readFile(sharedRuntimeReportFile, "utf8");
-  data.sharedRuntime = {
-    ...data.sharedRuntime,
-    componentOutline: markdownCodeBlock(sharedRuntimeMarkdown, "React component tree global") ?? data.sharedRuntime.componentOutline,
-    domOutline: markdownCodeBlock(sharedRuntimeMarkdown, "DOM outline comun") ?? data.sharedRuntime.domOutline,
-  };
-  data.inconsistencies = generateInconsistencies(nextRoutes, patterns, data.labels);
   const backendScan = runBackendScanner();
-  const frontendConsumers = scanFrontendConsumers(nextRoutes, sourceFiles, fileSources, importCache);
-  const correlated = correlateBackendScan(backendScan, nextRoutes, frontendConsumers);
+  const frontendConsumers = scanFrontendConsumers(routes, sourceFiles, fileSources, importCache);
+  const correlated = correlateBackendScan(backendScan, routes, frontendConsumers);
   data.apiExplorer = correlated.apiExplorer;
   data.backendExplorer = correlated.backendExplorer;
-  data.dataFlows = buildDataFlows(nextRoutes, data.apiExplorer, data.backendExplorer);
+  data.dataFlows = buildDataFlows(routes, data.apiExplorer, data.backendExplorer);
   data.meta.backendScan = backendScan.meta;
-  assertNoContradictedApplicationStateMainClaims(data, nextRoutes.map((route) => route.autoScan));
 
   const serializedData = JSON.stringify(data);
   const nextViewerApp = snapshotAppSource(viewerAppSource, serializedData);
@@ -1862,16 +1806,15 @@ async function main() {
     if (appChanged) await writeFile(viewerAppFile, nextViewerApp, "utf8");
   }
 
-  console.log(`Scanare încheiată: ${discoveredRoutes.length} rute, ${sourceFiles.length} fișiere TS/TSX, ${generatedPatterns.length} tipare automate.`);
+  console.log(`Scanare încheiată: ${discoveredRoutes.length} rute, ${sourceFiles.length} fișiere TS/TSX, ${patterns.length} tipare automate.`);
   console.log(`Backend: ${backendScan.meta.endpoints} endpointuri, ${backendScan.meta.djangoApplications} aplicații Django, ${backendScan.meta.pythonFiles} fișiere Python.`);
-  console.log(`Rute noi: ${newRouteCount}; rute eliminate din router: ${removedRoutes.length}; componente nerezolvate: ${scanner.unresolved.size}.`);
+  console.log(`Raport generat integral din cod; componente nerezolvate: ${scanner.unresolved.size}.`);
   if (checkOnly) {
     console.log(dataChanged || appChanged ? "Viewerul trebuie regenerat (rulează fără --check)." : "Viewerul este sincronizat.");
     if (dataChanged || appChanged) process.exitCode = 1;
   }
   else console.log(dataChanged || appChanged ? "data.json și snapshotul file:// au fost actualizate." : "Nu au fost necesare modificări.");
   if (verbose && scanner.unresolved.size) console.log(`Nerezolvate:\n- ${[...scanner.unresolved].sort().join("\n- ")}`);
-  if (removedRoutes.length) console.log(`Eliminate din inventar: ${removedRoutes.map((route) => route.path).join(", ")}`);
 }
 
 const directInvocation = process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);

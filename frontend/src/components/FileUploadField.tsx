@@ -2,6 +2,13 @@ import { useState, type DragEvent } from "react";
 import { FileUp, X, type LucideIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from "@/components/ui/empty";
 import { cn } from "@/lib/utils";
 
 type FileUploadFieldProps = {
@@ -114,26 +121,31 @@ export function FileUploadField({
           )}
           htmlFor={id}
         >
-          <span className="grid size-11 place-items-center rounded-xl border bg-background text-primary shadow-sm">
-            <Icon aria-hidden="true" className="size-5" />
-          </span>
-
           {file ? (
-            <span className="grid gap-1">
-              <span className="max-w-full truncate font-medium text-foreground">
-                {file.name}
+            <>
+              <span className="grid size-11 place-items-center rounded-xl border bg-background text-primary shadow-sm">
+                <Icon aria-hidden="true" className="size-5" />
               </span>
-              <span className="text-xs text-muted-foreground">
-                {formatFileSize(file.size)} · apasă pentru a înlocui fișierul
+
+              <span className="grid gap-1">
+                <span className="max-w-full truncate font-medium text-foreground">
+                  {file.name}
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  {formatFileSize(file.size)} · apasă pentru a înlocui fișierul
+                </span>
               </span>
-            </span>
+            </>
           ) : (
-            <span className="grid gap-1">
-              <span className="font-medium text-foreground">{emptyTitle}</span>
-              <span className="max-w-md text-xs leading-5 text-muted-foreground">
-                {emptyDescription}
-              </span>
-            </span>
+            <Empty className="gap-3 rounded-none p-0">
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Icon aria-hidden="true" />
+                </EmptyMedia>
+                <EmptyTitle>{emptyTitle}</EmptyTitle>
+                <EmptyDescription>{emptyDescription}</EmptyDescription>
+              </EmptyHeader>
+            </Empty>
           )}
         </label>
       </div>

@@ -1,4 +1,4 @@
-import { History, LayoutGrid } from "lucide-react";
+import { History } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { AntetAplicatie } from "@/components/AntetAplicatie";
@@ -8,24 +8,14 @@ export function PlannerHeader() {
   return (
     <AntetAplicatie
       actiuni={
-        <>
-          <Button
-            nativeButton={false}
-            render={<Link to="/planificator-cursuri" />}
-            variant="outline"
-          >
-            <LayoutGrid aria-hidden="true" />
-            Toate modulele
-          </Button>
-          <Button
-            nativeButton={false}
-            render={<Link to="/planificator-cursuri/istoric" />}
-            variant="outline"
-          >
-            <History aria-hidden="true" />
-            Istoric generări
-          </Button>
-        </>
+        <Button
+          nativeButton={false}
+          render={<Link to="/planificator-cursuri/istoric" />}
+          variant="outline"
+        >
+          <History aria-hidden="true" />
+          Istoric generări
+        </Button>
       }
       titlu="Generare perioade cursuri"
     />

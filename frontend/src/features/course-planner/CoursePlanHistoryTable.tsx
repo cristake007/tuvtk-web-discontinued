@@ -3,9 +3,10 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { FileCode, FileSpreadsheet, FileText } from "lucide-react";
 
 import { AntetAplicatie } from "@/components/AntetAplicatie";
+import { ContentEmptyState } from "@/components/ContentEmptyState";
+import { QueryApplicationState } from "@/components/QueryApplicationState";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { SectionTitle } from "@/components/ui/heading";
 import {
   Pagination,
   PaginationContent,
@@ -141,24 +142,40 @@ export function CoursePlanHistoryTable() {
     1,
     Math.ceil((historyQuery.data?.count ?? 0) / pageSize),
   );
-  const error = historyQuery.error ?? downloadMutation.error;
   const previousDisabled = page <= 1 || historyQuery.isFetching;
   const nextDisabled = page >= pageCount || historyQuery.isFetching;
+
+  if (historyQuery.isPending || historyQuery.isError) {
+    return (
+      <QueryApplicationState
+        error={historyQuery.error}
+        errorDescription="Istoricul generărilor nu a putut fi încărcat."
+        errorTitle="Istoricul nu este disponibil"
+        loading={historyQuery.isPending}
+        loadingDescription="Se încarcă generările și fișierele disponibile."
+        loadingTitle="Se încarcă istoricul"
+        onRetry={() => void historyQuery.refetch()}
+      />
+    );
+  }
 
   return (
     <div className="flex min-w-0 flex-col gap-5">
       <AntetAplicatie titlu="Istoric generări" />
 
-      {error ? (
+      {downloadMutation.error ? (
         <Alert aria-live="polite" variant="destructive">
           <AlertDescription>
-            {formatApiError(error, "Istoricul nu a putut fi încărcat.")}
+            {formatApiError(
+              downloadMutation.error,
+              "Fișierul nu a putut fi descărcat.",
+            )}
           </AlertDescription>
         </Alert>
       ) : null}
 
       <section className="min-w-0 overflow-hidden rounded-sm border bg-background shadow-sm">
-        {historyQuery.isPending ? null : historyQuery.data?.results.length ? (
+        {historyQuery.data.results.length ? (
           <Table className="min-w-[58rem]">
             <TableHeader className="bg-muted/70">
               <TableRow className="hover:bg-transparent">
@@ -215,13 +232,12 @@ export function CoursePlanHistoryTable() {
             </TableBody>
           </Table>
         ) : (
-          <div className="flex min-h-64 flex-col items-center justify-center px-6 text-center">
-            <FileSpreadsheet aria-hidden="true" className="size-8 text-muted-foreground" />
-            <SectionTitle className="mt-3">Nu există generări salvate</SectionTitle>
-            <p className="mt-1 max-w-md text-base leading-6 text-muted-foreground">
-              Prima planificare generată va apărea automat în acest tabel.
-            </p>
-          </div>
+          <ContentEmptyState
+            className="min-h-64"
+            description="Prima planificare generată va apărea automat în acest tabel."
+            icon={FileSpreadsheet}
+            title="Nu există generări salvate"
+          />
         )}
       </section>
 

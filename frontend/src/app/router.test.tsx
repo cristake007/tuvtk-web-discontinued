@@ -1,14 +1,10 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { createMemoryRouter, RouterProvider } from "react-router-dom";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { appRoutes } from "./router";
 import { LoadingOverlayProvider } from "./LoadingOverlayContext";
-
-vi.mock("@/pages/CoursePlannerPage", () => ({
-  CoursePlannerPage: () => <h1>Planificator montat</h1>,
-}));
 
 const normalUser = {
   id: 1,
@@ -57,7 +53,7 @@ describe("rutele protejate", () => {
     });
   }
 
-  for (const path of ["/planificator-cursuri", "/planificator-cursuri/generator", "/planificator-cursuri/istoric"]) {
+  for (const path of ["/planificator-cursuri/generator", "/planificator-cursuri/istoric"]) {
     it(`nu montează planificatorul fără acces: ${path}`, async () => {
       const fetchMock = renderRoute(path);
       await screen.findByRole("heading", { name: "Acces interzis" });
@@ -65,9 +61,11 @@ describe("rutele protejate", () => {
     });
   }
 
-  it("montează pagina planificatorului pentru cheia ACL acordată", async () => {
+  it("nu expune o pagină pentru rădăcina planificatorului", async () => {
     renderRoute("/planificator-cursuri", bootstrap(["course-planner"]));
-    await waitFor(() => expect(screen.getByRole("heading", { name: "Planificator montat" })).toBeInTheDocument());
+
+    await screen.findByRole("heading", { name: "Pagina nu a fost găsită" });
+    expect(screen.getByText("Eroare 404")).toBeInTheDocument();
   });
 
   it("folosește prezentarea 404 pentru o rută inexistentă", async () => {
