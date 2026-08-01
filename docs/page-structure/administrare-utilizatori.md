@@ -87,7 +87,7 @@ main[data-slot=sidebar-inset] > div > div
                     ├── p page count
                     └── nav[data-slot=pagination] > ul > li/a × 2
 
-[users error] ... > main.grid.min-h-svh [ApplicationState]
+[users error] ... > section.grid.min-h-svh [ApplicationState]
 ```
 
 ## Endpointuri Django/API
@@ -108,6 +108,4 @@ main[data-slot=sidebar-inset] > div > div
 
 - `UtilizatoriPanel` are 362 linii și combină query-uri, debounce, filtre, tabel, permisiuni și paginare.
 - `groupsQuery.isError` nu este tratat: selectul de grup poate apărea gol fără mesaj/retry.
-- Error-ul principal produce `main` imbricat.
 - Tabelul lat (`64rem`) necesită wrapperul implicit `Table`; structura listelor de badge-uri este semantică și nu există interactive imbricate.
-

@@ -11,6 +11,7 @@ import { UtilizatoriHeader } from "@/features/utilizatori/UtilizatoriHeader";
 import { UtilizatorFormHeader } from "@/features/utilizatori/UtilizatorFormHeader";
 import { DocumentePage } from "@/pages/DocumentePage";
 import { ModulePlaceholderPage } from "@/pages/ModulePlaceholderPage";
+import { NotFoundPage } from "@/pages/NotFoundPage";
 import { TablouDeBordPage } from "@/pages/TablouDeBordPage";
 import { WorkspaceCardPage } from "@/pages/WorkspaceCardPage";
 
@@ -436,12 +437,7 @@ export const appRoutes = [
       },
       {
         path: "*",
-        element: (
-          <ModulePlaceholderPage
-            title="Pagina nu a fost găsită"
-            description="Ruta solicitată nu există în aplicație."
-          />
-        ),
+        element: <NotFoundPage />,
       },
     ],
   },

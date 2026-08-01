@@ -4,6 +4,7 @@ import { toast } from "sonner";
 
 import { useAuthenticatedBootstrap } from "@/app/AuthenticatedBootstrapContext";
 import { ApplicationState } from "@/components/ApplicationState";
+import { QueryApplicationState } from "@/components/QueryApplicationState";
 import {
   createUtilizator,
   fetchAplicatiiGrup,
@@ -51,11 +52,26 @@ export function UtilizatorFormPage() {
   if (!editing && userId) {
     return <ApplicationState description="Identificatorul utilizatorului nu este valid." title="Utilizator indisponibil" />;
   }
-  if (groupsQuery.isPending || applicationsQuery.isPending || (editing && userQuery.isPending)) {
-    return <ApplicationState description="Se încarcă formularul utilizatorului." loading title="Se încarcă utilizatorul" />;
-  }
-  if (groupsQuery.isError || applicationsQuery.isError || userQuery.isError) {
-    return <ApplicationState description="Formularul utilizatorului nu a putut fi încărcat." title="Utilizator indisponibil" />;
+  const queryPending = groupsQuery.isPending || applicationsQuery.isPending || (editing && userQuery.isPending);
+  const queryError = groupsQuery.error ?? applicationsQuery.error ?? userQuery.error;
+  if (queryPending || groupsQuery.isError || applicationsQuery.isError || userQuery.isError) {
+    return (
+      <QueryApplicationState
+        error={queryError}
+        errorDescription="Formularul utilizatorului nu a putut fi încărcat."
+        errorTitle="Utilizator indisponibil"
+        loading={queryPending}
+        loadingDescription="Se încarcă formularul utilizatorului."
+        loadingTitle="Se încarcă utilizatorul"
+        onRetry={() => {
+          void groupsQuery.refetch();
+          void applicationsQuery.refetch();
+          if (editing) {
+            void userQuery.refetch();
+          }
+        }}
+      />
+    );
   }
   return (
     <UtilizatorForm

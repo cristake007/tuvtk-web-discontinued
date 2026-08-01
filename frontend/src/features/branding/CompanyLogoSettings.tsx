@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { ImageUp, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { ApplicationState } from "@/components/ApplicationState";
+import { QueryApplicationState } from "@/components/QueryApplicationState";
 import { FileUploadField } from "@/components/FileUploadField";
 import { Button } from "@/components/ui/button";
 
@@ -54,23 +54,19 @@ export function CompanyLogoSettings() {
     }
   }, [removeSuccess]);
 
-  if (settingsQuery.isPending) {
+  if (settingsQuery.isPending || settingsQuery.isError || !settingsQuery.data) {
     return (
-      <ApplicationState
-        description="Se încarcă opțiunile interfeței utilizator."
-        loading
-        title="Se încarcă interfața utilizator"
-      />
-    );
-  }
-
-  if (settingsQuery.isError || !settingsQuery.data) {
-    return (
-      <ApplicationState
-        actionLabel="Încearcă din nou"
-        description="Configurarea interfeței utilizator nu a putut fi încărcată."
-        onAction={() => void settingsQuery.refetch()}
-        title="Interfața utilizator nu este disponibilă"
+      <QueryApplicationState
+        error={
+          settingsQuery.error ??
+          new Error("Configurarea interfeței utilizator nu a putut fi încărcată.")
+        }
+        errorDescription="Configurarea interfeței utilizator nu a putut fi încărcată."
+        errorTitle="Interfața utilizator nu este disponibilă"
+        loading={settingsQuery.isPending}
+        loadingDescription="Se încarcă opțiunile interfeței utilizator."
+        loadingTitle="Se încarcă interfața utilizator"
+        onRetry={() => void settingsQuery.refetch()}
       />
     );
   }

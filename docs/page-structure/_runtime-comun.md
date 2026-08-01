@@ -12,7 +12,7 @@ Acest fișier nu reprezintă o rută suplimentară. El detaliază infrastructura
         ├── <RouterProvider>
         │   └── <AuthenticationGate> — frontend/src/app/AuthenticationGate.tsx
         │       ├── [bootstrap pending] <ApplicationState loading />
-        │       ├── [bootstrap error] <ApplicationState action="Încearcă din nou" />
+        │       ├── [bootstrap error] <ApplicationState onRetry />
         │       ├── [neautentificat] <DeferredView>
         │       │   └── <Suspense fallback={<ApplicationState loading />}>
         │       │       └── <LoginPage> — frontend/src/pages/LoginPage.tsx
@@ -110,11 +110,11 @@ flowchart TD
 ```text
 #root
 ├── [AuthenticationGate: bootstrap error, înainte de shell]
-│   └── main.grid.min-h-svh [ApplicationState]
+│   └── section.grid.min-h-svh [ApplicationState]
 │       └── div[data-slot=card][role=alert]
 │           ├── div[data-slot=card-header]
 │           │   ├── span > svg
-│           │   ├── h3[data-slot=card-title]
+│           │   ├── h1
 │           │   └── div[data-slot=card-description]
 │           └── div[data-slot=card-content] > button [dacă există retry]
 ├── [AuthenticationGate: neautentificat]
@@ -186,7 +186,7 @@ flowchart TD
 ## Stări comune
 
 - loading bootstrap: `ApplicationState loading` nu produce DOM; `GlobalLoadingOverlay` produce overlay-ul;
-- error bootstrap: `ApplicationState` cu retry; această eroare este înaintea shell-ului și nu creează `main` imbricat;
+- error bootstrap: `ApplicationState` cu retry; această eroare este afișată într-o secțiune înaintea shell-ului;
 - neautentificat: `LoginPage`; query-ul Wikiquote folosește fallback local atât în pending, cât și în error;
 - acces aplicație refuzat: `ApplicationAccessRoute` produce `AccessDenied` (`section > div > h1 + p`);
 - acces staff refuzat: `StaffRoute` produce același `AccessDenied`;
@@ -197,8 +197,8 @@ flowchart TD
 ## Observații structurale comune
 
 - `SidebarInset` este un `main`, deși numele componentei poate sugera doar un container.
-- `ApplicationState` este și el un `main`; folosit de o pagină în `Outlet`, devine `main > ... > main`.
-- Titlul din `ApplicationState` este `CardTitle` (`h3`), deși componenta reprezintă adesea întregul document/starea principală; în aceste ramuri lipsesc `h1` și `h2`.
+- `ApplicationState` produce o secțiune etichetată semantic, deci poate fi folosit în `SidebarInset` fără să adauge un alt landmark principal.
+- Titlul din `ApplicationState` este un `h1`, adecvat stării principale afișate în locul conținutului rutei.
 - Dropdown-urile, selecturile, dialogurile și tooltip-urile folosesc portaluri; DOM-ul deschis nu rămâne sub trigger.
 - Navigația desktop restrânsă și navigația mobilă au arbori diferiți, dar sunt proprietatea aceluiași `AppSidebar`.
 - `NotificationMenu` are texte și atribute accesibile în engleză.

@@ -54,7 +54,8 @@ main[data-slot=sidebar-inset] [AppShell]
                 └── p.text-base.leading-6.text-muted-foreground
 
 [error]
-main[data-slot=sidebar-inset] > div > div > main.grid.min-h-svh [ApplicationState]
+main[data-slot=sidebar-inset] > div > div
+└── section.grid.min-h-svh [ApplicationState]
 ```
 
 Nu există ID-uri în DOM-ul de succes.
@@ -74,6 +75,4 @@ Nu există ID-uri în DOM-ul de succes.
 
 ## Probleme structurale
 
-- Ramura error produce un al doilea `main` în `SidebarInset` (`main > main`).
 - Cardul este o secțiune reală de stare, nu doar wrapper de pagină; nu există `div` nesting excesiv, `h1` multiplu sau interactivitate imbricată.
-

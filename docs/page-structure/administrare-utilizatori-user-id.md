@@ -68,7 +68,7 @@ main[data-slot=sidebar-inset] > div > div
                     ├── [normal] div[data-slot=field] > ul > li/label/checkbox × applications
                     └── div[data-slot=dialog-footer] > button cancel + button submit
 
-[invalid/error] ... > main.grid.min-h-svh [ApplicationState]
+[invalid/error] ... > section.grid.min-h-svh [ApplicationState]
 ```
 
 ## Endpointuri Django/API
@@ -82,7 +82,7 @@ main[data-slot=sidebar-inset] > div > div
 ## Stări, formulare și acțiuni
 
 - parametru invalid: stare indisponibilă fără retry/navigare; query-urile grupuri/aplicații sunt totuși inițiate înaintea returnului;
-- loading/error combinat pentru trei query-uri; error fără retry;
+- loading/error combinat pentru trei query-uri; error oferă retry pentru toate query-urile relevante;
 - parolă opțională în editare; validare username locală;
 - superuser: acces read-only complet; user normal: grupuri, acces moștenit și direct;
 - cancel/success navighează la listă; save error toast.
@@ -91,6 +91,5 @@ main[data-slot=sidebar-inset] > div > div
 
 - `UtilizatorForm` are 360 linii și ramuri structurale mari pentru superuser vs user normal.
 - Parametrul invalid nu oprește query-urile auxiliare; produce lucru/overlay inutil înaintea stării de eroare.
-- Toate ramurile `ApplicationState` non-loading produc `main` imbricat și nu oferă acțiune de revenire/retry.
+- Starea parametrului invalid nu oferă încă o acțiune de revenire; erorile query-urilor oferă retry.
 - `DialogFooter` este folosit în pagină, nu în dialog; DOM valid, abstracție contextuală nealiniată.
-

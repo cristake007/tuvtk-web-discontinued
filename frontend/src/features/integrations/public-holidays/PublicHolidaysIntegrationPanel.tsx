@@ -1,6 +1,6 @@
 import { Trash2 } from "lucide-react";
 
-import { ApplicationState } from "@/components/ApplicationState";
+import { QueryApplicationState } from "@/components/QueryApplicationState";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -49,23 +49,16 @@ export function PublicHolidaysIntegrationPanel() {
     year,
   } = usePublicHolidaysIntegration();
 
-  if (settingsQuery.isPending) {
+  if (settingsQuery.isPending || settingsQuery.isError || !settingsQuery.data) {
     return (
-      <ApplicationState
-        description="Se încarcă integrarea Nager.Date și calendarul zilelor nelucrătoare."
-        loading
-        title="Se încarcă integrarea"
-      />
-    );
-  }
-
-  if (settingsQuery.isError || !settingsQuery.data) {
-    return (
-      <ApplicationState
-        actionLabel="Încearcă din nou"
-        description={formatApiError(settingsQuery.error, operationErrorFallback)}
-        onAction={() => void settingsQuery.refetch()}
-        title="Integrarea nu este disponibilă"
+      <QueryApplicationState
+        error={settingsQuery.error ?? new Error(operationErrorFallback)}
+        errorDescription={operationErrorFallback}
+        errorTitle="Integrarea nu este disponibilă"
+        loading={settingsQuery.isPending}
+        loadingDescription="Se încarcă integrarea Nager.Date și calendarul zilelor nelucrătoare."
+        loadingTitle="Se încarcă integrarea"
+        onRetry={() => void settingsQuery.refetch()}
       />
     );
   }

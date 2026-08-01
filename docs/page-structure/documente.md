@@ -43,7 +43,8 @@ main[data-slot=sidebar-inset] > div > div
         │   └── div[data-slot=card-description]
         └── div[data-slot=card-content] > p.text-base.leading-6.text-muted-foreground
 
-[error] main[data-slot=sidebar-inset] > div > div > main.grid.min-h-svh [ApplicationState]
+[error] main[data-slot=sidebar-inset] > div > div
+└── section.grid.min-h-svh [ApplicationState]
 ```
 
 ## Endpointuri Django/API
@@ -60,6 +61,4 @@ main[data-slot=sidebar-inset] > div > div
 
 ## Probleme structurale
 
-- Error produce `main` imbricat în `SidebarInset`.
 - Nu există `h1` multiplu, nesting excesiv sau interactive imbricate.
-

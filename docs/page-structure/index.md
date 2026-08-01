@@ -60,16 +60,15 @@ Calea componentei principale este scrisă în fiecare raport, iar componentele t
 
 ## Constatări transversale
 
-1. `SidebarInset` produce deja un element `main`. Orice `ApplicationState` de eroare randat în interiorul unei pagini autentificate produce încă un `main`, deci DOM invalid cu `main` imbricat. Încărcările nu îl produc deoarece `ApplicationState loading` întoarce `null` și activează overlay-ul global.
-2. `CoursePlannerPage` și `IntegrationsPage` dublează aproape integral compoziția cardurilor de catalog (icon, titlu, descriere, badge, footer și link).
-3. Componentele cele mai mari și cu mai multe responsabilități sunt `UpdateWordPressPanel` (394 linii), `UtilizatoriPanel` (362), `UtilizatorForm` (360), `GrupuriAplicatiiPanel` (327), `PlannerConfigurationCard` (277) și `CoursePlanHistoryTable` (267).
-4. Shell-ul și paginile normale folosesc semantic un singur `main`, dar rutele goale `/crm/companii` și `/companies` nu au titlu, conținut ori stare empty vizibilă. Placeholder-ele au structură semantică, dar folosesc un `Card` drept wrapper integral al rutei.
-5. Stările de încărcare globale acoperă orice query/mutation TanStack, însă unele pagini nu au stare locală explicită: istoricul ascunde tabelul în pending; `UpdateWordPressPanel` nu expune eroarea query-ului de setări; filtrul de grupuri al utilizatorilor ignoră eroarea `groupsQuery`; selecția utilizatorilor din dialogul de grup nu are error/empty dedicat.
-6. Nu au fost identificate perechi `button > a` sau `a > button` în JSX-ul aplicației: compozițiile `Button render={<Link />}`/`nativeButton={false}` înlocuiesc elementul rădăcină, nu îl imbrică.
-7. Pe fluxurile normale nu există pagini cu mai multe `h1`; pagina de administrare primește `h1` din header-ul layoutului, iar conținutul propriu începe cu `h2`. Rutele workspace goale nu au niciun `h1`.
-8. `NotificationMenu` conține copy în engleză, deși convenția frontendului cere română. Nu este o problemă de arbore, dar apare în fiecare rută autentificată.
-9. Paginile din același modul Planificator nu folosesc același wrapper: generator/XML/Word Matcher/Update WordPress au `section.relative.flex.min-h-[calc(100svh-4rem)]`, istoricul are `section.min-h-full`, iar catalogul are `section.flex...gap-6`. Shell-ul absoarbe diferența, dar layoutul nu este uniform între pagini similare.
-10. `ApplicationState` folosește `CardTitle`, care produce `h3`; stările full-page de bootstrap/query/error nu au `h1` și sar direct la nivelul 3.
+1. `CoursePlannerPage` și `IntegrationsPage` dublează aproape integral compoziția cardurilor de catalog (icon, titlu, descriere, badge, footer și link).
+2. Componentele cele mai mari și cu mai multe responsabilități sunt `UpdateWordPressPanel` (394 linii), `UtilizatoriPanel` (362), `UtilizatorForm` (360), `GrupuriAplicatiiPanel` (327), `PlannerConfigurationCard` (277) și `CoursePlanHistoryTable` (267).
+3. Shell-ul și paginile normale folosesc semantic un singur `main`, dar rutele goale `/crm/companii` și `/companies` nu au titlu, conținut ori stare empty vizibilă. Placeholder-ele au structură semantică, dar folosesc un `Card` drept wrapper integral al rutei.
+4. Stările de încărcare globale acoperă orice query/mutation TanStack, însă unele query-uri secundare rămân inline: filtrul de grupuri al utilizatorilor și selecția utilizatorilor din dialogul de grup necesită tratament local dedicat.
+5. Nu au fost identificate perechi `button > a` sau `a > button` în JSX-ul aplicației: compozițiile `Button render={<Link />}`/`nativeButton={false}` înlocuiesc elementul rădăcină, nu îl imbrică.
+6. Pe fluxurile normale nu există pagini cu mai multe `h1`; pagina de administrare primește `h1` din header-ul layoutului, iar conținutul propriu începe cu `h2`. Rutele workspace goale nu au niciun `h1`.
+7. `NotificationMenu` conține copy în engleză, deși convenția frontendului cere română. Nu este o problemă de arbore, dar apare în fiecare rută autentificată.
+8. Workflow-urile grele ale Planificatorului folosesc acum wrapperul comun `WorkflowPage`; istoricul și catalogul păstrează containere distincte, potrivite rolului lor.
+9. `ApplicationState` produce o secțiune etichetată cu `h1`, inclusiv atunci când este randat în `SidebarInset`.
 
 ## Surse analizate
 

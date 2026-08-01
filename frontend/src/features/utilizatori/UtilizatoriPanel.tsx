@@ -4,7 +4,7 @@ import { Pencil, Plus, Search, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuthenticatedBootstrap } from "@/app/AuthenticatedBootstrapContext";
-import { ApplicationState } from "@/components/ApplicationState";
+import { QueryApplicationState } from "@/components/QueryApplicationState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,7 +32,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { formatApiError } from "@/lib/api-errors";
 import { formatRomanianDateTime } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 
@@ -110,26 +109,16 @@ export function UtilizatoriPanel() {
   const nextDisabled = page >= pageCount || usersQuery.isFetching;
   const currentUser = bootstrap.user;
 
-  if (usersQuery.isPending) {
+  if (usersQuery.isPending || usersQuery.isError) {
     return (
-      <ApplicationState
-        description="Se încarcă utilizatorii și drepturile conturilor."
-        loading
-        title="Se încarcă utilizatorii"
-      />
-    );
-  }
-
-  if (usersQuery.isError) {
-    return (
-      <ApplicationState
-        actionLabel="Încearcă din nou"
-        description={formatApiError(
-          usersQuery.error,
-          "Lista utilizatorilor nu a putut fi încărcată.",
-        )}
-        onAction={() => void usersQuery.refetch()}
-        title="Utilizatorii nu sunt disponibili"
+      <QueryApplicationState
+        error={usersQuery.error}
+        errorDescription="Lista utilizatorilor nu a putut fi încărcată."
+        errorTitle="Utilizatorii nu sunt disponibili"
+        loading={usersQuery.isPending}
+        loadingDescription="Se încarcă utilizatorii și drepturile conturilor."
+        loadingTitle="Se încarcă utilizatorii"
+        onRetry={() => void usersQuery.refetch()}
       />
     );
   }

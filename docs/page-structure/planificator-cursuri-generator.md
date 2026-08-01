@@ -143,8 +143,6 @@ Orice request unsafe poate declanșa mai întâi `GET /api/v1/auth/csrf`.
 ## Probleme structurale
 
 - `PlannerConfigurationCard` are 277 linii și combină upload, setări, query de zile libere, validare vizuală și acțiuni; este o componentă mare.
-- Ramura settings error produce `main` imbricat în `SidebarInset`.
 - Loading-ul zilelor libere nu are placeholder local; overlay-ul global blochează întreaga aplicație pentru un query secundar.
 - Tabelul are lățime minimă de `118rem` și 15 coloane, deci DOM și scroll orizontal substanțiale; nestingul este justificat de formular/tabel, dar adânc.
 - Nu există `h1` multiplu sau interactive imbricate incorect.
-

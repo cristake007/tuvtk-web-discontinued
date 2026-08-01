@@ -31,9 +31,8 @@ export function QueryApplicationState({
   if (error) {
     return (
       <ApplicationState
-        actionLabel="Încearcă din nou"
         description={formatApiError(error, errorDescription)}
-        onAction={onRetry}
+        onRetry={onRetry}
         title={errorTitle}
       />
     );

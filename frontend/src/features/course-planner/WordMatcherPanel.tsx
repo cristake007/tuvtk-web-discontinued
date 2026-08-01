@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { AntetAplicatie } from "@/components/AntetAplicatie";
 import { FileUploadField } from "@/components/FileUploadField";
+import { WorkflowEmptyState } from "@/components/WorkflowEmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SectionTitle } from "@/components/ui/heading";
@@ -153,21 +154,25 @@ export function WordMatcherPanel() {
             <div>
               <SectionTitle>Rezultatul potrivirii</SectionTitle>
               <p className="mt-1 text-base leading-6 text-muted-foreground">
-                {assignedCount} din {preview.rows.length} rânduri au o potrivire selectată.
-                Corectează selecțiile de mai jos, apoi generează documentul final.
+                {preview.rows.length
+                  ? `${assignedCount} din ${preview.rows.length} rânduri au o potrivire selectată. Corectează selecțiile de mai jos, apoi generează documentul final.`
+                  : "Fișierele au fost procesate, dar nu conțin rânduri care pot fi potrivite."}
               </p>
             </div>
-            <Button
-              disabled={generateMutation.isPending || assignedCount === 0}
-              onClick={handleGenerate}
-              type="button"
-            >
-              {generateMutation.isPending ? "Se generează…" : "Generează documentul Word"}
-            </Button>
+            {preview.rows.length ? (
+              <Button
+                disabled={generateMutation.isPending || assignedCount === 0}
+                onClick={handleGenerate}
+                type="button"
+              >
+                {generateMutation.isPending ? "Se generează…" : "Generează documentul Word"}
+              </Button>
+            ) : null}
           </div>
 
-          <div className="min-w-0 overflow-hidden rounded-sm border">
-            <Table className="min-w-[46rem]">
+          {preview.rows.length ? (
+            <div className="min-w-0 overflow-hidden rounded-sm border">
+              <Table className="min-w-[46rem]">
               <TableHeader className="bg-muted/70">
                 <TableRow className="hover:bg-transparent">
                   <TableHead>Curs din documentul Word</TableHead>
@@ -227,8 +232,15 @@ export function WordMatcherPanel() {
                   );
                 })}
               </TableBody>
-            </Table>
-          </div>
+              </Table>
+            </div>
+          ) : (
+            <WorkflowEmptyState
+              description="Verifică documentul Word și programul cursurilor, apoi încearcă din nou cu fișiere care conțin date."
+              icon={FileSearch}
+              title="Niciun rând disponibil pentru potrivire"
+            />
+          )}
         </section>
       ) : null}
     </div>

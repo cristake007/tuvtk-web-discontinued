@@ -110,6 +110,15 @@ services:
     init: true
     restart: "no"
 
+  architecture-viewer:
+    image: nginx:alpine
+    volumes:
+      - ./docs/page-structure/viewer:/usr/share/nginx/html:ro
+    ports:
+      - ":8090:80"
+    restart: unless-stopped
+
+
 volumes:
   opensearch_data:
     name: ${OPENSEARCH_VOLUME_NAME:-tuvtk_opensearch_data}

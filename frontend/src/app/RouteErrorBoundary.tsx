@@ -12,13 +12,13 @@ export function RouteErrorBoundary() {
 
   return (
     <ApplicationState
-      actionLabel={dynamicImportFailed ? "Reîncarcă pagina" : "Încearcă din nou"}
       description={
         dynamicImportFailed
           ? "O versiune nouă a aplicației este disponibilă sau modulul nu a putut fi încărcat."
           : "Pagina solicitată nu a putut fi încărcată momentan."
       }
-      onAction={() => window.location.reload()}
+      onRetry={() => window.location.reload()}
+      retryLabel={dynamicImportFailed ? "Reîncarcă pagina" : "Încearcă din nou"}
       title={dynamicImportFailed ? "Actualizare disponibilă" : "Pagina nu este disponibilă"}
     />
   );

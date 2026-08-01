@@ -164,7 +164,6 @@ Bootstrap și CSRF implicit se aplică în plus.
 
 ## Probleme structurale
 
-- Ramurile error ale `ApplicationState` (settings și logo) produc `main` imbricat în `SidebarInset`.
 - Pagina are un arbore foarte adânc din cauza layoutului admin + tabs + cards + forms, dar folosește semantic `header`, `nav`, `section`, `form`, `fieldset`, `ul`.
 - Tabul Branding are `CardTitle` (`h3`) urmat de subtitluri tot `h3`; ierarhia nu sare peste `h1`, dar nu distinge nivelul subsecțiunilor.
 - Nu există `h1` multiplu sau interactive imbricate incorect; drag handle-urile și acțiunile sunt butoane surori.

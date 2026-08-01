@@ -69,4 +69,12 @@ describe("rutele protejate", () => {
     renderRoute("/planificator-cursuri", bootstrap(["course-planner"]));
     await waitFor(() => expect(screen.getByRole("heading", { name: "Planificator montat" })).toBeInTheDocument());
   });
+
+  it("folosește prezentarea 404 pentru o rută inexistentă", async () => {
+    renderRoute("/ruta-inexistenta");
+
+    await screen.findByRole("heading", { name: "Pagina nu a fost găsită" });
+    expect(screen.getByText("Eroare 404")).toBeInTheDocument();
+    expect(screen.queryByText("Modul în pregătire")).not.toBeInTheDocument();
+  });
 });

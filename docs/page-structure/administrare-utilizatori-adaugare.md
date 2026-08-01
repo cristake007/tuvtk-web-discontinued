@@ -94,7 +94,5 @@ main[data-slot=sidebar-inset] > div > div
 ## Probleme structurale
 
 - `UtilizatorForm` are 360 linii și combină date de identitate, status/rol și două modele de acces.
-- Error-ul de încărcare produce `main` imbricat și nu oferă retry.
 - `DialogFooter` este reutilizat într-o pagină care nu este dialog; produce un `div`, deci DOM-ul este valid, dar numele/abstracția nu corespunde contextului.
 - Un singur `h1`; liste/fieldset-uri vizuale sunt în mare parte semantice, deși switch-urile nu au label HTML asociat direct.
-

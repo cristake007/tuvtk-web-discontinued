@@ -1,6 +1,6 @@
 import { Menu, Palette, Settings2 } from "lucide-react";
 
-import { ApplicationState } from "@/components/ApplicationState";
+import { QueryApplicationState } from "@/components/QueryApplicationState";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { BrandingPanel } from "./components/BrandingPanel";
@@ -41,23 +41,19 @@ export function UserInterfaceSettingsTabs() {
     stergeSeparator,
   } = useUserInterfaceSettings();
 
-  if (settingsQuery.isPending) {
+  if (settingsQuery.isPending || settingsQuery.isError || !settingsQuery.data) {
     return (
-      <ApplicationState
-        description="Se încarcă setările disponibile."
-        loading
-        title="Se încarcă interfața utilizator"
-      />
-    );
-  }
-
-  if (settingsQuery.isError || !settingsQuery.data) {
-    return (
-      <ApplicationState
-        actionLabel="Încearcă din nou"
-        description="Configurarea interfeței utilizator nu a putut fi încărcată."
-        onAction={() => void settingsQuery.refetch()}
-        title="Interfața utilizator nu este disponibilă"
+      <QueryApplicationState
+        error={
+          settingsQuery.error ??
+          new Error("Configurarea interfeței utilizator nu a putut fi încărcată.")
+        }
+        errorDescription="Configurarea interfeței utilizator nu a putut fi încărcată."
+        errorTitle="Interfața utilizator nu este disponibilă"
+        loading={settingsQuery.isPending}
+        loadingDescription="Se încarcă setările disponibile."
+        loadingTitle="Se încarcă interfața utilizator"
+        onRetry={() => void settingsQuery.refetch()}
       />
     );
   }

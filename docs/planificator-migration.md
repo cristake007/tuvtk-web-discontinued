@@ -62,3 +62,17 @@ Se vor migra separat:
 5. setările specifice fiecărui instrument.
 
 Fiecare etapă trebuie să păstreze contractele de fișiere necesare etapelor următoare, fără să importe infrastructură frontend din proiectul vechi.
+
+## Contractul stărilor pentru workflow-uri
+
+Paginile de tip workflow din Planificator folosesc același contract de interfață:
+
+- încărcarea configurației necesare întregii pagini folosește starea full-page comună;
+- o eroare la încărcarea configurației rămâne vizibilă și oferă retry;
+- o operație pornită din formular păstrează formularul vizibil, dezactivează controalele relevante și afișează feedbackul tranzitoriu prin Sonner;
+- un răspuns reușit care conține o colecție goală afișează un empty state explicit, nu un tabel gol;
+- înaintea primei operații, câmpurile de încărcare descriu acțiunea necesară și reprezintă starea inițială a workflow-ului.
+
+Formatarea XML este excepția de la empty state-ul de rezultat: operația produce un singur fișier care este descărcat imediat și nu păstrează o colecție de rezultate în pagină. Generatorul de planificări păstrează separat rezumatul fără rezultat deoarece rezultatul său devine disponibil pentru consultare și descărcare în aceeași pagină.
+
+Workflow-urile grele folosesc `WorkflowPage`, care preia înălțimea disponibilă din shell prin flex și `min-h-full`; paginile nu recalculează viewport-ul sau înălțimea antetului. Catalogul Planificatorului nu folosește acest wrapper deoarece compune carduri de navigare într-un grid, iar istoricul rămâne o pagină de tabel cu propriul container semantic.

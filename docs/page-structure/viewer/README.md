@@ -18,7 +18,7 @@ Scriptul:
 4. urmărește recursiv componentele JSX și dependențele TS/TSX ale fiecărei pagini;
 5. detectează structura React, elementele DOM, clasele, ID-urile, condițiile și listele;
 6. detectează endpointurile folosite, formularele și indiciile pentru loading/error/empty;
-7. păstrează analiza documentată existentă și generează o analiză separată „Scan actual”;
+7. recitește `domOutline` și `issues` din rapoartele Markdown, le reconciliază cu scanarea curentă și generează analiza separată „Scan actual”;
 8. adaugă automat rutele care nu existau în `data.json` și elimină din inventar rutele scoase din router;
 9. actualizează `data.json` și snapshotul integrat în `app.js`, necesar pentru `file://`.
 
@@ -58,6 +58,8 @@ Pentru rutele deja documentate, viewerul oferă două surse ale arborelui:
 - **Scan actual** — rezultatul regenerat direct din cod la ultima rulare.
 
 Rutele noi folosesc automat arborele scanat. Scannerul este static și conservator: nu execută React sau Django, nu apelează API-uri, baze de date ori servicii externe și nu modifică frontendul sau backendul. Relațiile confirmate reprezintă dovezi în cod (URL-uri, importuri, apeluri, decoratori sau câmpuri de model), nu garanții că ramura se execută la runtime. Importurile dinamice, URL-urile construite programatic, consumatorii externi și ramurile determinate exclusiv la runtime trebuie confirmate manual.
+
+Pentru rutele documentate, secțiunile `DOM outline estimat` și `Probleme structurale` din raportul Markdown sunt sursa câmpurilor `domOutline` și `issues`. `_runtime-comun.md` este sursa pentru `sharedRuntime.componentOutline` și `sharedRuntime.domOutline`. Generatorul elimină o constatare manuală despre un element root atunci când `autoScan` identifică fără ambiguitate un alt element și oprește regenerarea dacă o contradicție despre `ApplicationState` supraviețuiește reconcilierii.
 
 ## Cerințe
 

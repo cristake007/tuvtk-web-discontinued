@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, Search, Trash2, UsersRound } from "lucide-react";
 import { toast } from "sonner";
 
-import { ApplicationState } from "@/components/ApplicationState";
+import { QueryApplicationState } from "@/components/QueryApplicationState";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   AlertDialog,
@@ -235,11 +235,23 @@ export function GrupuriAplicatiiPanel() {
   });
   const filteredGroups = useMemo(() => groupsQuery.data?.filter((group) => group.name.toLocaleLowerCase("ro-RO").includes(search.trim().toLocaleLowerCase("ro-RO"))) ?? [], [groupsQuery.data, search]);
 
-  if (groupsQuery.isPending || applicationsQuery.isPending) {
-    return <ApplicationState description="Se încarcă grupurile și accesul la aplicații." loading title="Se încarcă grupurile" />;
-  }
-  if (groupsQuery.isError || applicationsQuery.isError) {
-    return <ApplicationState actionLabel="Încearcă din nou" description="Datele pentru grupuri nu au putut fi încărcate." onAction={() => void groupsQuery.refetch()} title="Grupurile nu sunt disponibile" />;
+  const queryPending = groupsQuery.isPending || applicationsQuery.isPending;
+  const queryError = groupsQuery.error ?? applicationsQuery.error;
+  if (queryPending || groupsQuery.isError || applicationsQuery.isError) {
+    return (
+      <QueryApplicationState
+        error={queryError}
+        errorDescription="Datele pentru grupuri nu au putut fi încărcate."
+        errorTitle="Grupurile nu sunt disponibile"
+        loading={queryPending}
+        loadingDescription="Se încarcă grupurile și accesul la aplicații."
+        loadingTitle="Se încarcă grupurile"
+        onRetry={() => {
+          void groupsQuery.refetch();
+          void applicationsQuery.refetch();
+        }}
+      />
+    );
   }
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6">

@@ -107,7 +107,6 @@ Bootstrap/CSRF se aplică în plus.
 ## Probleme structurale
 
 - `GrupuriAplicatiiPanel` are 327 linii și include subcomponenta dialog cu query propriu, lista și confirmarea delete.
-- Retry-ul erorii de pagină reapelează doar `groupsQuery`; dacă `applicationsQuery` a eșuat, butonul nu repară blocajul.
+- Retry-ul erorii de pagină reapelează atât `groupsQuery`, cât și `applicationsQuery`.
 - `selectionQuery` nu are error sau empty state; un rezultat gol produce o listă goală fără explicație.
-- Error-ul de pagină produce `main` imbricat; dialogurile sunt corect portalizate și nu imbrică interactive.
-
+- Dialogurile sunt corect portalizate și nu imbrică elemente interactive.

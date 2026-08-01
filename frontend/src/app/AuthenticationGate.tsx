@@ -51,9 +51,8 @@ export function AuthenticationGate() {
   if (bootstrapQuery.isError || !bootstrapQuery.data) {
     return (
       <ApplicationState
-        actionLabel="Încearcă din nou"
         description="Serverul aplicației nu a putut fi accesat. Verifică serviciul Django și încearcă din nou."
-        onAction={() => void bootstrapQuery.refetch()}
+        onRetry={() => void bootstrapQuery.refetch()}
         title="Serverul nu este disponibil"
       />
     );

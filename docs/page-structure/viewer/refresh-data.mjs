@@ -20,7 +20,7 @@ import { readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, extname, join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const SCANNER_VERSION = 1;
+const SCANNER_VERSION = 2;
 const args = new Set(process.argv.slice(2));
 const checkOnly = args.has("--check");
 const verbose = args.has("--verbose");
@@ -51,6 +51,7 @@ const routerFile = join(frontendSourceRoot, "app/router.tsx");
 const dataFile = join(viewerDirectory, "data.json");
 const viewerAppFile = join(viewerDirectory, "app.js");
 const backendScannerFile = join(viewerDirectory, "scan-backend.py");
+const sharedRuntimeReportFile = resolve(viewerDirectory, "../_runtime-comun.md");
 
 const htmlTags = new Set([
   "a", "article", "aside", "blockquote", "button", "caption", "cite", "code",
@@ -847,6 +848,87 @@ function mergeBadge(documented, scanned) {
   return "present";
 }
 
+function markdownSection(markdown, heading) {
+  const escapedHeading = heading.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return markdown.match(new RegExp(`## ${escapedHeading}\\s*([\\s\\S]*?)(?=\\n## |$)`))?.[1] ?? "";
+}
+
+function markdownCodeBlock(markdown, heading) {
+  return markdownSection(markdown, heading).match(/```(?:text)?\s*\n([\s\S]*?)\n```/)?.[1]?.trim() ?? null;
+}
+
+function markdownIssues(markdown) {
+  return [...markdownSection(markdown, "Probleme structurale").matchAll(/^-\s+(.+)$/gm)]
+    .map((match) => match[1].replace(/`/g, "").trim());
+}
+
+async function documentedRouteAnalysis(route) {
+  if (!route.report) return { domOutline: route.domOutline, issues: route.issues };
+  const reportPath = resolve(viewerDirectory, route.report);
+  if (!existsSync(reportPath)) return { domOutline: route.domOutline, issues: route.issues };
+  const markdown = await readFile(reportPath, "utf8");
+  const domOutline = markdownCodeBlock(markdown, "DOM outline estimat") ?? route.domOutline;
+  const issues = markdownIssues(markdown);
+  const hasIssuesSection = markdown.includes("## Probleme structurale");
+  return { domOutline, issues: hasIssuesSection ? issues : route.issues };
+}
+
+function componentRootLabel(scan, componentName) {
+  const marker = ` — ${componentName} — `;
+  return scan.domNodes.find((node) => node.includes(marker))?.split(marker, 1)[0] ?? null;
+}
+
+function isNestedMainClaim(text) {
+  return /al doilea\s+main|main\s+(?:i|î)mbricat|main\s*>\s*(?:[^.\n]*>\s*)?main/i.test(text);
+}
+
+function reconcileDomOutline(domOutline, scan) {
+  const applicationStateRoot = componentRootLabel(scan, "ApplicationState");
+  if (!applicationStateRoot || applicationStateRoot.startsWith("main")) return domOutline;
+
+  return domOutline.split("\n").map((line) => {
+    const markerIndex = line.indexOf("[ApplicationState]");
+    if (markerIndex < 0) return line;
+    const rootIndex = line.lastIndexOf("main", markerIndex);
+    if (rootIndex < 0) return line;
+    return `${line.slice(0, rootIndex)}${applicationStateRoot} ${line.slice(markerIndex)}`;
+  }).join("\n");
+}
+
+function reconcileIssues(issues, scan) {
+  const applicationStateRoot = componentRootLabel(scan, "ApplicationState");
+  if (!applicationStateRoot || applicationStateRoot.startsWith("main")) return issues;
+  return issues.filter((issue) => !isNestedMainClaim(issue));
+}
+
+function reconcileDocumentedPatterns(patterns, scans) {
+  const applicationStateRoot = scans.map((scan) => componentRootLabel(scan, "ApplicationState")).find(Boolean);
+  if (!applicationStateRoot || applicationStateRoot.startsWith("main")) return patterns;
+
+  return patterns.map((pattern) => {
+    if (!isNestedMainClaim(pattern.differences ?? "")) return pattern;
+    return {
+      ...pattern,
+      category: pattern.id === "async-page-state" ? "existent" : pattern.category,
+      differences: pattern.id === "async-page-state"
+        ? "Query-urile blocante folosesc retry; erorile operațiilor locale rămân inline sau în toast. ApplicationState produce o secțiune semantică în shell."
+        : pattern.differences.replace(/ApplicationState produce main\s+(?:i|î)mbricat în shell\.?/i, "ApplicationState produce o secțiune semantică în shell."),
+      candidate: pattern.id === "async-page-state"
+        ? "Păstrează contractul comun QueryApplicationState și separă erorile blocante de feedbackul operațiilor locale."
+        : pattern.candidate,
+    };
+  });
+}
+
+function assertNoContradictedApplicationStateMainClaims(data, scans) {
+  const applicationStateRoot = scans.map((scan) => componentRootLabel(scan, "ApplicationState")).find(Boolean);
+  if (!applicationStateRoot || applicationStateRoot.startsWith("main")) return;
+  const serialized = JSON.stringify(data);
+  if (isNestedMainClaim(serialized) || /main[^"\\n]*\[ApplicationState\]/i.test(serialized)) {
+    throw new Error("Analiza manuală contrazice scanarea actuală: ApplicationState are root section, dar viewerul păstrează o afirmație despre main imbricat.");
+  }
+}
+
 async function documentedEndpoints(route) {
   if (!route.report) return route.api;
   const reportPath = resolve(viewerDirectory, route.report);
@@ -905,12 +987,15 @@ function automaticRouteRecord(route, terminal, scan, order, data) {
   };
 }
 
-function updateExistingRoute(existing, discovered, terminal, scan, documentedApi) {
+function updateExistingRoute(existing, discovered, terminal, scan, documentedApi, documentedAnalysis) {
   const sourceRefs = stableUnique([
     ...existing.sourceRefs,
     ...scan.sourceFiles.filter((sourcePath) => /\.tsx$/.test(sourcePath) || /\/api\.ts$/.test(sourcePath)),
   ]);
-  const issues = existing.issues.filter((issue) => !issue.startsWith("Scanner automat:"));
+  const issues = reconcileIssues(
+    documentedAnalysis.issues.filter((issue) => !issue.startsWith("Scanner automat:")),
+    scan,
+  );
   const previousComponents = new Set((existing.autoScan?.components ?? []).map((item) => `${item.name}@${item.source ?? ""}`));
   const currentComponents = new Set(scan.components.map((item) => `${item.name}@${item.source ?? ""}`));
   if (existing.autoScan) {
@@ -933,6 +1018,7 @@ function updateExistingRoute(existing, discovered, terminal, scan, documentedApi
     terminalComponent: terminal.terminalComponent,
     access: discovered.access,
     lazy: terminal.lazy,
+    domOutline: reconcileDomOutline(documentedAnalysis.domOutline, scan),
     api: mergeEndpoints(documentedApi, autoDiscoveredApi),
     autoDiscoveredApi,
     stateBadges: {
@@ -1667,7 +1753,7 @@ function buildDataFlows(routes, apiExplorer, backendExplorer) {
 }
 
 async function main() {
-  for (const requiredPath of [frontendSourceRoot, routerFile, dataFile, viewerAppFile, backendScannerFile]) {
+  for (const requiredPath of [frontendSourceRoot, routerFile, dataFile, viewerAppFile, backendScannerFile, sharedRuntimeReportFile]) {
     if (!existsSync(requiredPath)) throw new Error(`Lipsește calea necesară: ${requiredPath}`);
   }
 
@@ -1694,8 +1780,9 @@ async function main() {
     const scan = buildScan(discovered, terminal, scanner, fileSources, importCache);
     const existing = existingByPath.get(discovered.path);
     const documentedApi = existing ? await documentedEndpoints(existing) : [];
+    const documentedAnalysis = existing ? await documentedRouteAnalysis(existing) : null;
     const route = existing
-      ? updateExistingRoute(existing, discovered, terminal, scan, documentedApi)
+      ? updateExistingRoute(existing, discovered, terminal, scan, documentedApi, documentedAnalysis)
       : automaticRouteRecord(discovered, terminal, scan, index + 1, data);
     if (!existing) newRouteCount += 1;
     route.order = index + 1;
@@ -1704,7 +1791,10 @@ async function main() {
   }
 
   const removedRoutes = data.routes.filter((route) => !discoveredRoutes.some((discovered) => discovered.path === route.path));
-  const documentedPatterns = data.patterns.filter((pattern) => !pattern.id.startsWith("auto-component-"));
+  const documentedPatterns = reconcileDocumentedPatterns(
+    data.patterns.filter((pattern) => !pattern.id.startsWith("auto-component-")),
+    nextRoutes.map((route) => route.autoScan),
+  );
   const generatedPatterns = automaticPatterns(nextRoutes, documentedPatterns);
   const patterns = [...documentedPatterns, ...generatedPatterns];
   const patternByRoute = new Map();
@@ -1732,7 +1822,7 @@ async function main() {
     ...data.meta,
     generatedFrom: "frontend/src/app/router.tsx + analiza documentată existentă",
     routeCount: nextRoutes.length,
-    note: "Analiza documentată este păstrată; câmpul autoScan este regenerat direct din router și sursele TS/TSX.",
+    note: "Analiza documentată este recitită din rapoartele Markdown și reconciliată cu autoScan, regenerat direct din router și sursele TS/TSX.",
     scan: {
       version: SCANNER_VERSION,
       sourceFingerprint: allSourceFingerprint,
@@ -1746,6 +1836,12 @@ async function main() {
   };
   data.routes = nextRoutes;
   data.patterns = patterns;
+  const sharedRuntimeMarkdown = await readFile(sharedRuntimeReportFile, "utf8");
+  data.sharedRuntime = {
+    ...data.sharedRuntime,
+    componentOutline: markdownCodeBlock(sharedRuntimeMarkdown, "React component tree global") ?? data.sharedRuntime.componentOutline,
+    domOutline: markdownCodeBlock(sharedRuntimeMarkdown, "DOM outline comun") ?? data.sharedRuntime.domOutline,
+  };
   data.inconsistencies = generateInconsistencies(nextRoutes, patterns, data.labels);
   const backendScan = runBackendScanner();
   const frontendConsumers = scanFrontendConsumers(nextRoutes, sourceFiles, fileSources, importCache);
@@ -1754,6 +1850,7 @@ async function main() {
   data.backendExplorer = correlated.backendExplorer;
   data.dataFlows = buildDataFlows(nextRoutes, data.apiExplorer, data.backendExplorer);
   data.meta.backendScan = backendScan.meta;
+  assertNoContradictedApplicationStateMainClaims(data, nextRoutes.map((route) => route.autoScan));
 
   const serializedData = JSON.stringify(data);
   const nextViewerApp = snapshotAppSource(viewerAppSource, serializedData);

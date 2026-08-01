@@ -1,10 +1,12 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckCircle2, RefreshCcw, Upload, XCircle } from "lucide-react";
+import { CheckCircle2, FileSearch, RefreshCcw, Upload, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { AntetAplicatie } from "@/components/AntetAplicatie";
 import { FileUploadField } from "@/components/FileUploadField";
+import { QueryApplicationState } from "@/components/QueryApplicationState";
+import { WorkflowEmptyState } from "@/components/WorkflowEmptyState";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -189,6 +191,20 @@ export function UpdateWordPressPanel() {
     credentials.wpBaseUrl && credentials.wpUsername && credentials.wpAppPassword,
   );
 
+  if (settingsQuery.isPending || settingsQuery.isError) {
+    return (
+      <QueryApplicationState
+        error={settingsQuery.error}
+        errorDescription="Setările conexiunii WordPress nu au putut fi încărcate."
+        errorTitle="Update WordPress nu este disponibil"
+        loading={settingsQuery.isPending}
+        loadingDescription="Se încarcă setările conexiunii WordPress."
+        loadingTitle="Se încarcă Update WordPress"
+        onRetry={() => void settingsQuery.refetch()}
+      />
+    );
+  }
+
   return (
     <div className="flex w-full min-w-0 flex-1 flex-col gap-6">
       <AntetAplicatie titlu="Update WordPress" />
@@ -301,16 +317,19 @@ export function UpdateWordPressPanel() {
       {rows ? (
         <section className="grid min-w-0 gap-4 rounded-sm border bg-background p-6 shadow-sm">
           <div>
-            <SectionTitle>Cursuri găsite</SectionTitle>
+            <SectionTitle>Rezultatul previzualizării</SectionTitle>
             <p className="mt-1 text-base leading-6 text-muted-foreground">
-              {hasCredentials
+              {rows.length === 0
+                ? "Fișierul a fost procesat, dar nu conține cursuri care pot fi actualizate."
+                : hasCredentials
                 ? "Verifică perioadele curente de pe WordPress, apoi actualizează cursurile dorite."
                 : "Conectează-te la WordPress mai sus pentru a putea verifica și actualiza cursurile."}
             </p>
           </div>
 
-          <div className="min-w-0 overflow-hidden rounded-sm border">
-            <Table className="min-w-[54rem]">
+          {rows.length ? (
+            <div className="min-w-0 overflow-hidden rounded-sm border">
+              <Table className="min-w-[54rem]">
               <TableHeader className="bg-muted/70">
                 <TableRow className="hover:bg-transparent">
                   <TableHead>Curs</TableHead>
@@ -385,8 +404,15 @@ export function UpdateWordPressPanel() {
                   );
                 })}
               </TableBody>
-            </Table>
-          </div>
+              </Table>
+            </div>
+          ) : (
+            <WorkflowEmptyState
+              description="Verifică structura fișierului și încearcă din nou cu un fișier care conține cursuri și perioade."
+              icon={FileSearch}
+              title="Niciun curs disponibil pentru actualizare"
+            />
+          )}
         </section>
       ) : null}
     </div>

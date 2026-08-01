@@ -130,7 +130,5 @@ Bootstrap și CSRF implicit se aplică suplimentar.
 ## Probleme structurale
 
 - La error al `holidaysQuery`, `loading` este fals și datele sunt `[]`; pagina afișează simultan alertul de eroare și empty state-ul „Nu există zile salvate”, care poate induce în eroare.
-- Error-ul settings produce `main` imbricat.
 - Labelurile pentru switch-uri au `htmlFor`, iar switch-urile au ID-uri; interactivitatea este corect asociată. Nu există `h1` multiplu.
 - Arborele este adânc din cauza layoutului admin și a celor trei carduri, dar folosește `form`, `table`, `dl`, `header` și dialog semantic.
-
