@@ -71,7 +71,7 @@ export function ListaMeniuSortabila<Element extends ElementSortabil>({
         items={elemente.map((element) => element.key)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="divide-y border-t" role="list">
+        <ul className="divide-y border-t">
           {elemente.map((element) => (
             <ElementMeniuSortabil
               disabled={disabled}
@@ -81,7 +81,7 @@ export function ListaMeniuSortabila<Element extends ElementSortabil>({
               onStergeSeparator={onStergeSeparator}
             />
           ))}
-        </div>
+        </ul>
       </SortableContext>
     </DndContext>
   );
@@ -112,13 +112,12 @@ function ElementMeniuSortabil<Element extends ElementSortabil>({
   };
 
   return (
-    <div
+    <li
       className={cn(
         "flex items-center gap-3 p-3 transition-colors",
         isDragging && "z-10 bg-primary/5 opacity-40 shadow-sm",
       )}
       ref={setNodeRef}
-      role="listitem"
       style={stil}
     >
       <button
@@ -156,6 +155,6 @@ function ElementMeniuSortabil<Element extends ElementSortabil>({
           Elimină
         </Button>
       ) : null}
-    </div>
+    </li>
   );
 }

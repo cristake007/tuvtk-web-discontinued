@@ -16,6 +16,8 @@ describe("ListaMeniuSortabila", () => {
 
     expect(screen.getByText("CRM")).toBeInTheDocument();
     expect(screen.queryByText("Separator")).not.toBeInTheDocument();
+    expect(screen.getByRole("list")).toBeInTheDocument();
+    expect(screen.getByRole("listitem")).toHaveTextContent("CRM");
     expect(screen.getByRole("button", { name: "Redenumește" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Elimină" })).toBeInTheDocument();
   });

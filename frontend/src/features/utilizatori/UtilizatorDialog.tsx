@@ -243,13 +243,13 @@ export function UtilizatorForm({
                   Acces complet — superutilizatorii au acces la toate aplicațiile.
                 </AlertDescription>
               </Alert>
-              <div className="flex min-h-10 flex-wrap gap-2 rounded-md border p-3 text-sm">
+              <ul className="flex min-h-10 flex-wrap gap-2 rounded-md border p-3 text-sm">
                 {user?.effective_applications.map((application) => (
-                  <span className="rounded-md bg-muted px-2 py-1" key={application.id}>
+                  <li className="rounded-md bg-muted px-2 py-1" key={application.id}>
                     {application.name}
-                  </span>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </Field>
           ) : (
             <>
@@ -258,31 +258,33 @@ export function UtilizatorForm({
             <FieldDescription>
               Accesul la aplicații se cumulează între grupurile selectate.
             </FieldDescription>
-            <div className="grid max-h-44 gap-2 overflow-y-auto rounded-md border p-3 sm:grid-cols-2">
+            <ul className="grid max-h-44 gap-2 overflow-y-auto rounded-md border p-3 sm:grid-cols-2">
               {groups.map((group) => {
                 const checked = values.group_ids.includes(group.id);
                 return (
-                  <label className="flex cursor-pointer items-center gap-2 text-sm" key={group.id}>
-                    <Checkbox
-                      checked={checked}
-                      disabled={pending}
-                      onCheckedChange={(nextChecked) =>
-                        setValue(
-                          "group_ids",
-                          nextChecked
-                            ? [...values.group_ids, group.id]
-                            : values.group_ids.filter((groupId) => groupId !== group.id),
-                        )
-                      }
-                    />
-                    {group.name}
-                  </label>
+                  <li key={group.id}>
+                    <label className="flex cursor-pointer items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={checked}
+                        disabled={pending}
+                        onCheckedChange={(nextChecked) =>
+                          setValue(
+                            "group_ids",
+                            nextChecked
+                              ? [...values.group_ids, group.id]
+                              : values.group_ids.filter((groupId) => groupId !== group.id),
+                          )
+                        }
+                      />
+                      {group.name}
+                    </label>
+                  </li>
                 );
               })}
               {groups.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nu există grupuri create.</p>
+                <li className="text-sm text-muted-foreground">Nu există grupuri create.</li>
               ) : null}
-            </div>
+            </ul>
           </Field>
 
           <Field>
@@ -291,17 +293,17 @@ export function UtilizatorForm({
               Aplicațiile de mai jos sunt acordate de grupurile selectate și nu pot fi
               retrase din acest formular.
             </FieldDescription>
-            <div className="flex min-h-10 flex-wrap gap-2 rounded-md border p-3 text-sm">
+            <ul className="flex min-h-10 flex-wrap gap-2 rounded-md border p-3 text-sm">
               {inheritedApplications.length ? (
                 inheritedApplications.map((application) => (
-                  <span className="rounded-md bg-muted px-2 py-1" key={application.id}>
+                  <li className="rounded-md bg-muted px-2 py-1" key={application.id}>
                     {application.name}
-                  </span>
+                  </li>
                 ))
               ) : (
-                <span className="text-muted-foreground">Niciun acces moștenit.</span>
+                <li className="text-muted-foreground">Niciun acces moștenit.</li>
               )}
-            </div>
+            </ul>
           </Field>
 
           <Field>
@@ -309,30 +311,32 @@ export function UtilizatorForm({
             <FieldDescription>
               Acest acces se adaugă celui moștenit din grupuri.
             </FieldDescription>
-            <div className="grid max-h-44 gap-2 overflow-y-auto rounded-md border p-3 sm:grid-cols-2">
+            <ul className="grid max-h-44 gap-2 overflow-y-auto rounded-md border p-3 sm:grid-cols-2">
               {applications.map((application) => {
                 const checked = values.direct_application_ids.includes(application.id);
                 return (
-                  <label className="flex cursor-pointer items-center gap-2 text-sm" key={application.id}>
-                    <Checkbox
-                      checked={checked}
-                      disabled={pending}
-                      onCheckedChange={(nextChecked) =>
-                        setValue(
-                          "direct_application_ids",
-                          nextChecked
-                            ? [...values.direct_application_ids, application.id]
-                            : values.direct_application_ids.filter(
-                                (applicationId) => applicationId !== application.id,
-                              ),
-                        )
-                      }
-                    />
-                    {application.name}
-                  </label>
+                  <li key={application.id}>
+                    <label className="flex cursor-pointer items-center gap-2 text-sm">
+                      <Checkbox
+                        checked={checked}
+                        disabled={pending}
+                        onCheckedChange={(nextChecked) =>
+                          setValue(
+                            "direct_application_ids",
+                            nextChecked
+                              ? [...values.direct_application_ids, application.id]
+                              : values.direct_application_ids.filter(
+                                  (applicationId) => applicationId !== application.id,
+                                ),
+                          )
+                        }
+                      />
+                      {application.name}
+                    </label>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           </Field>
             </>
           )}

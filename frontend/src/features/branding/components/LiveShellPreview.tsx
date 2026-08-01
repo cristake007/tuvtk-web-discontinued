@@ -104,9 +104,9 @@ export function LiveShellPreview({
       <div className="flex items-center gap-2">
         <Sparkles aria-hidden="true" className="size-4 text-primary" />
         <SectionTitle>Previzualizare live</SectionTitle>
-        <span className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Reflectă modificările nesalvate din formularele de mai jos.
-        </span>
+        </p>
       </div>
 
       <div
@@ -136,15 +136,18 @@ export function LiveShellPreview({
         <div className="flex h-52">
           <nav
             aria-label="Exemplu de navigație"
-            className="flex w-32 shrink-0 flex-col gap-0.5 overflow-hidden border-r border-sidebar-border bg-white py-2 sm:w-40"
+            className="w-32 shrink-0 overflow-hidden border-r border-sidebar-border bg-white sm:w-40"
           >
-            {elementeAfisate.map((item) => (
-              <RandNavigatiePrevizualizare
-                activ={item.key === primulElementActiv}
-                item={item}
-                key={item.key}
-              />
-            ))}
+            <ul className="flex flex-col gap-0.5 py-2">
+              {elementeAfisate.map((item) => (
+                <li key={item.key}>
+                  <RandNavigatiePrevizualizare
+                    activ={item.key === primulElementActiv}
+                    item={item}
+                  />
+                </li>
+              ))}
+            </ul>
           </nav>
 
           <div className="flex-1 space-y-3 bg-background p-4">

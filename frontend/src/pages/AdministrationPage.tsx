@@ -46,14 +46,18 @@ function AdministrationEntryRow({ entry }: { entry: AdministrationEntry }) {
   );
 
   const className =
-    "group grid min-h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 border-t bg-background px-4 py-3 text-left first:border-t-0 sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)_auto]";
+    "group grid min-h-12 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 bg-background px-4 py-3 text-left sm:grid-cols-[minmax(0,15rem)_minmax(0,1fr)_auto]";
 
-  return entry.href ? (
-    <Link className={`${className} transition-colors hover:bg-muted/40`} to={entry.href}>
-      {content}
-    </Link>
-  ) : (
-    <div className={className}>{content}</div>
+  return (
+    <li className="border-t first:border-t-0">
+      {entry.href ? (
+        <Link className={`${className} transition-colors hover:bg-muted/40`} to={entry.href}>
+          {content}
+        </Link>
+      ) : (
+        <div className={className}>{content}</div>
+      )}
+    </li>
   );
 }
 
@@ -86,7 +90,7 @@ export function AdministrationPage() {
   }, [hasQuery, normalizedQuery]);
 
   return (
-    <section className="flex min-w-0 flex-1 flex-col gap-6 bg-background">
+    <section className="flex min-w-0 flex-1 flex-col gap-6">
       <div className="relative w-full">
         <Search
           aria-hidden="true"
@@ -110,26 +114,30 @@ export function AdministrationPage() {
           </p>
         </div>
       ) : filteredGroups.length > 0 ? (
-        <div className="grid min-w-0 gap-10">
+        <ul className="grid min-w-0 gap-10">
           {filteredGroups.map((group) => {
             const Icon = group.icon;
 
             return (
-              <section className="grid min-w-0 gap-3" key={group.name}>
-                <div className="flex items-center gap-2 px-1">
-                  <Icon aria-hidden="true" className="size-5 shrink-0 text-primary" />
-                  <SectionTitle>{group.name}</SectionTitle>
-                </div>
+              <li key={group.name}>
+                <section className="grid min-w-0 gap-3">
+                  <div className="flex items-center gap-2 px-1">
+                    <Icon aria-hidden="true" className="size-5 shrink-0 text-primary" />
+                    <SectionTitle>{group.name}</SectionTitle>
+                  </div>
 
-                <Card className="gap-0 rounded-md bg-background py-0">
-                  {group.entries.map((entry) => (
-                    <AdministrationEntryRow entry={entry} key={entry.name} />
-                  ))}
-                </Card>
-              </section>
+                  <Card className="gap-0 rounded-md bg-background py-0">
+                    <ul>
+                      {group.entries.map((entry) => (
+                        <AdministrationEntryRow entry={entry} key={entry.name} />
+                      ))}
+                    </ul>
+                  </Card>
+                </section>
+              </li>
             );
           })}
-        </div>
+        </ul>
       ) : (
         <Card className="border-dashed bg-background">
           <CardContent className="flex flex-col items-center gap-2 py-10 text-center">

@@ -135,7 +135,7 @@ export function UtilizatoriPanel() {
   }
 
   return (
-    <section className="flex min-w-0 flex-1 flex-col gap-6 bg-background">
+    <section className="flex min-w-0 flex-1 flex-col gap-6">
       <div className="flex justify-end">
         <Button onClick={() => navigate("/administrare/utilizatori/adaugare")} type="button">
           <Plus aria-hidden="true" />
@@ -246,7 +246,7 @@ export function UtilizatoriPanel() {
                         <div className="min-w-0">
                           <p className="truncate font-medium">{user.full_name}</p>
                           <p className="truncate text-xs text-muted-foreground">
-                            @{user.username}
+                            <code>@{user.username}</code>
                             {currentUser?.id === user.id ? " · contul tău" : ""}
                           </p>
                         </div>
@@ -259,17 +259,17 @@ export function UtilizatoriPanel() {
                       <AccountTypeBadge user={user} />
                     </TableCell>
                     <TableCell className="max-w-52">
-                      <div className="flex flex-wrap gap-1">
+                      <ul className="flex flex-wrap gap-1">
                         {user.groups.length ? (
                           user.groups.map((group) => (
-                            <Badge key={group.id} variant="outline">
-                              {group.name}
-                            </Badge>
+                            <li key={group.id}>
+                              <Badge variant="outline">{group.name}</Badge>
+                            </li>
                           ))
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <li className="text-muted-foreground">—</li>
                         )}
-                      </div>
+                      </ul>
                     </TableCell>
                     <TableCell>
                       <Badge variant={user.is_active ? "secondary" : "destructive"}>

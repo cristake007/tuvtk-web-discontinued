@@ -68,13 +68,14 @@ export function CoursePlannerPage() {
     <section className="flex min-w-0 flex-1 flex-col gap-6">
       <AntetAplicatie titlu="Planificator cursuri" />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {plannerModules.map((module) => {
           const Icon = module.icon;
 
           return (
-            <Card className="h-full transition-shadow hover:shadow-md" key={module.href}>
-              <CardHeader>
+            <li key={module.href}>
+              <Card className="h-full transition-shadow hover:shadow-md">
+                <CardHeader>
                 <div className="flex items-start gap-3">
                   <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                     <Icon aria-hidden="true" className="size-5" />
@@ -87,24 +88,25 @@ export function CoursePlannerPage() {
                 <CardAction>
                   <Badge variant={module.statusVariant}>{module.status}</Badge>
                 </CardAction>
-              </CardHeader>
-              <CardContent>
-                <p className="text-base leading-6 text-muted-foreground">{module.description}</p>
-              </CardContent>
-              <CardFooter className="mt-auto justify-end">
-                <Button
-                  nativeButton={false}
-                  render={<Link to={module.href} />}
-                  variant="outline"
-                >
-                  {module.action}
-                  <ArrowRight aria-hidden="true" />
-                </Button>
-              </CardFooter>
-            </Card>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-base leading-6 text-muted-foreground">{module.description}</p>
+                </CardContent>
+                <CardFooter className="mt-auto justify-end">
+                  <Button
+                    nativeButton={false}
+                    render={<Link to={module.href} />}
+                    variant="outline"
+                  >
+                    {module.action}
+                    <ArrowRight aria-hidden="true" />
+                  </Button>
+                </CardFooter>
+              </Card>
+            </li>
           );
         })}
-      </div>
+      </ul>
     </section>
   );
 }

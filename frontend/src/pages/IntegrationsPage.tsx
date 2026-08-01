@@ -28,13 +28,14 @@ const integrations = [
 export function IntegrationsPage() {
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {integrations.map((integration) => {
           const Icon = integration.icon;
 
           return (
-            <Card className="h-full transition-shadow hover:shadow-md" key={integration.href}>
-              <CardHeader>
+            <li key={integration.href}>
+              <Card className="h-full transition-shadow hover:shadow-md">
+                <CardHeader>
                 <div className="flex items-start gap-3">
                   <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
                     <Icon aria-hidden="true" className="size-5" />
@@ -49,26 +50,27 @@ export function IntegrationsPage() {
                 <CardAction>
                   <Badge variant="secondary">{integration.status}</Badge>
                 </CardAction>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm leading-6 text-muted-foreground">
-                  {integration.description}
-                </p>
-              </CardContent>
-              <CardFooter className="mt-auto justify-end">
-                <Button
-                  nativeButton={false}
-                  render={<Link to={integration.href} />}
-                  variant="outline"
-                >
-                  Configurează
-                  <ArrowRight aria-hidden="true" />
-                </Button>
-              </CardFooter>
-            </Card>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm leading-6 text-muted-foreground">
+                    {integration.description}
+                  </p>
+                </CardContent>
+                <CardFooter className="mt-auto justify-end">
+                  <Button
+                    nativeButton={false}
+                    render={<Link to={integration.href} />}
+                    variant="outline"
+                  >
+                    Configurează
+                    <ArrowRight aria-hidden="true" />
+                  </Button>
+                </CardFooter>
+              </Card>
+            </li>
           );
         })}
-      </div>
+      </ul>
     </section>
   );
 }

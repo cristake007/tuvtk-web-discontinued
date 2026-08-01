@@ -101,7 +101,7 @@ function CampCuloare({
       <p className="text-xs leading-5 text-muted-foreground">{descriere}</p>
       {!esteValid ? (
         <p className="text-xs text-destructive">
-          Introdu un cod hexazecimal valid, de exemplu #164194.
+          Introdu un cod hexazecimal valid, de exemplu <code>#164194</code>.
         </p>
       ) : null}
     </div>
@@ -133,19 +133,22 @@ export function BrandColorsSection({
         {esteModificat ? <UnsavedBadge /> : null}
       </div>
 
-      <fieldset className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-4" disabled={saving}>
+      <fieldset className="mt-4" disabled={saving}>
         <legend className="sr-only">Culori de bază ale interfeței</legend>
-        {CAMPURI_CULORI.map(({ camp, descriere, eticheta }) => (
-          <CampCuloare
-            camp={camp}
-            descriere={descriere}
-            disabled={saving}
-            eticheta={eticheta}
-            key={camp}
-            onChange={(valoare) => onChangeCuloare(camp, valoare)}
-            valoare={culori[camp]}
-          />
-        ))}
+        <ul className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4">
+          {CAMPURI_CULORI.map(({ camp, descriere, eticheta }) => (
+            <li key={camp}>
+              <CampCuloare
+                camp={camp}
+                descriere={descriere}
+                disabled={saving}
+                eticheta={eticheta}
+                onChange={(valoare) => onChangeCuloare(camp, valoare)}
+                valoare={culori[camp]}
+              />
+            </li>
+          ))}
+        </ul>
       </fieldset>
 
       <Button className="mt-4" disabled={saving} type="submit">

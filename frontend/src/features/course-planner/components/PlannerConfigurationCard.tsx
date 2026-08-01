@@ -115,9 +115,9 @@ export function PlannerConfigurationCard({
                   ))}
                 </SelectContent>
               </Select>
-              <span className="text-xs font-normal leading-5 text-muted-foreground">
+              <p className="text-xs font-normal leading-5 text-muted-foreground">
                 Anul folosit pentru toate perioadele generate.
-              </span>
+              </p>
             </div>
 
             <div className="grid content-start gap-2 text-sm font-medium">
@@ -140,9 +140,9 @@ export function PlannerConfigurationCard({
                   {settings.randomness}
                 </span>
               </div>
-              <span className="text-xs font-normal leading-5 text-muted-foreground">
+              <p className="text-xs font-normal leading-5 text-muted-foreground">
                 1 păstrează mai mult spațiu între cursuri, iar 10 distribuie mai liber.
-              </span>
+              </p>
             </div>
 
             <div className="grid content-start gap-2 text-sm font-medium sm:col-span-2">
@@ -162,10 +162,10 @@ export function PlannerConfigurationCard({
                 type="number"
                 value={settings.xml_start_post_id}
               />
-              <span className="text-xs font-normal leading-5 text-muted-foreground">
+              <p className="text-xs font-normal leading-5 text-muted-foreground">
                 Primul ID de postare folosit la generarea fișierului XML pentru cursuri
                 noi.
-              </span>
+              </p>
             </div>
           </div>
 
@@ -179,30 +179,31 @@ export function PlannerConfigurationCard({
                 Niciuna
               </Button>
             </div>
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+            <ul className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
               {monthNames.map((monthName, index) => {
                 const month = index + 1;
                 const selected = settings.months.includes(month);
                 return (
-                  <Button
-                    aria-pressed={selected}
-                    className="justify-start"
-                    key={monthName}
-                    onClick={() => onToggleMonth(month)}
-                    type="button"
-                    variant={selected ? "default" : "outline"}
-                  >
-                    <span
-                      aria-hidden="true"
-                      className="grid size-5 place-items-center rounded-md border border-current/25 text-[11px]"
+                  <li key={monthName}>
+                    <Button
+                      aria-pressed={selected}
+                      className="w-full justify-start"
+                      onClick={() => onToggleMonth(month)}
+                      type="button"
+                      variant={selected ? "default" : "outline"}
                     >
-                      {month}
-                    </span>
-                    {monthName}
-                  </Button>
+                      <span
+                        aria-hidden="true"
+                        className="grid size-5 place-items-center rounded-md border border-current/25 text-[11px]"
+                      >
+                        {month}
+                      </span>
+                      {monthName}
+                    </Button>
+                  </li>
                 );
               })}
-            </div>
+            </ul>
           </fieldset>
 
           <section className="flex gap-3 border-l-2 border-primary pl-4">

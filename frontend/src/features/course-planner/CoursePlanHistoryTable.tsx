@@ -178,10 +178,10 @@ export function CoursePlanHistoryTable() {
                     {formatRomanianDateTime(generation.created_at)}
                   </TableCell>
                   <TableCell
-                    className="max-w-80 truncate font-medium"
+                    className="max-w-80 truncate"
                     title={generation.source_filename}
                   >
-                    {generation.source_filename}
+                    <code className="font-medium">{generation.source_filename}</code>
                   </TableCell>
                   <TableCell>{generation.year}</TableCell>
                   <TableCell>
