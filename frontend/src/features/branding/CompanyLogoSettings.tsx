@@ -13,13 +13,11 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
 
 import { useCompanyLogoSettings } from "./useCompanyLogoSettings";
 
 export function CompanyLogoSettings() {
   const {
-    bootstrapQuery,
     configuredLogoUrl,
     displayedLogoUrl,
     isSaving,
@@ -30,6 +28,7 @@ export function CompanyLogoSettings() {
     selectedFile,
     selectionError,
     selectLogo,
+    settingsQuery,
     uploadPending,
     uploadSelectedLogo,
     uploadSuccess,
@@ -63,32 +62,23 @@ export function CompanyLogoSettings() {
     }
   }, [removeSuccess]);
 
-  if (bootstrapQuery.isPending) {
+  if (settingsQuery.isPending) {
     return (
       <ApplicationState
-        description="Se încarcă configurația vizuală a aplicației."
+        description="Se încarcă opțiunile interfeței utilizator."
         loading
-        title="Se încarcă setările"
+        title="Se încarcă interfața utilizator"
       />
     );
   }
 
-  if (bootstrapQuery.isError || !bootstrapQuery.data) {
+  if (settingsQuery.isError || !settingsQuery.data) {
     return (
       <ApplicationState
         actionLabel="Încearcă din nou"
-        description="Setările aplicației nu au putut fi încărcate."
-        onAction={() => void bootstrapQuery.refetch()}
-        title="Setările nu sunt disponibile"
-      />
-    );
-  }
-
-  if (!bootstrapQuery.data.user.is_staff) {
-    return (
-      <ApplicationState
-        description="Este necesar acces de administrator pentru modificarea identității vizuale."
-        title="Acces restricționat"
+        description="Configurarea interfeței utilizator nu a putut fi încărcată."
+        onAction={() => void settingsQuery.refetch()}
+        title="Interfața utilizator nu este disponibilă"
       />
     );
   }
@@ -98,7 +88,8 @@ export function CompanyLogoSettings() {
       <CardHeader className="border-b">
         <CardTitle>Sigla companiei</CardTitle>
         <CardDescription>
-          Sigla este afișată în antetul meniului lateral pentru utilizatorii autentificați.
+          Sigla este afișată în antetul meniului lateral pentru utilizatorii
+          autentificați.
         </CardDescription>
       </CardHeader>
 
@@ -121,7 +112,7 @@ export function CompanyLogoSettings() {
           <div className="flex min-h-44 items-center justify-center rounded-xl border bg-muted/20 p-5">
             {displayedLogoUrl ? (
               <img
-                alt={`Previzualizare siglă ${bootstrapQuery.data.configuration.organization_name}`}
+                alt={`Previzualizare siglă ${settingsQuery.data.organization_name}`}
                 className="max-h-24 max-w-full object-contain"
                 src={displayedLogoUrl}
               />
@@ -132,7 +123,8 @@ export function CompanyLogoSettings() {
             )}
           </div>
           <p className="text-xs leading-5 text-muted-foreground">
-            Scripturile, resursele externe și stilurile nesigure sunt respinse la încărcare.
+            Scripturile, resursele externe și stilurile nesigure sunt respinse la
+            încărcare.
           </p>
         </div>
       </CardContent>
@@ -143,7 +135,7 @@ export function CompanyLogoSettings() {
           onClick={uploadSelectedLogo}
           type="button"
         >
-          {uploadPending ? <Spinner /> : <ImageUp aria-hidden="true" />}
+          <ImageUp aria-hidden="true" />
           {uploadPending ? "Se încarcă…" : "Încarcă sigla"}
         </Button>
         <Button
@@ -152,7 +144,7 @@ export function CompanyLogoSettings() {
           type="button"
           variant="destructive"
         >
-          {removePending ? <Spinner /> : <Trash2 aria-hidden="true" />}
+          <Trash2 aria-hidden="true" />
           {removePending ? "Se elimină…" : "Elimină sigla"}
         </Button>
       </CardFooter>

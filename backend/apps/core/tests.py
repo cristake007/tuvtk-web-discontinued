@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
@@ -9,6 +10,10 @@ VALID_LOGO = b"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40">
 <rect width="120" height="40" fill="#164194"/>
 <text x="10" y="26" fill="white">TUVTK</text>
 </svg>"""
+
+USER_INTERFACE_LOGO_PATH = (
+    "/api/v1/core/administration/user-interface/company-logo"
+)
 
 
 class CoreBootstrapApiTests(TestCase):
@@ -22,6 +27,7 @@ class CoreBootstrapApiTests(TestCase):
             name="Core",
             route_prefix="/",
             position=10,
+            is_access_controlled=False,
         )
         self.companies_application = ApplicationDefinition.objects.create(
             key="companies",
@@ -52,9 +58,9 @@ class CoreBootstrapApiTests(TestCase):
         )
         NavigationItem.objects.create(
             application=self.core_application,
-            key="settings",
-            label="Settings",
-            path="/settings",
+            key="administration",
+            label="Administrare",
+            path="/administrare",
             icon="settings",
             position=90,
             requires_staff=True,
@@ -67,18 +73,26 @@ class CoreBootstrapApiTests(TestCase):
             is_staff=is_staff,
         )
 
-    def test_bootstrap_requires_authentication(self):
+    def test_anonymous_bootstrap_returns_branding_and_authentication_state(self):
         response = self.client.get("/api/v1/core/bootstrap")
 
-        self.assertEqual(response.status_code, 401)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["authenticated"], False)
+        self.assertIsNone(response.json()["user"])
+        self.assertEqual(response.json()["navigation"], [])
+        self.assertEqual(response.json()["configuration"]["site_name"], "TUVTK")
 
     def test_regular_user_receives_permitted_navigation(self):
         user = self.create_user("regular-user")
+        group = Group.objects.create(name="Companii")
+        self.companies_application.allowed_groups.add(group)
+        user.groups.add(group)
         self.client.force_login(user)
 
         response = self.client.get("/api/v1/core/bootstrap")
 
         self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.json()["authenticated"])
         self.assertEqual(
             [item["key"] for item in response.json()["navigation"]],
             ["dashboard", "companies"],
@@ -89,9 +103,79 @@ class CoreBootstrapApiTests(TestCase):
         )
         self.assertIsNone(response.json()["configuration"]["logo_url"])
         self.assertEqual(response.json()["user"]["username"], "regular-user")
+        self.assertEqual(response.json()["accessible_application_keys"], ["companies"])
+
+    def test_user_without_group_sees_only_dashboard(self):
+        user = self.create_user("without-group")
+        self.client.force_login(user)
+
+        response = self.client.get("/api/v1/core/bootstrap")
+
+        self.assertEqual(
+            [item["key"] for item in response.json()["navigation"]],
+            ["dashboard"],
+        )
+        self.assertEqual(response.json()["accessible_application_keys"], [])
+
+    def test_user_with_direct_access_receives_application_navigation(self):
+        user = self.create_user("direct-user")
+        self.companies_application.allowed_users.add(user)
+        self.client.force_login(user)
+
+        response = self.client.get("/api/v1/core/bootstrap")
+
+        self.assertEqual(
+            [item["key"] for item in response.json()["navigation"]],
+            ["dashboard", "companies"],
+        )
+        self.assertEqual(response.json()["accessible_application_keys"], ["companies"])
+
+    def test_group_and_direct_access_are_combined(self):
+        documents_application = ApplicationDefinition.objects.create(
+            key="documents",
+            name="Documente",
+            route_prefix="/documente",
+            position=30,
+        )
+        NavigationItem.objects.create(
+            application=documents_application,
+            key="documents",
+            label="Documente",
+            path="/documente",
+            position=30,
+        )
+        user = self.create_user("combined-user")
+        group = Group.objects.create(name="Companii")
+        self.companies_application.allowed_groups.add(group)
+        user.groups.add(group)
+        documents_application.allowed_users.add(user)
+        self.client.force_login(user)
+
+        response = self.client.get("/api/v1/core/bootstrap")
+
+        self.assertEqual(
+            response.json()["accessible_application_keys"],
+            ["companies", "documents"],
+        )
+
+    def test_removing_direct_access_removes_application_navigation(self):
+        user = self.create_user("direct-removal-user")
+        self.companies_application.allowed_users.add(user)
+        self.companies_application.allowed_users.remove(user)
+        self.client.force_login(user)
+
+        response = self.client.get("/api/v1/core/bootstrap")
+
+        self.assertEqual(
+            [item["key"] for item in response.json()["navigation"]],
+            ["dashboard"],
+        )
 
     def test_staff_user_receives_staff_navigation(self):
         user = self.create_user("staff-user", is_staff=True)
+        group = Group.objects.create(name="Companii")
+        self.companies_application.allowed_groups.add(group)
+        user.groups.add(group)
         self.client.force_login(user)
 
         response = self.client.get("/api/v1/core/bootstrap")
@@ -99,7 +183,76 @@ class CoreBootstrapApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             [item["key"] for item in response.json()["navigation"]],
-            ["dashboard", "companies", "settings"],
+            ["dashboard", "companies", "administration"],
+        )
+
+    def test_superuser_sees_all_active_applications(self):
+        user = get_user_model().objects.create_superuser(
+            username="superuser",
+            password="test-password-123",
+        )
+        self.client.force_login(user)
+
+        response = self.client.get("/api/v1/core/bootstrap")
+
+        self.assertEqual(
+            [item["key"] for item in response.json()["navigation"]],
+            ["dashboard", "companies", "administration"],
+        )
+        self.assertIn("companies", response.json()["accessible_application_keys"])
+
+    def test_staff_user_without_groups_sees_administration_but_not_business_apps(self):
+        user = self.create_user("staff-without-groups", is_staff=True)
+        self.client.force_login(user)
+
+        response = self.client.get("/api/v1/core/bootstrap")
+
+        self.assertEqual(
+            [item["key"] for item in response.json()["navigation"]],
+            ["dashboard", "administration"],
+        )
+
+    def test_staff_user_with_contact_access_sees_only_contacts_and_administration(self):
+        contacts_application = ApplicationDefinition.objects.create(
+            key="contacts",
+            name="Contacte",
+            route_prefix="/contacts",
+            position=30,
+        )
+        NavigationItem.objects.create(
+            application=contacts_application,
+            key="contacts",
+            label="Contacte",
+            path="/contacts",
+            position=30,
+        )
+        user = self.create_user("staff-contacts", is_staff=True)
+        group = Group.objects.create(name="Contacte")
+        contacts_application.allowed_groups.add(group)
+        user.groups.add(group)
+        self.client.force_login(user)
+
+        response = self.client.get("/api/v1/core/bootstrap")
+
+        self.assertEqual(
+            [item["key"] for item in response.json()["navigation"]],
+            ["dashboard", "contacts", "administration"],
+        )
+
+    def test_removing_superuser_status_reactivates_regular_acl(self):
+        user = get_user_model().objects.create_superuser(
+            username="former-superuser",
+            password="test-password-123",
+        )
+        self.client.force_login(user)
+        user.is_superuser = False
+        user.save(update_fields=("is_superuser",))
+
+        response = self.client.get("/api/v1/core/bootstrap")
+
+        self.assertEqual(
+            [item["key"] for item in response.json()["navigation"]],
+            ["dashboard", "administration"],
         )
 
     def test_disabled_application_hides_its_navigation(self):
@@ -126,7 +279,7 @@ class CoreBootstrapApiTests(TestCase):
         )
 
         response = self.client.post(
-            "/api/v1/core/settings/company-logo",
+            USER_INTERFACE_LOGO_PATH,
             {"logo": logo},
         )
 
@@ -155,11 +308,12 @@ class CoreBootstrapApiTests(TestCase):
         )
 
         response = self.client.post(
-            "/api/v1/core/settings/company-logo",
+            USER_INTERFACE_LOGO_PATH,
             {"logo": logo},
         )
 
         self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["code"], "permission_denied")
 
     def test_unsafe_svg_is_rejected(self):
         user = self.create_user("staff-user", is_staff=True)
@@ -171,11 +325,12 @@ class CoreBootstrapApiTests(TestCase):
         )
 
         response = self.client.post(
-            "/api/v1/core/settings/company-logo",
+            USER_INTERFACE_LOGO_PATH,
             {"logo": logo},
         )
 
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json()["code"], "validation_error")
         self.configuration.refresh_from_db()
         self.assertEqual(self.configuration.company_logo_svg, "")
 
@@ -189,7 +344,7 @@ class CoreBootstrapApiTests(TestCase):
         )
 
         response = self.client.post(
-            "/api/v1/core/settings/company-logo",
+            USER_INTERFACE_LOGO_PATH,
             {"logo": logo},
         )
 
@@ -212,7 +367,7 @@ class CoreBootstrapApiTests(TestCase):
         )
 
         response = self.client.post(
-            "/api/v1/core/settings/company-logo",
+            USER_INTERFACE_LOGO_PATH,
             {"logo": logo},
         )
 
@@ -226,7 +381,7 @@ class CoreBootstrapApiTests(TestCase):
         user = self.create_user("staff-user", is_staff=True)
         self.client.force_login(user)
 
-        response = self.client.delete("/api/v1/core/settings/company-logo")
+        response = self.client.delete(USER_INTERFACE_LOGO_PATH)
 
         self.assertEqual(response.status_code, 204)
         self.configuration.refresh_from_db()

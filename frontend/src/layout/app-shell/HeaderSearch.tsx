@@ -23,6 +23,7 @@ export function HeaderSearch({ navigation }: { navigation: NavigationItem[] }) {
     }
 
     return navigation
+      .filter((item) => !item.is_separator)
       .filter((item) => {
         const searchableValue = `${item.label} ${item.path}`.toLocaleLowerCase("ro-RO");
         return searchableValue.includes(normalizedQuery);

@@ -38,9 +38,6 @@ class CoursePlannerSettings(models.Model):
     class Meta:
         verbose_name = "setări planificator cursuri"
         verbose_name_plural = "setări planificator cursuri"
-        permissions = [
-            ("use_course_planner", "Can use the course planner"),
-        ]
 
     def __str__(self) -> str:
         return f"Planificator cursuri {self.year}"

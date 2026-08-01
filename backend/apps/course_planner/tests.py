@@ -1,12 +1,18 @@
 import io
 import tempfile
 from datetime import date
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from openpyxl import load_workbook
 
+from apps.core.models import ApplicationDefinition
+from apps.public_holidays.models import PublicHoliday
+
+from .files import create_excel_export
 from .models import CoursePlanGeneration
 from .scheduler import CourseScheduler
 
@@ -37,6 +43,16 @@ class CoursePlannerApiTests(TestCase):
             username="planner-user",
             password="test-password-123",
         )
+        application, _ = ApplicationDefinition.objects.get_or_create(
+            key="course-planner",
+            defaults={"name": "Planificator cursuri"},
+        )
+        application.is_enabled = True
+        application.is_access_controlled = True
+        application.save(update_fields=("is_enabled", "is_access_controlled", "updated_at"))
+        group = Group.objects.create(name="Planificator test")
+        application.allowed_groups.add(group)
+        self.user.groups.add(group)
         self.client.force_login(self.user)
 
     def tearDown(self):
@@ -63,7 +79,6 @@ class CoursePlannerApiTests(TestCase):
                 "year": 2027,
                 "months": "1",
                 "randomness": 5,
-                "holidays": "",
             },
         )
 
@@ -74,7 +89,85 @@ class CoursePlannerApiTests(TestCase):
 
         self.assertEqual(response.status_code, 401)
 
-    def test_generate_schedule_from_csv_and_persist_history(self):
+    def test_authenticated_user_without_application_group_receives_forbidden(self):
+        user_without_permission = get_user_model().objects.create_user(
+            username="no-planner-access",
+            password="test-password-123",
+        )
+        self.client.force_login(user_without_permission)
+        generation_id = "00000000-0000-0000-0000-000000000001"
+
+        responses = [
+            self.client.get("/api/v1/course-planner/settings"),
+            self.client.get("/api/v1/course-planner/holidays?year=2028&months=3"),
+            self.client.put(
+                "/api/v1/course-planner/settings",
+                data={"year": 2028, "months": [3], "randomness": 5},
+                content_type="application/json",
+            ),
+            self.generate_request(self.course_file()),
+            self.client.get("/api/v1/course-planner/history"),
+            self.client.post(
+                "/api/v1/course-planner/export",
+                data={"generation_id": generation_id},
+                content_type="application/json",
+            ),
+            self.client.get(
+                f"/api/v1/course-planner/history/{generation_id}/files/excel"
+            ),
+        ]
+
+        self.assertTrue(responses)
+        for response in responses:
+            self.assertEqual(response.status_code, 403)
+
+    def test_holidays_lists_only_the_selected_planner_period(self):
+        PublicHoliday.objects.create(
+            date=date(2027, 1, 1),
+            local_name="Anul Nou",
+            source=PublicHoliday.Source.NAGER,
+            is_internal=False,
+        )
+        PublicHoliday.objects.create(
+            date=date(2027, 2, 2),
+            local_name="Zi internă companie",
+            source=PublicHoliday.Source.INTERNAL,
+            is_internal=True,
+        )
+        PublicHoliday.objects.create(
+            date=date(2027, 3, 8),
+            local_name="Zi în afara selecției",
+            source=PublicHoliday.Source.INTERNAL,
+            is_internal=True,
+        )
+
+        response = self.client.get("/api/v1/course-planner/holidays?year=2027&months=1,2")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response.json(),
+            [
+                {
+                    "date": "01.01.2027",
+                    "name": "Anul Nou",
+                    "source_label": "Zi legală",
+                },
+                {
+                    "date": "02.02.2027",
+                    "name": "Zi internă companie",
+                    "source_label": "Zi internă",
+                },
+            ],
+        )
+
+    @patch(
+        "apps.course_planner.views.get_holiday_dates",
+        return_value=[date(2027, 1, 1)],
+    )
+    def test_generate_schedule_uses_backend_holidays_and_persists_history(
+        self,
+        get_holiday_dates,
+    ):
         response = self.client.post(
             "/api/v1/course-planner/generate",
             {
@@ -82,7 +175,6 @@ class CoursePlannerApiTests(TestCase):
                 "year": 2027,
                 "months": "1,2",
                 "randomness": 5,
-                "holidays": "01.01.2027",
             },
         )
 
@@ -94,11 +186,13 @@ class CoursePlannerApiTests(TestCase):
         self.assertTrue(payload["generation"]["files"]["excel"]["available"])
         self.assertFalse(payload["generation"]["files"]["word"]["available"])
         self.assertFalse(payload["generation"]["files"]["xml"]["available"])
+        get_holiday_dates.assert_called_once_with(year=2027, months=[1, 2])
 
         generation = CoursePlanGeneration.objects.get()
         self.assertEqual(generation.created_by, self.user)
         self.assertEqual(generation.source_filename, "cursuri.csv")
         self.assertEqual(generation.months, [1, 2])
+        self.assertEqual(generation.holidays, ["01.01.2027"])
         self.assertEqual(len(generation.schedule), 2)
         self.assertTrue(generation.excel_file.storage.exists(generation.excel_file.name))
 
@@ -193,32 +287,25 @@ class CoursePlannerApiTests(TestCase):
                 "year": 2028,
                 "months": [3, 4],
                 "randomness": 7,
-                "holidays": ["01.05.2028"],
             },
             content_type="application/json",
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["months"], [3, 4])
+        self.assertNotIn("holidays", response.json())
 
-    def test_schedule_can_be_exported_to_excel(self):
+    @patch(
+        "apps.course_planner.views.get_holiday_dates",
+        return_value=[date(2027, 1, 1)],
+    )
+    def test_schedule_export_uses_saved_generation_data(self, get_holiday_dates):
+        generate_response = self.generate_request(self.course_file())
+        generation_id = generate_response.json()["generation"]["id"]
+
         response = self.client.post(
             "/api/v1/course-planner/export",
-            data={
-                "year": 2027,
-                "holidays": ["01.01.2027"],
-                "schedule": [
-                    {
-                        "title": "Auditor ISO 9001",
-                        "permalink": "/curs/auditor-iso-9001",
-                        "duration_label": "2 zile",
-                        "investment": "350 EUR",
-                        "date_range": "11-12.01.2027",
-                        "month": 1,
-                        "original_order": 0,
-                    }
-                ],
-            },
+            data={"generation_id": generation_id},
             content_type="application/json",
         )
 
@@ -230,6 +317,39 @@ class CoursePlannerApiTests(TestCase):
         )
         workbook = load_workbook(io.BytesIO(response.content), read_only=True)
         self.assertEqual(workbook["Schedule"]["A2"].value, "Auditor ISO 9001")
-        self.assertEqual(workbook["Schedule"]["E2"].value, "11-12.01.2027")
         self.assertEqual(workbook["Holidays"]["A2"].value, "01.01.2027")
+        workbook.close()
+
+    def test_excel_export_keeps_distinct_courses_with_duplicate_titles(self):
+        excel_data = create_excel_export(
+            [
+                {
+                    "title": "Auditor ISO 9001",
+                    "permalink": "/curs/first",
+                    "duration_label": "2 zile",
+                    "investment": "350 EUR",
+                    "date_range": "11-12.01.2027",
+                    "month": 1,
+                    "original_order": 0,
+                },
+                {
+                    "title": "Auditor ISO 9001",
+                    "permalink": "/curs/second",
+                    "duration_label": "3 zile",
+                    "investment": "450 EUR",
+                    "date_range": "18-20.01.2027",
+                    "month": 1,
+                    "original_order": 1,
+                },
+            ],
+            [],
+        )
+
+        workbook = load_workbook(io.BytesIO(excel_data), read_only=True)
+        schedule = workbook["Schedule"]
+        self.assertEqual(schedule.max_row, 3)
+        self.assertEqual(schedule["A2"].value, "Auditor ISO 9001")
+        self.assertEqual(schedule["A3"].value, "Auditor ISO 9001")
+        self.assertEqual(schedule["B2"].value, "/curs/first")
+        self.assertEqual(schedule["B3"].value, "/curs/second")
         workbook.close()

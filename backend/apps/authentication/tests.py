@@ -1,9 +1,17 @@
 import json
 
 from django.contrib.auth import get_user_model
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
+
+TEST_CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+        "LOCATION": "authentication-api-tests",
+    }
+}
 
 
+@override_settings(CACHES=TEST_CACHES)
 class SessionAuthenticationApiTests(TestCase):
     def setUp(self):
         self.user = get_user_model().objects.create_user(
@@ -80,6 +88,7 @@ class SessionAuthenticationApiTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["code"], "csrf_failed")
 
     def test_login_rejects_invalid_credentials(self):
         response = self.login(password="incorrect-password")
@@ -87,7 +96,11 @@ class SessionAuthenticationApiTests(TestCase):
         self.assertEqual(response.status_code, 401)
         self.assertEqual(
             response.json(),
-            {"detail": "Invalid username or password."},
+            {
+                "code": "invalid_credentials",
+                "detail": "Invalid username or password.",
+                "fields": {},
+            },
         )
 
     def test_login_creates_a_session(self):
@@ -112,6 +125,7 @@ class SessionAuthenticationApiTests(TestCase):
         response = self.client.post("/api/v1/auth/logout")
 
         self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["code"], "csrf_failed")
 
     def test_logout_ends_the_session_and_is_idempotent(self):
         login_response = self.login()

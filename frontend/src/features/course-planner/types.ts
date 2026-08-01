@@ -1,52 +1,20 @@
-export type CoursePlannerSettings = {
-  year: number;
-  months: number[];
-  randomness: number;
-  holidays: string[];
-};
+import type { components } from "@/api/generated";
 
-export type ScheduledCourse = {
-  title: string;
-  permalink: string;
-  duration_label: string;
-  investment: string;
-  date_range: string;
-  month: number;
-  original_order: number;
-};
+export type CoursePlannerSettings = components["schemas"]["CoursePlannerSettings"];
+export type ScheduledCourse = components["schemas"]["ScheduledCourse"];
+export type CoursePlanFile = components["schemas"]["CoursePlanFile"];
+export type CoursePlanGeneration = components["schemas"]["CoursePlanGeneration"];
+export type CoursePlanHistoryResponse = components["schemas"]["CoursePlanHistoryResponse"];
+export type GenerateScheduleResponse = components["schemas"]["GenerateScheduleResponse"];
 
 export type CoursePlanFileType = "excel" | "word" | "xml";
 
-export type CoursePlanFile = {
-  available: boolean;
-  filename: string | null;
-};
-
-export type CoursePlanGeneration = {
-  id: string;
-  source_filename: string;
-  year: number;
-  months: number[];
-  randomness: number;
-  course_count: number;
-  created_at: string;
-  created_by: string | null;
-  files: Record<CoursePlanFileType, CoursePlanFile>;
-};
-
-export type CoursePlanHistoryResponse = {
-  count: number;
-  next: string | null;
-  previous: string | null;
-  results: CoursePlanGeneration[];
-};
-
-export type GenerateScheduleResponse = {
-  schedule: ScheduledCourse[];
-  course_count: number;
-  generation: CoursePlanGeneration;
-};
-
 export type CoursePlannerInput = CoursePlannerSettings & {
   inputFile: File;
+};
+
+export type CoursePlannerHoliday = {
+  date: string;
+  name: string;
+  source_label: string;
 };

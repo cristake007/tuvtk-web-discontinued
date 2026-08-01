@@ -2,7 +2,7 @@ import { fileURLToPath, URL } from "node:url";
 
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 
 const buildOutDir = process.env.VITE_BUILD_OUT_DIR ?? "dist";
 
@@ -64,7 +64,7 @@ export default defineConfig({
       "/api": {
         target: "http://backend:8000",
       },
-      "/admin": {
+      "^/admin(?:/|$)": {
         target: "http://backend:8000",
       },
       "/media": {
@@ -74,5 +74,10 @@ export default defineConfig({
         target: "http://backend:8000",
       },
     },
+  },
+  test: {
+    environment: "jsdom",
+    globals: true,
+    setupFiles: ["./src/test/setup.ts"],
   },
 });

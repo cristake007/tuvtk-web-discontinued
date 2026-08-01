@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink } from "react-router-dom";
 
 import type { ShellConfiguration } from "@/api/types";
-import { SidebarTrigger } from "@/components/ui/sidebar";
+import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import type { ShellUser } from "@/features/auth/types";
 import type { NavigationItem } from "@/features/core/types";
 import { cn } from "@/lib/utils";
@@ -12,7 +12,6 @@ import { NotificationMenu } from "./NotificationMenu";
 import { UserMenu } from "./UserMenu";
 
 type AppHeaderProps = {
-  compact: boolean;
   configuration: ShellConfiguration;
   navigation: NavigationItem[];
   user: ShellUser;
@@ -21,11 +20,13 @@ type AppHeaderProps = {
 };
 
 function HeaderBrand({
-  compact,
   configuration,
+  className,
+  logoClassName,
 }: {
-  compact: boolean;
   configuration: ShellConfiguration;
+  className: string;
+  logoClassName: string;
 }) {
   const [logoFailed, setLogoFailed] = useState(false);
 
@@ -38,16 +39,16 @@ function HeaderBrand({
   return (
     <NavLink
       aria-label={`${configuration.site_name} — Dashboard`}
-      className="flex w-36 shrink-0 items-center justify-start outline-none focus-visible:ring-2 focus-visible:ring-ring sm:w-44 md:w-56"
+      className={cn(
+        "flex shrink-0 items-center outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        className,
+      )}
       to="/"
     >
       {showConfiguredLogo ? (
         <img
           alt={`Sigla ${configuration.organization_name}`}
-          className={cn(
-            "max-w-full object-contain object-left transition-[height] duration-200 ease-out motion-reduce:transition-none",
-            compact ? "h-10" : "h-14",
-          )}
+          className={cn("max-w-full object-contain", logoClassName)}
           onError={() => setLogoFailed(true)}
           src={configuration.logo_url ?? undefined}
         />
@@ -61,27 +62,46 @@ function HeaderBrand({
 }
 
 export function AppHeader({
-  compact,
   configuration,
   navigation,
   user,
   logoutPending,
   onLogout,
 }: AppHeaderProps) {
+  const { isMobile, state } = useSidebar();
+  const sidebarEsteRestrans = !isMobile && state === "collapsed";
+  const latimeLogoDesktop = sidebarEsteRestrans
+    ? "w-(--sidebar-width-icon)"
+    : "w-(--sidebar-width)";
+  const spatiuContinutDesktop = sidebarEsteRestrans
+    ? "md:pl-(--sidebar-width-icon)"
+    : "md:pl-(--sidebar-width)";
+  const dimensiuneLogoDesktop = sidebarEsteRestrans
+    ? "h-8 max-w-8 object-center"
+    : "h-14 max-w-[15rem] object-center";
+
   return (
-    <header
-      className={cn(
-        "sticky top-0 z-[60] flex w-full shrink-0 items-center border-b border-border/70 bg-white/95 px-3 shadow-sm backdrop-blur transition-[height,box-shadow] duration-200 ease-out motion-reduce:transition-none sm:px-5",
-        compact ? "h-16 shadow-md" : "h-20",
-      )}
-    >
-      <div className="flex w-full items-center gap-3">
+    <header className="sticky top-0 z-[60] h-16 w-full shrink-0 border-b border-border/70 bg-white/95 px-3 shadow-sm backdrop-blur sm:px-5">
+      <HeaderBrand
+        className={cn(
+          "absolute inset-y-0 left-0 z-10 hidden justify-center md:flex",
+          latimeLogoDesktop,
+        )}
+        configuration={configuration}
+        logoClassName={dimensiuneLogoDesktop}
+      />
+
+      <div className={cn("flex h-full w-full items-center gap-3", spatiuContinutDesktop)}>
         <SidebarTrigger
           aria-label="Deschide sau închide navigația"
           className="shrink-0 rounded-sm text-primary hover:bg-primary/5 hover:text-brand-red aria-expanded:bg-primary/5 aria-expanded:text-brand-red md:hidden"
         />
 
-        <HeaderBrand compact={compact} configuration={configuration} />
+        <HeaderBrand
+          className="w-36 justify-start sm:w-44 md:hidden"
+          configuration={configuration}
+          logoClassName="h-11 object-left sm:h-12"
+        />
 
         <div className="hidden min-w-0 flex-1 justify-center px-3 md:flex lg:px-8">
           <HeaderSearch navigation={navigation} />

@@ -1,6 +1,12 @@
+import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -20,6 +26,7 @@ import {
   isNavigationPathActive,
   type NavigationNode,
 } from "./navigation";
+import { MeniuFlyoutNavigatie } from "./NavigationFlyoutMenu";
 
 type AppSidebarProps = {
   navigation: NavigationNode[];
@@ -42,7 +49,7 @@ const navigationLinkClassName = [
   "data-active:bg-primary/5 data-active:pl-5 data-active:font-semibold",
   "data-active:text-brand-red data-active:before:scale-y-100",
   "group-data-[collapsible=icon]:before:hidden",
-  "[&_svg]:text-current",
+  "[&_svg]:size-5 [&_svg]:text-current",
 ].join(" ");
 
 const navigationSubLinkClassName = [
@@ -50,24 +57,114 @@ const navigationSubLinkClassName = [
   "pl-8 hover:pl-9 data-active:pl-9",
 ].join(" ");
 
-function isNodeActive(node: NavigationNode, pathname: string): boolean {
-  return (
-    isNavigationPathActive(pathname, node.path) ||
-    node.children.some((child) => isNodeActive(child, pathname))
-  );
-}
-
 function NavigationEntry({ item }: { item: NavigationNode }) {
   const location = useLocation();
-  const { setOpenMobile } = useSidebar();
+  const { isMobile, setOpenMobile, state } = useSidebar();
   const Icon = getNavigationIcon(item.icon);
-  const active = isNodeActive(item, location.pathname);
+  const copilActiv = item.children.some((copil) =>
+    isNavigationPathActive(location.pathname, copil.path),
+  );
+  const [deschis, setDeschis] = useState(copilActiv);
+  const activ =
+    item.children.length === 0
+      ? isNavigationPathActive(location.pathname, item.path)
+      : location.pathname === item.path;
+
+  if (item.is_separator) {
+    return (
+      <SidebarMenuItem className="px-4 py-2.5 group-data-[collapsible=icon]:px-2">
+        <div
+          aria-label={item.label}
+          className="flex w-full items-center gap-2"
+          role="separator"
+        >
+          <span
+            aria-hidden="true"
+            className="h-px min-w-3 flex-1 bg-sidebar-border"
+          />
+          <span className="max-w-28 truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground group-data-[collapsible=icon]:hidden">
+            {item.label}
+          </span>
+          <span
+            aria-hidden="true"
+            className="h-px min-w-3 flex-1 bg-sidebar-border group-data-[collapsible=icon]:hidden"
+          />
+        </div>
+      </SidebarMenuItem>
+    );
+  }
+
+  useEffect(() => {
+    if (copilActiv) {
+      setDeschis(true);
+    }
+  }, [copilActiv]);
+
+  if (item.children.length > 0) {
+    if (!isMobile && state === "collapsed") {
+      return (
+        <MeniuFlyoutNavigatie
+          activ={activ}
+          caleCurenta={location.pathname}
+          clasaDeclansator={navigationLinkClassName}
+          item={item}
+        />
+      );
+    }
+
+    return (
+      <SidebarMenuItem className="w-full">
+        <Collapsible onOpenChange={setDeschis} open={deschis}>
+          <CollapsibleTrigger
+            render={
+              <SidebarMenuButton
+                className={navigationLinkClassName}
+                isActive={activ}
+                tooltip={{
+                  children: item.label,
+                  ...sidebarTooltip,
+                }}
+              />
+            }
+          >
+            <Icon aria-hidden="true" />
+            <span className="whitespace-nowrap">{item.label}</span>
+            <ChevronRight
+              aria-hidden="true"
+              className={`ml-auto size-4 shrink-0 transition-transform ${deschis ? "rotate-90" : ""}`}
+            />
+          </CollapsibleTrigger>
+
+          <CollapsibleContent>
+            <SidebarMenuSub className="m-0 gap-0 border-0 p-0">
+              {item.children.map((copil) => (
+                <SidebarMenuSubItem key={copil.key}>
+                  <SidebarMenuSubButton
+                    className={navigationSubLinkClassName}
+                    isActive={isNavigationPathActive(location.pathname, copil.path)}
+                    render={
+                      <NavLink
+                        onClick={() => setOpenMobile(false)}
+                        to={copil.path}
+                      />
+                    }
+                  >
+                    <span>{copil.label}</span>
+                  </SidebarMenuSubButton>
+                </SidebarMenuSubItem>
+              ))}
+            </SidebarMenuSub>
+          </CollapsibleContent>
+        </Collapsible>
+      </SidebarMenuItem>
+    );
+  }
 
   return (
     <SidebarMenuItem className="w-full">
       <SidebarMenuButton
         className={navigationLinkClassName}
-        isActive={active}
+        isActive={activ}
         render={
           <NavLink
             end={item.path === "/"}
@@ -84,26 +181,6 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
         <span className="whitespace-nowrap">{item.label}</span>
       </SidebarMenuButton>
 
-      {item.children.length > 0 ? (
-        <SidebarMenuSub className="m-0 gap-0 border-0 p-0">
-          {item.children.map((child) => (
-            <SidebarMenuSubItem key={child.key}>
-              <SidebarMenuSubButton
-                className={navigationSubLinkClassName}
-                isActive={isNavigationPathActive(location.pathname, child.path)}
-                render={
-                  <NavLink
-                    onClick={() => setOpenMobile(false)}
-                    to={child.path}
-                  />
-                }
-              >
-                <span>{child.label}</span>
-              </SidebarMenuSubButton>
-            </SidebarMenuSubItem>
-          ))}
-        </SidebarMenuSub>
-      ) : null}
     </SidebarMenuItem>
   );
 }

@@ -6,6 +6,9 @@ from typing import Any, Sequence
 from django.core.files.base import ContentFile
 from django.db import transaction
 
+from apps.public_holidays.calendar import get_holidays
+from config.formats import ROMANIAN_DATE_FORMAT
+
 from .files import CourseInput, create_excel_export
 from .models import CoursePlanGeneration, CoursePlannerSettings
 from .scheduler import CourseScheduler
@@ -47,12 +50,12 @@ def parse_holidays(values: Sequence[str]) -> tuple[list[str], list[date]]:
     for value in values:
         clean_value = value.strip()
         try:
-            parsed = datetime.strptime(clean_value, "%d.%m.%Y").date()
+            parsed = datetime.strptime(clean_value, ROMANIAN_DATE_FORMAT).date()
         except ValueError as exc:
             raise ValueError(
                 f'Data „{clean_value}” trebuie să respecte formatul ZZ.LL.AAAA.'
             ) from exc
-        canonical = parsed.strftime("%d.%m.%Y")
+        canonical = parsed.strftime(ROMANIAN_DATE_FORMAT)
         if canonical not in normalized:
             normalized.append(canonical)
             parsed_dates.append(parsed)
@@ -75,13 +78,11 @@ def update_course_planner_settings(
     year: int,
     months: list[int],
     randomness: int,
-    holidays: list[str],
 ) -> CoursePlannerSettings:
     settings = get_course_planner_settings()
     settings.year = year
     settings.months = list(dict.fromkeys(months))
     settings.randomness = randomness
-    settings.holidays = holidays
     settings.full_clean()
     settings.save()
     return settings
@@ -92,8 +93,18 @@ def serialize_settings(settings: CoursePlannerSettings) -> dict[str, Any]:
         "year": settings.year,
         "months": settings.months,
         "randomness": settings.randomness,
-        "holidays": settings.holidays,
     }
+
+
+def get_course_planner_holidays(*, year: int, months: list[int]) -> list[dict[str, str]]:
+    return [
+        {
+            "date": holiday.date.strftime(ROMANIAN_DATE_FORMAT),
+            "name": holiday.local_name,
+            "source_label": "Zi internă" if holiday.is_internal else "Zi legală",
+        }
+        for holiday in get_holidays(year=year, months=months)
+    ]
 
 
 def create_course_plan_generation(
@@ -146,13 +157,19 @@ def generate_schedule(
     randomizer = random_source or random.Random()
     schedule: list[dict[str, Any]] = []
     unscheduled_courses: dict[int, list[str]] = {}
+    available_dates_cache: dict[tuple[int, int], tuple[date, ...]] = {}
 
     for month in months:
         scheduled_dates = set()
         month_unscheduled: set[str] = set()
 
         for course in courses:
-            available_dates = scheduler.get_available_start_days(month, course.duration)
+            cache_key = (month, course.duration)
+            if cache_key not in available_dates_cache:
+                available_dates_cache[cache_key] = tuple(
+                    scheduler.get_available_start_days(month, course.duration)
+                )
+            available_dates = available_dates_cache[cache_key]
             if not available_dates:
                 month_unscheduled.add(course.title)
                 continue

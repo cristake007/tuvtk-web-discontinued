@@ -1,13 +1,14 @@
 import { useRef, useState, type FormEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Eye, EyeOff, LockKeyhole } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
+import { coreBootstrapQueryKey } from "@/api/core";
 import { ApiError } from "@/api/http";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 
 import { login } from "./api";
 import {
@@ -16,7 +17,6 @@ import {
   type LoginFieldErrors,
   validateLoginCredentials,
 } from "./loginValidation";
-import { authQueryKeys } from "./queryKeys";
 
 function getLoginError(error: Error | null): string | null {
   if (!error) {
@@ -25,6 +25,10 @@ function getLoginError(error: Error | null): string | null {
 
   if (error instanceof ApiError && error.status === 401) {
     return "Numele de utilizator sau parola nu sunt corecte.";
+  }
+
+  if (error instanceof ApiError && error.status === 429) {
+    return "Au fost prea multe încercări nereușite. Încearcă din nou peste câteva minute.";
   }
 
   if (error instanceof ApiError && error.status === 403) {
@@ -36,6 +40,7 @@ function getLoginError(error: Error | null): string | null {
 
 export function LoginForm() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
   const [credentials, setCredentials] = useState<LoginCredentials>({
@@ -47,9 +52,13 @@ export function LoginForm() {
 
   const loginMutation = useMutation({
     mutationFn: login,
-    onSuccess: (session) => {
-      queryClient.setQueryData(authQueryKeys.session, session);
-      void queryClient.invalidateQueries({ queryKey: ["core-bootstrap"] });
+    onSuccess: async () => {
+      await queryClient.cancelQueries();
+      queryClient.removeQueries({
+        predicate: (query) => query.queryKey[0] !== coreBootstrapQueryKey[0],
+      });
+      await queryClient.resetQueries({ queryKey: coreBootstrapQueryKey });
+      navigate("/tablou-de-bord", { replace: true });
     },
   });
 
@@ -205,11 +214,7 @@ export function LoginForm() {
             disabled={loginMutation.isPending}
             type="submit"
           >
-            {loginMutation.isPending ? (
-              <Spinner />
-            ) : (
-              <LockKeyhole aria-hidden="true" className="size-3.5" />
-            )}
+            <LockKeyhole aria-hidden="true" className="size-3.5" />
             {loginMutation.isPending ? "Se autentifică…" : "Autentificare"}
           </Button>
         </FieldGroup>

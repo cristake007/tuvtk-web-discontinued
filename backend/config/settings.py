@@ -40,8 +40,17 @@ INSTALLED_APPS = [
     "drf_spectacular_sidecar",
     "apps.authentication.apps.AuthenticationConfig",
     "apps.core.apps.CoreConfig",
+    "apps.tablou_de_bord.apps.TablouDeBordConfig",
+    "apps.documente.apps.DocumenteConfig",
+    "apps.companii.apps.CompaniiConfig",
+    "apps.contacte.apps.ContacteConfig",
+    "apps.oportunitati.apps.OportunitatiConfig",
+    "apps.activitati.apps.ActivitatiConfig",
+    "apps.firme_onrc.apps.FirmeOnrcConfig",
     "apps.course_planner.apps.CoursePlannerConfig",
+    "apps.update_wordpress.apps.UpdateWordpressConfig",
     "apps.public_holidays.apps.PublicHolidaysConfig",
+    "apps.utilizatori.apps.UtilizatoriConfig",
 ]
 
 
@@ -89,17 +98,45 @@ DATABASES = {
         "CONN_MAX_AGE": 60,
         "CONN_HEALTH_CHECKS": True,
     },
-    "registry": {
+}
+
+registry_database = {
+    "NAME": os.environ.get("REGISTRY_DB_NAME"),
+    "USER": os.environ.get("REGISTRY_DB_USER"),
+    "PASSWORD": os.environ.get("REGISTRY_DB_PASSWORD"),
+}
+if env_bool("REGISTRY_DB_ENABLED", default=True) and all(registry_database.values()):
+    DATABASES["registry"] = {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ["REGISTRY_DB_NAME"],
-        "USER": os.environ["REGISTRY_DB_USER"],
-        "PASSWORD": os.environ["REGISTRY_DB_PASSWORD"],
+        **registry_database,
         "HOST": os.environ.get("REGISTRY_DB_HOST", "db_registry"),
         "PORT": os.environ.get("REGISTRY_DB_PORT", "5432"),
         "CONN_MAX_AGE": 60,
         "CONN_HEALTH_CHECKS": True,
-    },
+    }
+
+CACHES = {
+    "default": {
+        "BACKEND": "django.core.cache.backends.redis.RedisCache",
+        "LOCATION": os.environ.get("DJANGO_CACHE_URL", "redis://redis:6379/2"),
+    }
 }
+
+OPENSEARCH_URL = os.environ.get("OPENSEARCH_URL", "")
+OPENSEARCH_USERNAME = os.environ.get("OPENSEARCH_USERNAME", "")
+OPENSEARCH_PASSWORD = os.environ.get("OPENSEARCH_PASSWORD", "")
+OPENSEARCH_VERIFY_CERTS = env_bool("OPENSEARCH_VERIFY_CERTS", default=True)
+OPENSEARCH_CA_CERTS = os.environ.get("OPENSEARCH_CA_CERTS") or None
+OPENSEARCH_REQUEST_TIMEOUT = int(
+    os.environ.get("OPENSEARCH_REQUEST_TIMEOUT", "5")
+)
+OPENSEARCH_FIRME_ONRC_ALIAS = os.environ.get(
+    "OPENSEARCH_FIRME_ONRC_ALIAS",
+    "firme-onrc-companies",
+)
+ONRC_DATA_DIR = Path(os.environ.get("ONRC_DATA_DIR", "/data/onrc"))
+
+DATABASE_ROUTERS = ["config.database_routers.RegistryRouter"]
 
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -138,6 +175,7 @@ SESSION_COOKIE_SECURE = env_bool("DJANGO_SESSION_COOKIE_SECURE", default=not DEB
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SECURE = env_bool("DJANGO_CSRF_COOKIE_SECURE", default=not DEBUG)
+CSRF_FAILURE_VIEW = "config.csrf.csrf_failure"
 
 SECURE_SSL_REDIRECT = env_bool("DJANGO_SECURE_SSL_REDIRECT")
 SECURE_HSTS_SECONDS = int(os.environ.get("DJANGO_SECURE_HSTS_SECONDS", "0"))
@@ -149,6 +187,10 @@ X_FRAME_OPTIONS = "DENY"
 if env_bool("DJANGO_TRUST_X_FORWARDED_PROTO"):
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
+LOGIN_THROTTLE_LIMIT = int(os.environ.get("LOGIN_THROTTLE_LIMIT", "5"))
+LOGIN_THROTTLE_WINDOW_SECONDS = int(
+    os.environ.get("LOGIN_THROTTLE_WINDOW_SECONDS", "300")
+)
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -158,7 +200,7 @@ REST_FRAMEWORK = {
         "rest_framework.permissions.IsAuthenticated",
     ],
     "DEFAULT_RENDERER_CLASSES": [
-        "rest_framework.renderers.JSONRenderer",
+        "config.renderers.StandardizedJSONRenderer",
     ],
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",

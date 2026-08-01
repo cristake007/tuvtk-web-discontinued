@@ -1,16 +1,37 @@
+export type ApiErrorFields = Record<string, unknown>;
+
+export type ApiErrorPayload = {
+  code: string;
+  detail: string;
+  fields: ApiErrorFields;
+};
+
+export type ApiAuthorizationFailureDetail = ApiErrorPayload & {
+  status: number;
+};
+
+export const apiAuthorizationFailureEvent = "tuvtk:api-authorization-failure";
+
 export class ApiError extends Error {
+  readonly code: string;
+  readonly fields: ApiErrorFields;
   readonly status: number;
 
-  constructor(message: string, status: number) {
-    super(message);
+  constructor(payload: ApiErrorPayload, status: number) {
+    super(payload.detail);
     this.name = "ApiError";
+    this.code = payload.code;
+    this.fields = payload.fields;
     this.status = status;
   }
 }
 
 type ApiRequestOptions = RequestInit & {
-  includeCsrf?: boolean;
+  authorizationHandling?: "global" | "ignore";
 };
+
+const unsafeMethods = new Set(["POST", "PUT", "PATCH", "DELETE"]);
+let csrfCookieRequest: Promise<void> | null = null;
 
 function readCookie(name: string): string | null {
   const prefix = `${name}=`;
@@ -25,13 +46,34 @@ function readCookie(name: string): string | null {
   return null;
 }
 
-function readErrorDetail(body: unknown): string | undefined {
-  if (!body || typeof body !== "object" || !("detail" in body)) {
-    return undefined;
+function normalizeErrorPayload(body: unknown, status: number): ApiErrorPayload {
+  if (body && typeof body === "object") {
+    const candidate = body as Partial<ApiErrorPayload>;
+    return {
+      code:
+        typeof candidate.code === "string"
+          ? candidate.code
+          : status === 401
+            ? "authentication_required"
+            : status === 403
+              ? "permission_denied"
+              : "api_error",
+      detail:
+        typeof candidate.detail === "string"
+          ? candidate.detail
+          : `API request failed: ${status}`,
+      fields:
+        candidate.fields && typeof candidate.fields === "object"
+          ? candidate.fields
+          : {},
+    };
   }
 
-  const detail = (body as { detail?: unknown }).detail;
-  return typeof detail === "string" ? detail : undefined;
+  return {
+    code: status === 401 ? "authentication_required" : "api_error",
+    detail: typeof body === "string" && body ? body : `API request failed: ${status}`,
+    fields: {},
+  };
 }
 
 async function readResponseBody(response: Response): Promise<unknown> {
@@ -57,14 +99,60 @@ async function readResponseBody(response: Response): Promise<unknown> {
   try {
     return JSON.parse(responseText) as unknown;
   } catch {
-    throw new ApiError("The server returned invalid JSON.", response.status);
+    throw new ApiError(
+      {
+        code: "invalid_json",
+        detail: "The server returned invalid JSON.",
+        fields: {},
+      },
+      response.status,
+    );
   }
 }
 
-function buildRequestHeaders(
+async function fetchCsrfCookie(): Promise<void> {
+  if (readCookie("csrftoken")) {
+    return;
+  }
+
+  if (!csrfCookieRequest) {
+    csrfCookieRequest = fetch("/api/v1/auth/csrf", {
+      cache: "no-store",
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    })
+      .then(async (response) => {
+        if (!response.ok) {
+          const body = await readResponseBody(response);
+          throw new ApiError(normalizeErrorPayload(body, response.status), response.status);
+        }
+        if (!readCookie("csrftoken")) {
+          throw new ApiError(
+            {
+              code: "csrf_missing",
+              detail: "Security token is missing.",
+              fields: {},
+            },
+            403,
+          );
+        }
+      })
+      .finally(() => {
+        csrfCookieRequest = null;
+      });
+  }
+
+  await csrfCookieRequest;
+}
+
+async function buildRequestHeaders(
   options: ApiRequestOptions,
-): { headers: Headers; requestOptions: RequestInit } {
-  const { includeCsrf = false, ...requestOptions } = options;
+): Promise<{
+  headers: Headers;
+  requestOptions: RequestInit;
+  authorizationHandling: "global" | "ignore";
+}> {
+  const { authorizationHandling = "global", ...requestOptions } = options;
   const headers = new Headers(requestOptions.headers);
   headers.set("Accept", "application/json");
 
@@ -74,22 +162,49 @@ function buildRequestHeaders(
     headers.set("Content-Type", "application/json");
   }
 
-  if (includeCsrf) {
+  const method = (requestOptions.method ?? "GET").toUpperCase();
+  if (unsafeMethods.has(method)) {
+    await fetchCsrfCookie();
     const token = readCookie("csrftoken");
     if (!token) {
-      throw new ApiError("Security token is missing.", 403);
+      throw new ApiError(
+        {
+          code: "csrf_missing",
+          detail: "Security token is missing.",
+          fields: {},
+        },
+        403,
+      );
     }
     headers.set("X-CSRFToken", token);
   }
 
-  return { headers, requestOptions };
+  return { headers, requestOptions, authorizationHandling };
+}
+
+function notifyAuthorizationFailure(
+  status: number,
+  authorizationHandling: "global" | "ignore",
+  payload: ApiErrorPayload,
+): void {
+  if (
+    authorizationHandling === "global" &&
+    (status === 401 || status === 403)
+  ) {
+    window.dispatchEvent(
+      new CustomEvent<ApiAuthorizationFailureDetail>(apiAuthorizationFailureEvent, {
+        detail: { ...payload, status },
+      }),
+    );
+  }
 }
 
 export async function apiRequest<T>(
   path: string,
   options: ApiRequestOptions = {},
 ): Promise<T> {
-  const { headers, requestOptions } = buildRequestHeaders(options);
+  const { headers, requestOptions, authorizationHandling } =
+    await buildRequestHeaders(options);
   const response = await fetch(path, {
     ...requestOptions,
     credentials: "same-origin",
@@ -99,10 +214,9 @@ export async function apiRequest<T>(
   const body = await readResponseBody(response);
 
   if (!response.ok) {
-    throw new ApiError(
-      readErrorDetail(body) ?? `API request failed: ${response.status}`,
-      response.status,
-    );
+    const payload = normalizeErrorPayload(body, response.status);
+    notifyAuthorizationFailure(response.status, authorizationHandling, payload);
+    throw new ApiError(payload, response.status);
   }
 
   return body as T;
@@ -112,11 +226,12 @@ export async function apiDownload(
   path: string,
   options: ApiRequestOptions = {},
 ): Promise<Blob> {
-  const { headers, requestOptions } = buildRequestHeaders(options);
+  const { headers, requestOptions, authorizationHandling } =
+    await buildRequestHeaders(options);
 
   // DRF performs renderer negotiation before the view returns FileResponse.
-  // A wildcard allows the authenticated endpoint to return its real file MIME
-  // while JSON error responses remain readable by the client.
+  // A wildcard allows the endpoint to return its real file MIME while JSON
+  // error responses remain readable by the client.
   headers.set("Accept", "*/*");
 
   const response = await fetch(path, {
@@ -127,17 +242,10 @@ export async function apiDownload(
 
   if (!response.ok) {
     const body = await readResponseBody(response);
-    throw new ApiError(
-      readErrorDetail(body) ?? `API request failed: ${response.status}`,
-      response.status,
-    );
+    const payload = normalizeErrorPayload(body, response.status);
+    notifyAuthorizationFailure(response.status, authorizationHandling, payload);
+    throw new ApiError(payload, response.status);
   }
 
   return response.blob();
-}
-
-export async function ensureCsrfCookie(): Promise<void> {
-  await apiRequest<void>("/api/v1/auth/csrf", {
-    cache: "no-store",
-  });
 }

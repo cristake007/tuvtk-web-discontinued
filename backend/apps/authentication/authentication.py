@@ -1,5 +1,8 @@
 from drf_spectacular.extensions import OpenApiAuthenticationExtension
 from rest_framework.authentication import SessionAuthentication
+from rest_framework.exceptions import PermissionDenied
+
+from config.csrf import api_csrf_error_payload
 
 
 class BrowserSessionAuthentication(SessionAuthentication):
@@ -7,6 +10,12 @@ class BrowserSessionAuthentication(SessionAuthentication):
 
     def authenticate_header(self, request):
         return "Session"
+
+    def enforce_csrf(self, request):
+        try:
+            super().enforce_csrf(request)
+        except PermissionDenied as exc:
+            raise PermissionDenied(detail=api_csrf_error_payload()) from exc
 
 
 class BrowserSessionAuthenticationScheme(OpenApiAuthenticationExtension):

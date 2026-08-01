@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { ServerCrash } from "lucide-react";
 
+import { useLoadingOverlay } from "@/app/LoadingOverlayContext";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,11 +10,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
-import {
-  fetchPublicBranding,
-  publicBrandingQueryKey,
-} from "@/features/branding/api";
 
 type ApplicationStateProps = {
   title: string;
@@ -31,50 +26,18 @@ export function ApplicationState({
   actionLabel,
   onAction,
 }: ApplicationStateProps) {
-  const brandingQuery = useQuery({
-    queryKey: publicBrandingQueryKey,
-    queryFn: fetchPublicBranding,
-    enabled: loading,
-    retry: 1,
-    staleTime: 5 * 60_000,
-  });
-  const [logoFailed, setLogoFailed] = useState(false);
-  const logoUrl = brandingQuery.data?.logo_url ?? null;
+  const { beginLoading } = useLoadingOverlay();
 
   useEffect(() => {
-    setLogoFailed(false);
-  }, [logoUrl]);
+    if (!loading) {
+      return;
+    }
+
+    return beginLoading();
+  }, [beginLoading, loading]);
 
   if (loading) {
-    const showLogo = Boolean(logoUrl) && !logoFailed;
-
-    return (
-      <main
-        aria-live="polite"
-        className="flex min-h-svh items-center justify-center bg-background px-6 py-12"
-        role="status"
-      >
-        <div className="flex w-full max-w-lg flex-col items-center text-center">
-          {showLogo ? (
-            <img
-              alt={`${brandingQuery.data?.organization_name ?? "Company"} logo`}
-              className="max-h-36 max-w-[26rem] animate-pulse object-contain object-center motion-reduce:animate-none"
-              onError={() => setLogoFailed(true)}
-              src={logoUrl ?? undefined}
-            />
-          ) : (
-            <Spinner className="size-8 text-primary" />
-          )}
-
-          <p className="mt-6 text-lg font-semibold tracking-tight text-foreground">
-            {title}
-          </p>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            {description}
-          </p>
-        </div>
-      </main>
-    );
+    return null;
   }
 
   return (

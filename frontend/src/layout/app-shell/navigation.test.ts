@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vitest";
 
 import type { NavigationItem } from "../../features/core/types.js";
 
@@ -11,13 +11,14 @@ import {
 
 const items: NavigationItem[] = [
   {
-    key: "settings",
-    label: "Settings",
-    path: "/settings",
+    key: "administration",
+    label: "Administrare",
+    path: "/administrare",
     icon: "settings",
     position: 30,
     parent_key: null,
     application_key: "core",
+    is_separator: false,
   },
   {
     key: "companies",
@@ -27,6 +28,7 @@ const items: NavigationItem[] = [
     position: 20,
     parent_key: null,
     application_key: "companies",
+    is_separator: false,
   },
   {
     key: "dashboard",
@@ -36,6 +38,7 @@ const items: NavigationItem[] = [
     position: 10,
     parent_key: null,
     application_key: "core",
+    is_separator: false,
   },
   {
     key: "company-detail",
@@ -45,6 +48,7 @@ const items: NavigationItem[] = [
     position: 10,
     parent_key: "companies",
     application_key: "companies",
+    is_separator: false,
   },
 ];
 
@@ -53,7 +57,7 @@ describe("isNavigationPathActive", () => {
     assert.equal(isNavigationPathActive("/companies", "/companies"), true);
     assert.equal(isNavigationPathActive("/companies/42", "/companies"), true);
     assert.equal(isNavigationPathActive("/company", "/companies"), false);
-    assert.equal(isNavigationPathActive("/settings", "/"), false);
+    assert.equal(isNavigationPathActive("/administrare", "/"), false);
   });
 });
 
@@ -63,7 +67,7 @@ describe("buildNavigationTree", () => {
 
     assert.deepEqual(
       tree.map((item) => item.key),
-      ["dashboard", "companies", "settings"],
+      ["dashboard", "companies", "administration"],
     );
     assert.deepEqual(
       tree[1]?.children.map((item) => item.key),

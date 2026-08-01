@@ -3,7 +3,7 @@ from rest_framework import serializers
 
 class DatabaseHealthSerializer(serializers.Serializer):
     alias = serializers.CharField()
-    status = serializers.ChoiceField(choices=("ok", "error"))
+    status = serializers.ChoiceField(choices=("ok", "error", "disabled"))
 
 
 class HealthDatabasesSerializer(serializers.Serializer):

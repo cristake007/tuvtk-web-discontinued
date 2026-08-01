@@ -6,6 +6,7 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect, ensure_csrf_cookie
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
+from rest_framework.exceptions import Throttled
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -17,6 +18,7 @@ from .serializers import (
     LoginRequestSerializer,
 )
 from .services import get_authentication_endpoints, serialize_authentication_session
+from .throttling import LoginFailureThrottle
 
 
 @method_decorator(never_cache, name="dispatch")
@@ -78,6 +80,7 @@ class LoginView(APIView):
         responses={
             200: AuthenticationSessionSerializer,
             401: ErrorDetailSerializer,
+            429: ErrorDetailSerializer,
         },
         summary="Create a Django login session",
         tags=["authentication"],
@@ -85,19 +88,32 @@ class LoginView(APIView):
     def post(self, request):
         serializer = LoginRequestSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        username = serializer.validated_data["username"]
+        throttle = LoginFailureThrottle(request, username)
+        if throttle.is_blocked():
+            raise Throttled(
+                wait=throttle.window_seconds,
+                detail="Prea multe încercări de autentificare nereușite. Încearcă din nou mai târziu.",
+            )
 
         user = authenticate(
             request,
-            username=serializer.validated_data["username"],
+            username=username,
             password=serializer.validated_data["password"],
         )
 
         if user is None or not user.is_active:
+            throttle.record_failure()
             return Response(
-                {"detail": "Invalid username or password."},
+                {
+                    "code": "invalid_credentials",
+                    "detail": "Invalid username or password.",
+                    "fields": {},
+                },
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
+        throttle.clear_username()
         django_login(request, user)
         payload = serialize_authentication_session(user)
         return Response(AuthenticationSessionSerializer(payload).data)

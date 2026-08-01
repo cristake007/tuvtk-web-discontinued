@@ -1,12 +1,12 @@
-import { apiDownload, apiRequest, ensureCsrfCookie } from "@/api/http";
+import { apiDownload, apiRequest } from "@/api/http";
 
 import type {
   CoursePlanFileType,
   CoursePlanHistoryResponse,
+  CoursePlannerHoliday,
   CoursePlannerInput,
   CoursePlannerSettings,
   GenerateScheduleResponse,
-  ScheduledCourse,
 } from "./types";
 
 const coursePlannerPath = "/api/v1/course-planner";
@@ -14,38 +14,50 @@ const coursePlannerPath = "/api/v1/course-planner";
 export const coursePlannerQueryKey = ["course-planner", "settings"] as const;
 export const coursePlannerHistoryQueryKey = ["course-planner", "history"] as const;
 
+export function coursePlannerHolidaysQueryKey(year: number, months: number[]) {
+  return ["course-planner", "holidays", year, ...months] as const;
+}
+
 export function fetchCoursePlannerSettings(): Promise<CoursePlannerSettings> {
   return apiRequest<CoursePlannerSettings>(`${coursePlannerPath}/settings`, {
     cache: "no-store",
   });
 }
 
-export async function saveCoursePlannerSettings(
+export function saveCoursePlannerSettings(
   settings: CoursePlannerSettings,
 ): Promise<CoursePlannerSettings> {
-  await ensureCsrfCookie();
   return apiRequest<CoursePlannerSettings>(`${coursePlannerPath}/settings`, {
     method: "PUT",
     body: JSON.stringify(settings),
-    includeCsrf: true,
   });
 }
 
-export async function generateCourseSchedule(
+export function fetchCoursePlannerHolidays(
+  year: number,
+  months: number[],
+): Promise<CoursePlannerHoliday[]> {
+  const search = new URLSearchParams({
+    year: String(year),
+    months: months.join(","),
+  });
+  return apiRequest<CoursePlannerHoliday[]>(`${coursePlannerPath}/holidays?${search}`, {
+    cache: "no-store",
+  });
+}
+
+export function generateCourseSchedule(
   input: CoursePlannerInput,
 ): Promise<GenerateScheduleResponse> {
-  await ensureCsrfCookie();
   const formData = new FormData();
   formData.append("input_file", input.inputFile);
   formData.append("year", String(input.year));
   formData.append("months", input.months.join(","));
   formData.append("randomness", String(input.randomness));
-  formData.append("holidays", input.holidays.join(","));
 
   return apiRequest<GenerateScheduleResponse>(`${coursePlannerPath}/generate`, {
     method: "POST",
     body: formData,
-    includeCsrf: true,
   });
 }
 
@@ -65,15 +77,9 @@ export function downloadCoursePlanFile(input: {
   );
 }
 
-export async function exportCourseSchedule(input: {
-  year: number;
-  holidays: string[];
-  schedule: ScheduledCourse[];
-}): Promise<Blob> {
-  await ensureCsrfCookie();
+export function exportCourseSchedule(generationId: string): Promise<Blob> {
   return apiDownload(`${coursePlannerPath}/export`, {
     method: "POST",
-    body: JSON.stringify(input),
-    includeCsrf: true,
+    body: JSON.stringify({ generation_id: generationId }),
   });
 }

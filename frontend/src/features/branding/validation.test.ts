@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { describe, it } from "node:test";
+import { describe, it } from "vitest";
 
 import {
   MAX_COMPANY_LOGO_BYTES,
@@ -21,7 +21,7 @@ describe("validateCompanyLogo", () => {
   it("rejects non-SVG files", () => {
     assert.equal(
       validateCompanyLogo({ name: "logo.png", size: 100, type: "image/png" }),
-      "Select an SVG file.",
+      "Selectează un fișier SVG.",
     );
   });
 
@@ -32,7 +32,7 @@ describe("validateCompanyLogo", () => {
         size: MAX_COMPANY_LOGO_BYTES + 1,
         type: "image/svg+xml",
       }),
-      "The SVG file must be 256 KB or smaller.",
+      "Fișierul SVG trebuie să aibă cel mult 256 KB.",
     );
   });
 });

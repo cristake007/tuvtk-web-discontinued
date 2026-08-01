@@ -1,4 +1,5 @@
-import { LogOut, ShieldCheck, UserRound } from "lucide-react";
+import { LogOut, Settings, ShieldCheck, UserRound } from "lucide-react";
+import { NavLink } from "react-router-dom";
 
 import { Avatar, AvatarBadge, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Spinner } from "@/components/ui/spinner";
 import type { ShellUser } from "@/features/auth/types";
 
 type UserMenuProps = {
@@ -48,7 +48,7 @@ function UserAvatar({ user, large = false }: { user: ShellUser; large?: boolean 
 }
 
 export function UserMenu({ user, logoutPending, onLogout }: UserMenuProps) {
-  const roleLabel = user.is_staff ? "Administrator" : "Team member";
+  const roleLabel = user.is_staff ? "Administrator" : "Membru echipă";
   const RoleIcon = user.is_staff ? ShieldCheck : UserRound;
   const identity = user.email || user.username;
 
@@ -57,10 +57,10 @@ export function UserMenu({ user, logoutPending, onLogout }: UserMenuProps) {
       <DropdownMenuTrigger
         render={
           <Button
-            aria-label={`Open ${user.display_name} account menu`}
+            aria-label={`Deschide meniul contului ${user.display_name}`}
             className="cursor-pointer rounded-full p-0"
             size="icon-lg"
-            title="Account"
+            title="Cont"
             variant="ghost"
           />
         }
@@ -90,14 +90,26 @@ export function UserMenu({ user, logoutPending, onLogout }: UserMenuProps) {
         </DropdownMenuGroup>
 
         <DropdownMenuSeparator />
+        {user.is_staff ? (
+          <>
+            <DropdownMenuItem
+              className="cursor-pointer py-1.5"
+              render={<NavLink to="/administrare" />}
+            >
+              <Settings aria-hidden="true" />
+              Administrare
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        ) : null}
         <DropdownMenuItem
           className="cursor-pointer py-1.5"
           disabled={logoutPending}
           onClick={onLogout}
           variant="destructive"
         >
-          {logoutPending ? <Spinner /> : <LogOut aria-hidden="true" />}
-          {logoutPending ? "Signing out…" : "Sign out"}
+          <LogOut aria-hidden="true" />
+          {logoutPending ? "Se deconectează…" : "Deconectare"}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

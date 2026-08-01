@@ -21,6 +21,7 @@ def serialize_session_user(user: AbstractBaseUser) -> dict[str, object]:
         "display_name": display_name,
         "email": user.email,
         "is_staff": user.is_staff,
+        "is_superuser": user.is_superuser,
     }
 
 

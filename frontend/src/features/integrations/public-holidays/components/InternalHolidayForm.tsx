@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Spinner } from "@/components/ui/spinner";
 import { Textarea } from "@/components/ui/textarea";
 
 import type { InternalHolidayInput } from "../types";
@@ -95,7 +94,7 @@ export function InternalHolidayForm({
             </Button>
           ) : null}
           <Button disabled={pending} type="submit">
-            {pending ? <Spinner /> : <Save aria-hidden="true" />}
+            <Save aria-hidden="true" />
             {editing ? "Salvează modificările" : "Adaugă ziua"}
           </Button>
         </CardFooter>

@@ -49,7 +49,7 @@ Do not create Django authentication, administration, session, or content-type ta
 ```text
 backend/config/                     Django settings, API URLs, Celery, schema, system views
 backend/apps/authentication/        Browser session authentication
-backend/apps/core/                  Shell configuration and navigation
+backend/apps/core/                  Shell, navigation, and administration configuration
 backend/apps/course_planner/        Course planning, history, and generated files
 backend/apps/public_holidays/       Nager.Date, internal holidays, and central calendar
 backend/apps/<domain>/              Domain models, serializers, services, views, URLs, tests
@@ -60,7 +60,7 @@ frontend/src/api/                   Shared HTTP transport
 frontend/src/app/                   React Router configuration
 frontend/src/components/ui/         Generated shadcn primitives
 frontend/src/features/auth/         Authentication feature
-frontend/src/features/branding/     Branding feature
+frontend/src/features/branding/     Public branding and user-interface visual settings
 frontend/src/features/core/         Shared shell API contracts
 frontend/src/features/course-planner/ Course planner API, state, and interface
 frontend/src/features/integrations/ External service settings and interfaces
@@ -193,6 +193,28 @@ POST /api/v1/auth/logout
 - Permission checks belong in Django; React is not a security boundary.
 - Do not add JWT or another user store without a concrete external-client requirement.
 
+## Administration contract
+
+`Administrare` is the staff-only entry point for system configuration. Do not recreate the former `/settings` frontend routes or API endpoint aliases.
+
+```text
+Frontend:
+/administrare
+/administrare/sistem/interfata-utilizator
+/administrare/integrari
+/administrare/integrari/zile-libere
+
+API:
+GET    /api/v1/core/administration/user-interface
+POST   /api/v1/core/administration/user-interface/company-logo
+DELETE /api/v1/core/administration/user-interface/company-logo
+```
+
+- The administration overview groups: `Sistem`, `Utilizatori`, `Mesagerie`, `Configurare`, `Date`, and `Integrări`.
+- `Interfață utilizator` is the extensible page for visual and presentation settings; the company logo is one child setting, not the page identity.
+- Administrative API resources use `IsAdminUser` and retain session authentication plus CSRF protection.
+- The public read-only logo remains available at `/api/v1/core/company-logo`.
+
 ## Frontend language
 
 All user-facing frontend copy must be written in Romanian unless the feature explicitly requires another language.
@@ -212,10 +234,10 @@ Dashboard
 Companii
 Documente
 Planificator cursuri
-Setări
+Administrare
 ```
 
-`Integrări` is an approved submenu under `Setări`. Do not rename `Dashboard` to `Spațiu de lucru` or `Panou de control` unless explicitly requested.
+`Integrări` belongs inside the `Administrare` overview. Do not add it back as a sidebar submenu. Do not rename `Dashboard` to `Spațiu de lucru` or `Panou de control` unless explicitly requested.
 
 ## Frontend conventions
 

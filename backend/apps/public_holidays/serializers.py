@@ -1,17 +1,20 @@
 from rest_framework import serializers
 
+from config.error_serializers import ApiErrorSerializer
+from config.formats import ROMANIAN_DATE_FORMAT
+
 from .models import PublicHoliday, PublicHolidaySettings
 
 
 class RomanianDateField(serializers.DateField):
     def __init__(self, *args, **kwargs):
-        kwargs.setdefault("format", "%d.%m.%Y")
-        kwargs.setdefault("input_formats", ["%d.%m.%Y", "iso-8601"])
+        kwargs.setdefault("format", ROMANIAN_DATE_FORMAT)
+        kwargs.setdefault("input_formats", [ROMANIAN_DATE_FORMAT, "iso-8601"])
         super().__init__(*args, **kwargs)
 
 
-class PublicHolidayErrorDetailSerializer(serializers.Serializer):
-    detail = serializers.CharField()
+class PublicHolidayErrorDetailSerializer(ApiErrorSerializer):
+    pass
 
 
 class PublicHolidaySerializer(serializers.ModelSerializer):
@@ -33,6 +36,13 @@ class PublicHolidaySerializer(serializers.ModelSerializer):
 
 
 class PublicHolidaySettingsSerializer(serializers.ModelSerializer):
+    enabled = serializers.BooleanField(read_only=True)
+    automatic_sync = serializers.BooleanField(read_only=True)
+    frequency = serializers.ChoiceField(
+        choices=PublicHolidaySettings.Frequency.choices,
+        read_only=True,
+    )
+
     class Meta:
         model = PublicHolidaySettings
         fields = (

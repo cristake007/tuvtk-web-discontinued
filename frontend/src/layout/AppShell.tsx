@@ -1,57 +1,52 @@
-import { useEffect, useMemo, useState, type CSSProperties } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect, useMemo, type CSSProperties } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
-import { Outlet } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router-dom";
 
-import { coreBootstrapQueryKey, fetchCoreBootstrap } from "@/api/core";
+import { coreBootstrapQueryKey } from "@/api/core";
 import { ApiError } from "@/api/http";
-import { ApplicationState } from "@/components/ApplicationState";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { logout } from "@/features/auth/api";
-import { authQueryKeys } from "@/features/auth/queryKeys";
-import type { AuthenticationSession } from "@/features/auth/types";
+import type { CoreBootstrap } from "@/features/core/types";
 
 import { AppHeader } from "./app-shell/AppHeader";
 import { AppSidebar } from "./app-shell/AppSidebar";
 import { buildNavigationTree } from "./app-shell/navigation";
 
-const unauthenticatedSession: AuthenticationSession = {
-  authenticated: false,
-  user: null,
-};
-
 type AppShellStyle = CSSProperties & {
   "--app-header-height": string;
 };
 
-export function AppShell() {
+export function AppShell({ bootstrap }: { bootstrap: CoreBootstrap }) {
   const queryClient = useQueryClient();
-  const [headerCompact, setHeaderCompact] = useState(false);
-  const headerHeight = headerCompact ? "4rem" : "5rem";
-
-  const bootstrapQuery = useQuery({
-    queryKey: coreBootstrapQueryKey,
-    queryFn: fetchCoreBootstrap,
-    retry: false,
-    staleTime: 60_000,
-  });
+  const navigate = useNavigate();
+  const headerHeight = "4rem";
 
   const logoutMutation = useMutation({
     mutationFn: logout,
-    onSuccess: () => {
-      queryClient.removeQueries({ queryKey: coreBootstrapQueryKey });
-      queryClient.setQueryData(authQueryKeys.session, unauthenticatedSession);
+    onMutate: async () => {
+      await queryClient.cancelQueries();
+      queryClient.removeQueries({
+        predicate: (query) => query.queryKey[0] !== coreBootstrapQueryKey[0],
+      });
+      queryClient.setQueryData<CoreBootstrap>(coreBootstrapQueryKey, {
+        ...bootstrap,
+        authenticated: false,
+        accessible_application_keys: [],
+        navigation: [],
+        user: null,
+      });
+      navigate("/tablou-de-bord", { replace: true });
+    },
+    onSuccess: async () => {
+      await queryClient.resetQueries({ queryKey: coreBootstrapQueryKey });
+    },
+    onError: async () => {
+      await queryClient.resetQueries({ queryKey: coreBootstrapQueryKey });
     },
   });
-
-  useEffect(() => {
-    if (bootstrapQuery.error instanceof ApiError && bootstrapQuery.error.status === 401) {
-      queryClient.removeQueries({ queryKey: coreBootstrapQueryKey });
-      queryClient.setQueryData(authQueryKeys.session, unauthenticatedSession);
-    }
-  }, [bootstrapQuery.error, queryClient]);
 
   useEffect(() => {
     document.documentElement.style.setProperty("--app-header-height", headerHeight);
@@ -61,33 +56,29 @@ export function AppShell() {
     };
   }, [headerHeight]);
 
+  useEffect(() => {
+    const root = document.documentElement;
+    const { culoare_accent, culoare_fundal, culoare_primara } = bootstrap.configuration;
+    root.style.setProperty("--primary", culoare_primara);
+    root.style.setProperty("--brand-red", culoare_accent);
+    root.style.setProperty("--background", culoare_fundal);
+
+    return () => {
+      root.style.removeProperty("--primary");
+      root.style.removeProperty("--brand-red");
+      root.style.removeProperty("--background");
+    };
+  }, [bootstrap.configuration]);
+
   const navigation = useMemo(
-    () => buildNavigationTree(bootstrapQuery.data?.navigation ?? []),
-    [bootstrapQuery.data?.navigation],
+    () => buildNavigationTree(bootstrap.navigation),
+    [bootstrap.navigation],
   );
 
-  if (bootstrapQuery.isPending) {
-    return (
-      <ApplicationState
-        description="Se încarcă navigația, permisiunile și configurația aplicației."
-        loading
-        title="Se pregătește aplicația"
-      />
-    );
+  if (!bootstrap.user) {
+    return null;
   }
 
-  if (bootstrapQuery.isError || !bootstrapQuery.data) {
-    return (
-      <ApplicationState
-        actionLabel="Încearcă din nou"
-        description="Configurația aplicației nu a putut fi încărcată din Django."
-        onAction={() => void bootstrapQuery.refetch()}
-        title="Aplicația nu este disponibilă"
-      />
-    );
-  }
-
-  const bootstrap = bootstrapQuery.data;
   const shellStyle: AppShellStyle = {
     "--app-header-height": headerHeight,
   };
@@ -99,7 +90,6 @@ export function AppShell() {
         style={shellStyle}
       >
         <AppHeader
-          compact={headerCompact}
           configuration={bootstrap.configuration}
           logoutPending={logoutMutation.isPending}
           navigation={bootstrap.navigation}
@@ -111,15 +101,7 @@ export function AppShell() {
           <AppSidebar navigation={navigation} />
 
           <SidebarInset className="min-h-0 overflow-hidden bg-muted/30">
-            <div
-              className="flex min-h-0 flex-1 flex-col overflow-auto bg-muted/30 p-[15px]"
-              onScroll={(event) => {
-                const compact = event.currentTarget.scrollTop > 24;
-                setHeaderCompact((current) =>
-                  current === compact ? current : compact,
-                );
-              }}
-            >
+            <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-background p-[15px]">
               <div className="flex min-h-full w-full flex-1 flex-col bg-background">
                 {logoutMutation.isError ? (
                   <Alert className="m-4 mb-0 border-warning/40 bg-warning/10 sm:m-6 sm:mb-0 lg:m-8 lg:mb-0">

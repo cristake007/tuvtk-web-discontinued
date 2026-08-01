@@ -4,6 +4,8 @@ from django.conf import settings
 from django.db import models
 from django.db.models import Q
 
+from config.formats import ROMANIAN_DATE_FORMAT
+
 
 class PublicHoliday(models.Model):
     class Source(models.TextChoices):
@@ -58,7 +60,7 @@ class PublicHoliday(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"{self.date:%d.%m.%Y} — {self.local_name}"
+        return f"{self.date.strftime(ROMANIAN_DATE_FORMAT)} — {self.local_name}"
 
 
 class PublicHolidaySettings(models.Model):

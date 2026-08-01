@@ -11,7 +11,6 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
 
 import type { PublicHoliday } from "../types";
 
@@ -60,11 +59,7 @@ export function PublicHolidayTable({
       </CardHeader>
 
       <CardContent className="px-0">
-        {loading ? (
-          <div className="flex min-h-56 items-center justify-center">
-            <Spinner className="size-7 text-primary" />
-          </div>
-        ) : holidays.length ? (
+        {loading ? null : holidays.length ? (
           <div className="overflow-x-auto">
             <table className="w-full min-w-[48rem] border-collapse text-sm">
               <thead className="bg-muted/60 text-left">
@@ -128,11 +123,7 @@ export function PublicHolidayTable({
                           type="button"
                           variant="outline"
                         >
-                          {deletePendingId === holiday.id ? (
-                            <Spinner />
-                          ) : (
-                            <Trash2 aria-hidden="true" />
-                          )}
+                          <Trash2 aria-hidden="true" />
                         </Button>
                       </div>
                     </td>

@@ -1,34 +1,7 @@
-import type { ShellUser } from "../auth/types.js";
+import type { components } from "../../api/generated.js";
 
-export type ShellConfiguration = {
-  site_name: string;
-  organization_name: string;
-  sidebar_title: string;
-  logo_url: string | null;
-};
-
-export type NavigationItem = {
-  key: string;
-  label: string;
-  path: string;
-  icon: string;
-  position: number;
-  parent_key: string | null;
-  application_key: string;
-};
-
-export type CoreBootstrap = {
-  configuration: ShellConfiguration;
-  user: ShellUser;
-  navigation: NavigationItem[];
-};
-
-export type DatabaseHealth = {
-  alias: string;
-  status: "ok" | "error";
-};
-
-export type HealthResponse = {
-  status: "ok" | "degraded";
-  databases: Record<string, DatabaseHealth>;
-};
+export type ShellConfiguration = components["schemas"]["ShellConfiguration"];
+export type NavigationItem = components["schemas"]["NavigationItem"];
+export type CoreBootstrap = components["schemas"]["CoreBootstrap"];
+export type DatabaseHealth = components["schemas"]["DatabaseHealth"];
+export type HealthResponse = components["schemas"]["HealthResponse"];

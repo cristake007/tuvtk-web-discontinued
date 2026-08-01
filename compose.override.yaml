@@ -11,14 +11,71 @@ services:
 
     environment:
       DJANGO_DEBUG: "true"
+      OPENSEARCH_CA_CERTS: ""
+      OPENSEARCH_PASSWORD: ""
+      OPENSEARCH_URL: http://opensearch:9200
+      OPENSEARCH_USERNAME: ""
+      OPENSEARCH_VERIFY_CERTS: "false"
 
   celery_worker:
     build:
       target: development
 
+    environment:
+      OPENSEARCH_CA_CERTS: ""
+      OPENSEARCH_PASSWORD: ""
+      OPENSEARCH_URL: http://opensearch:9200
+      OPENSEARCH_USERNAME: ""
+      OPENSEARCH_VERIFY_CERTS: "false"
+
   celery_beat:
     build:
       target: development
+
+  opensearch:
+    image: opensearchproject/opensearch:3.7.0
+
+    container_name: ${OPENSEARCH_CONTAINER_NAME:-tuvtk_opensearch}
+
+    environment:
+      cluster.name: tuvtk-search
+      node.name: opensearch
+      discovery.type: single-node
+      bootstrap.memory_lock: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      DISABLE_SECURITY_PLUGIN: "true"
+      OPENSEARCH_JAVA_OPTS: ${OPENSEARCH_JAVA_OPTS:--Xms512m -Xmx512m}
+
+    expose:
+      - "9200"
+      - "9600"
+
+    ports:
+      - "127.0.0.1:${OPENSEARCH_EXPOSED_PORT:-9200}:9200"
+
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl --fail --silent http://localhost:9200/_cluster/health >/dev/null",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+    restart: unless-stopped
 
   frontend:
     image: node:24-bookworm-slim
@@ -52,3 +109,7 @@ services:
 
     init: true
     restart: "no"
+
+volumes:
+  opensearch_data:
+    name: ${OPENSEARCH_VOLUME_NAME:-tuvtk_opensearch_data}

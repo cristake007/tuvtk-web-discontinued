@@ -1,17 +1,5 @@
-export type ShellUser = {
-  id: number;
-  username: string;
-  display_name: string;
-  email: string;
-  is_staff: boolean;
-};
+import type { components } from "@/api/generated";
 
-export type AuthenticationSession = {
-  authenticated: boolean;
-  user: ShellUser | null;
-};
-
-export type LoginCredentials = {
-  username: string;
-  password: string;
-};
+export type ShellUser = components["schemas"]["SessionUser"];
+export type AuthenticationSession = components["schemas"]["AuthenticationSession"];
+export type LoginCredentials = components["schemas"]["LoginRequest"];

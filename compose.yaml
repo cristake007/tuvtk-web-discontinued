@@ -17,14 +17,16 @@ services:
       - type: bind
         source: ./backend
         target: /app
+      - type: bind
+        source: ./onrc-data
+        target: /data/onrc
+        read_only: true
 
     expose:
       - "8000"
 
     depends_on:
       db_core:
-        condition: service_healthy
-      db_registry:
         condition: service_healthy
 
     command:
@@ -59,11 +61,13 @@ services:
         source: ./backend
         target: /app
         read_only: true
+      - type: bind
+        source: ./onrc-data
+        target: /data/onrc
+        read_only: true
 
     depends_on:
       db_core:
-        condition: service_healthy
-      db_registry:
         condition: service_healthy
       redis:
         condition: service_healthy

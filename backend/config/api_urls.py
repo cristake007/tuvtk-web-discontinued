@@ -19,7 +19,10 @@ urlpatterns = [
     path("auth", authentication_root, name="authentication-root-no-slash"),
     path("auth/", include("apps.authentication.urls")),
     path("core/", include("apps.core.urls")),
+    path("tablou-de-bord/", include("apps.tablou_de_bord.urls")),
+    path("documente/", include("apps.documente.urls")),
     path("course-planner/", include("apps.course_planner.urls")),
+    path("utilizatori/", include("apps.utilizatori.urls")),
     path(
         "integrations/public-holidays/",
         include("apps.public_holidays.urls"),

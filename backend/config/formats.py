@@ -1,0 +1,1 @@
+ROMANIAN_DATE_FORMAT = "%d.%m.%Y"

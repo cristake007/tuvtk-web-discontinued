@@ -19,7 +19,7 @@ class DrfSessionContractTests(TestCase):
         )
 
         response = client.post(
-            "/api/v1/core/settings/company-logo",
+            "/api/v1/core/administration/user-interface/company-logo",
             {"logo": logo},
         )
 

@@ -10,15 +10,6 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Spinner } from "@/components/ui/spinner";
 
 import { formatSelectedMonths } from "../constants";
 import type { GenerateScheduleResponse } from "../types";
@@ -26,7 +17,6 @@ import type { GenerateScheduleResponse } from "../types";
 type PlannerSummaryCardProps = {
   downloadPending: boolean;
   file: File | null;
-  holidayCount: number;
   onDownload: () => void;
   result: GenerateScheduleResponse | null;
   selectedMonths: number[];
@@ -58,8 +48,8 @@ function ArtifactStatus({
   label: string;
 }) {
   return (
-    <div className="flex items-center gap-3 rounded-lg border bg-background px-3 py-2.5">
-      <span className="grid size-8 place-items-center rounded-lg bg-muted text-muted-foreground">
+    <div className="flex items-center gap-3 border-b py-3 last:border-b-0">
+      <span className="grid size-8 place-items-center bg-muted text-muted-foreground">
         <Icon aria-hidden="true" className="size-4" />
       </span>
       <div className="min-w-0 flex-1">
@@ -76,30 +66,29 @@ function ArtifactStatus({
 export function PlannerSummaryCard({
   downloadPending,
   file,
-  holidayCount,
   onDownload,
   result,
   selectedMonths,
   year,
 }: PlannerSummaryCardProps) {
   return (
-    <Card className="h-fit shadow-sm xl:sticky xl:top-6">
-      <CardHeader className="border-b">
-        <CardTitle className="flex items-center gap-2">
+    <aside className="h-fit border-t pt-6 xl:sticky xl:top-6 xl:border-t-0 xl:border-l xl:pl-6">
+      <div>
+        <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
           <ListChecks aria-hidden="true" className="size-4 text-primary" />
           Rezumat
-        </CardTitle>
-        <CardDescription>
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
           Verifică selecția înainte de generare și descarcă rezultatul curent.
-        </CardDescription>
-      </CardHeader>
+        </p>
+      </div>
 
-      <CardContent className="grid gap-5 pt-1">
+      <div className="mt-6 grid gap-6">
         <div>
           <SummaryRow label="Fișier" value={file?.name ?? "Neselectat"} />
           <SummaryRow label="An" value={String(year)} />
           <SummaryRow label="Luni" value={formatSelectedMonths(selectedMonths)} />
-          <SummaryRow label="Zile libere" value={String(holidayCount)} />
+          <SummaryRow label="Zile libere" value="Preluate automat" />
           <SummaryRow
             label="Cursuri procesate"
             value={result ? String(result.course_count) : "—"}
@@ -120,7 +109,7 @@ export function PlannerSummaryCard({
         </div>
 
         {!result ? (
-          <div className="rounded-xl border border-dashed bg-muted/20 p-4 text-center">
+          <div className="py-2 text-center">
             <CalendarDays aria-hidden="true" className="mx-auto size-6 text-muted-foreground" />
             <p className="mt-2 text-sm font-medium">Nicio planificare generată</p>
             <p className="mt-1 text-xs leading-5 text-muted-foreground">
@@ -128,20 +117,18 @@ export function PlannerSummaryCard({
             </p>
           </div>
         ) : null}
-      </CardContent>
+      </div>
 
-      <CardFooter>
-        <Button
-          className="w-full"
-          disabled={!result || downloadPending}
-          onClick={onDownload}
-          type="button"
-          variant="outline"
-        >
-          {downloadPending ? <Spinner /> : <Download aria-hidden="true" />}
-          {downloadPending ? "Se descarcă…" : "Descarcă Excel"}
-        </Button>
-      </CardFooter>
-    </Card>
+      <Button
+        className="mt-6 w-full"
+        disabled={!result || downloadPending}
+        onClick={onDownload}
+        type="button"
+        variant="outline"
+      >
+        <Download aria-hidden="true" />
+        {downloadPending ? "Se descarcă…" : "Descarcă Excel"}
+      </Button>
+    </aside>
   );
 }

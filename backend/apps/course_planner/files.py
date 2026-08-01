@@ -12,6 +12,7 @@ from openpyxl.utils.exceptions import InvalidFileException
 
 MAX_COURSES = 10_000
 MAX_HEADER_SCAN_ROWS = 25
+EXCEL_FORMULA_PREFIXES = ("=", "+", "-", "@", "\t", "\r")
 
 HEADER_ALIASES = {
     "title": ("title", "titlu", "nume curs"),
@@ -48,6 +49,16 @@ def _display_value(value: Any) -> str:
     if isinstance(value, float) and value.is_integer():
         return str(int(value))
     return str(value).strip()
+
+
+def _neutralize_excel_formula(value: Any) -> Any:
+    if not isinstance(value, str) or not value:
+        return value
+
+    first_non_space = value.lstrip(" ")[:1]
+    if value.startswith(("\t", "\r")) or first_non_space in EXCEL_FORMULA_PREFIXES:
+        return f"'{value}"
+    return value
 
 
 def _header_map(row: list[Any]) -> dict[str, int]:
@@ -303,30 +314,35 @@ def create_excel_export(
     headers = ["Title", "Permalink", "Durata Curs", "investitie", *month_names]
     schedule_sheet.append(headers)
 
-    rows_by_title: dict[str, dict[str, Any]] = {}
-    order: list[str] = []
-    for item in sorted(schedule, key=lambda value: value.get("original_order", 0)):
-        title = str(item["title"])
-        if title not in rows_by_title:
-            rows_by_title[title] = {
-                "Title": title,
+    rows_by_order: dict[int, dict[str, Any]] = {}
+    order: list[int] = []
+    sorted_schedule = sorted(schedule, key=lambda value: value.get("original_order", 0))
+    for fallback_order, item in enumerate(sorted_schedule):
+        course_order = int(item.get("original_order", fallback_order))
+        if course_order not in rows_by_order:
+            rows_by_order[course_order] = {
+                "Title": str(item["title"]),
                 "Permalink": item.get("permalink", ""),
                 "Durata Curs": item.get("duration_label", ""),
                 "investitie": item.get("investment", ""),
                 **{month: "" for month in month_names},
             }
-            order.append(title)
-        rows_by_title[title][month_names[int(item["month"]) - 1]] = item["date_range"]
+            order.append(course_order)
+        rows_by_order[course_order][month_names[int(item["month"]) - 1]] = item[
+            "date_range"
+        ]
 
-    for title in order:
-        row = rows_by_title[title]
-        schedule_sheet.append([row[header] for header in headers])
+    for course_order in order:
+        row = rows_by_order[course_order]
+        schedule_sheet.append(
+            [_neutralize_excel_formula(row[header]) for header in headers]
+        )
 
     if holidays:
         holidays_sheet = workbook.create_sheet("Holidays")
         holidays_sheet.append(["Holiday Date"])
         for holiday in holidays:
-            holidays_sheet.append([holiday])
+            holidays_sheet.append([_neutralize_excel_formula(holiday)])
 
     for sheet in workbook.worksheets:
         for column_index, column in enumerate(sheet.iter_cols(), start=1):

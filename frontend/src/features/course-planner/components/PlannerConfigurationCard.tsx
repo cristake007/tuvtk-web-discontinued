@@ -1,31 +1,38 @@
 import type { FormEvent } from "react";
-import { FileSpreadsheet, Save, Sparkles } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { CalendarCheck2, FileSpreadsheet, Save, Sparkles } from "lucide-react";
 
 import { FileUploadField } from "@/components/FileUploadField";
 import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Spinner } from "@/components/ui/spinner";
-import { Textarea } from "@/components/ui/textarea";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
 
+import { coursePlannerHolidaysQueryKey, fetchCoursePlannerHolidays } from "../api";
 import { monthNames } from "../constants";
 import type { CoursePlannerSettings } from "../types";
+
+const firstPlannerYear = 2024;
+const lastPlannerYear = new Date().getFullYear() + 10;
+
+function getPlannerYears(selectedYear: number): number[] {
+  const start = Math.min(firstPlannerYear, selectedYear);
+  const end = Math.max(lastPlannerYear, selectedYear);
+
+  return Array.from({ length: end - start + 1 }, (_, index) => end - index);
+}
 
 type PlannerConfigurationCardProps = {
   file: File | null;
   generatePending: boolean;
-  holidaysText: string;
   onClearMonths: () => void;
   onFileChange: (file: File | undefined) => void;
   onGenerate: (event: FormEvent<HTMLFormElement>) => void;
-  onHolidaysChange: (value: string) => void;
   onRandomnessChange: (value: number) => void;
   onSave: () => void;
   onSelectAllMonths: () => void;
@@ -38,11 +45,9 @@ type PlannerConfigurationCardProps = {
 export function PlannerConfigurationCard({
   file,
   generatePending,
-  holidaysText,
   onClearMonths,
   onFileChange,
   onGenerate,
-  onHolidaysChange,
   onRandomnessChange,
   onSave,
   onSelectAllMonths,
@@ -52,21 +57,28 @@ export function PlannerConfigurationCard({
   settings,
 }: PlannerConfigurationCardProps) {
   const busy = generatePending || savePending;
+  const plannerYears = getPlannerYears(settings.year);
+  const holidaysQuery = useQuery({
+    queryKey: coursePlannerHolidaysQueryKey(settings.year, settings.months),
+    queryFn: () => fetchCoursePlannerHolidays(settings.year, settings.months),
+    enabled: settings.months.length > 0,
+    staleTime: 60_000,
+  });
 
   return (
-    <form noValidate onSubmit={onGenerate}>
-      <Card className="shadow-sm">
-        <CardHeader className="border-b">
-          <CardTitle className="flex items-center gap-2">
+    <form className="grid gap-8" noValidate onSubmit={onGenerate}>
+      <section className="grid gap-6">
+        <div>
+          <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
             <Sparkles aria-hidden="true" className="size-4 text-primary" />
             Configurare planificare
-          </CardTitle>
-          <CardDescription>
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
             Fișierul, lunile și regulile de distribuție folosite pentru această generare.
-          </CardDescription>
-        </CardHeader>
+          </p>
+        </div>
 
-        <CardContent className="grid gap-7 pt-1">
+        <div className="grid gap-7">
           <FileUploadField
             accept=".csv,.xlsx,.xls"
             description="Coloane obligatorii: Title, Durata Curs și Permalink. Coloana investitie este opțională."
@@ -80,35 +92,45 @@ export function PlannerConfigurationCard({
             onFileChange={onFileChange}
           />
 
-          <div className="grid gap-5 sm:grid-cols-2">
-            <label className="grid content-start gap-2 text-sm font-medium" htmlFor="planner-year">
-              Anul planificării
-              <Input
+          <div className="grid gap-5 border-y py-6 sm:grid-cols-2">
+            <div className="grid content-start gap-2 text-sm font-medium">
+              <label htmlFor="planner-year">Anul planificării</label>
+              <Select
                 disabled={busy}
-                id="planner-year"
-                max={2100}
-                min={2024}
-                onChange={(event) => onYearChange(Number(event.target.value))}
-                type="number"
-                value={settings.year}
-              />
+                onValueChange={(value) => onYearChange(Number(value))}
+                value={String(settings.year)}
+              >
+                <SelectTrigger className="w-full cursor-pointer" id="planner-year">
+                  <SelectValue>{settings.year}</SelectValue>
+                </SelectTrigger>
+                <SelectContent align="start" alignItemWithTrigger={false}>
+                  {plannerYears.map((year) => (
+                    <SelectItem className="cursor-pointer" key={year} value={String(year)}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <span className="text-xs font-normal leading-5 text-muted-foreground">
                 Anul folosit pentru toate perioadele generate.
               </span>
-            </label>
+            </div>
 
-            <label className="grid content-start gap-2 text-sm font-medium" htmlFor="randomness">
-              Nivel de distribuție
-              <div className="flex items-center gap-3 rounded-lg border bg-muted/20 px-3 py-3">
-                <input
-                  className="h-2 min-w-0 flex-1 cursor-pointer accent-primary"
+            <div className="grid content-start gap-2 text-sm font-medium">
+              <label htmlFor="randomness">Nivel de distribuție</label>
+              <div className="flex items-center gap-3 py-2">
+                <Slider
+                  aria-label="Nivel de distribuție"
+                  className="min-w-0 flex-1 cursor-pointer"
                   disabled={busy}
                   id="randomness"
                   max={10}
                   min={1}
-                  onChange={(event) => onRandomnessChange(Number(event.target.value))}
-                  type="range"
-                  value={settings.randomness}
+                  onValueChange={(value) =>
+                    onRandomnessChange(typeof value === "number" ? value : (value[0] ?? 1))
+                  }
+                  step={1}
+                  value={[settings.randomness]}
                 />
                 <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">
                   {settings.randomness}
@@ -117,10 +139,10 @@ export function PlannerConfigurationCard({
               <span className="text-xs font-normal leading-5 text-muted-foreground">
                 1 păstrează mai mult spațiu între cursuri, iar 10 distribuie mai liber.
               </span>
-            </label>
+            </div>
           </div>
 
-          <fieldset className="grid gap-3" disabled={busy}>
+          <fieldset className="grid gap-3 border-b pb-7" disabled={busy}>
             <legend className="text-sm font-medium">Lunile incluse</legend>
             <div className="flex justify-end gap-2">
               <Button onClick={onSelectAllMonths} size="xs" type="button" variant="outline">
@@ -156,33 +178,72 @@ export function PlannerConfigurationCard({
             </div>
           </fieldset>
 
-          <label className="grid gap-2 text-sm font-medium" htmlFor="holidays">
-            Zile libere suplimentare
-            <Textarea
-              className="min-h-28 resize-y"
-              disabled={busy}
-              id="holidays"
-              onChange={(event) => onHolidaysChange(event.target.value)}
-              placeholder={"01.01.2027\n02.01.2027"}
-              value={holidaysText}
-            />
-            <span className="text-xs font-normal leading-5 text-muted-foreground">
-              Folosește formatul ZZ.LL.AAAA. Datele pot fi separate prin virgulă sau pe rânduri noi.
-            </span>
-          </label>
-        </CardContent>
+          <section className="flex gap-3 border-l-2 border-primary pl-4">
+            <CalendarCheck2 aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-primary" />
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">Zile libere administrate automat</p>
+              <p className="text-xs leading-5 text-muted-foreground">
+                Acestea sunt zilele legale și interne pe care generatorul le va exclude
+                pentru anul și lunile selectate.
+              </p>
+              {settings.months.length === 0 ? (
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Selectează cel puțin o lună pentru a verifica zilele libere.
+                </p>
+              ) : null}
+              {holidaysQuery.isError ? (
+                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                  Zilele libere nu au putut fi încărcate.
+                  <Button
+                    onClick={() => void holidaysQuery.refetch()}
+                    size="xs"
+                    type="button"
+                    variant="outline"
+                  >
+                    Reîncearcă
+                  </Button>
+                </div>
+              ) : null}
+              {holidaysQuery.isSuccess ? (
+                <div className="mt-3 grid gap-2">
+                  <p className="text-xs font-medium text-foreground">
+                    {holidaysQuery.data.length === 1
+                      ? "1 zi liberă preluată"
+                      : `${holidaysQuery.data.length} zile libere preluate`}
+                  </p>
+                  {holidaysQuery.data.length > 0 ? (
+                    <ul className="grid max-h-40 divide-y overflow-y-auto border-y text-xs">
+                      {holidaysQuery.data.map((holiday) => (
+                        <li className="flex items-center justify-between gap-3 px-3 py-2" key={`${holiday.date}-${holiday.name}`}>
+                          <span className="min-w-0 truncate">
+                            <span className="font-medium">{holiday.date}</span> — {holiday.name}
+                          </span>
+                          <span className="shrink-0 text-muted-foreground">{holiday.source_label}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-muted-foreground">
+                      Nu există zile libere salvate pentru această selecție.
+                    </p>
+                  )}
+                </div>
+              ) : null}
+            </div>
+          </section>
+        </div>
+      </section>
 
-        <CardFooter className="flex flex-wrap justify-between gap-3">
-          <Button disabled={busy} onClick={onSave} type="button" variant="outline">
-            {savePending ? <Spinner /> : <Save aria-hidden="true" />}
-            {savePending ? "Se salvează…" : "Salvează setările"}
-          </Button>
-          <Button disabled={busy} size="lg" type="submit">
-            {generatePending ? <Spinner /> : <FileSpreadsheet aria-hidden="true" />}
-            {generatePending ? "Se generează…" : "Generează planificarea"}
-          </Button>
-        </CardFooter>
-      </Card>
+      <div className="flex flex-wrap justify-between gap-3 border-t pt-6">
+        <Button disabled={busy} onClick={onSave} type="button" variant="outline">
+          <Save aria-hidden="true" />
+          {savePending ? "Se salvează…" : "Salvează setările"}
+        </Button>
+        <Button disabled={busy} size="lg" type="submit">
+          <FileSpreadsheet aria-hidden="true" />
+          {generatePending ? "Se generează…" : "Generează planificarea"}
+        </Button>
+      </div>
     </form>
   );
 }

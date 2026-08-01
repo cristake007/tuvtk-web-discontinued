@@ -2,6 +2,7 @@ from django.db import connections
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.permissions import AllowAny
+from rest_framework.renderers import JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -9,6 +10,9 @@ from .api_serializers import HealthResponseSerializer
 
 
 def database_status(alias: str) -> str:
+    if alias not in connections.databases:
+        return "disabled"
+
     try:
         with connections[alias].cursor() as cursor:
             cursor.execute("SELECT 1")
@@ -22,6 +26,9 @@ def database_status(alias: str) -> str:
 class HealthView(APIView):
     authentication_classes = []
     permission_classes = [AllowAny]
+    # Health is an operational status document, including when HTTP 503 is
+    # returned. It must not be converted to the standard API error envelope.
+    renderer_classes = [JSONRenderer]
 
     @extend_schema(
         operation_id="system_health",
@@ -43,10 +50,13 @@ class HealthView(APIView):
                 "status": database_status("registry"),
             },
         }
-        healthy = all(database["status"] == "ok" for database in databases.values())
+        core_healthy = databases["core"]["status"] == "ok"
+        all_healthy = core_healthy and databases["registry"]["status"] == "ok"
         payload = {
-            "status": "ok" if healthy else "degraded",
+            "status": "ok" if all_healthy else "degraded",
             "databases": databases,
         }
-        response_status = status.HTTP_200_OK if healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+        response_status = (
+            status.HTTP_200_OK if core_healthy else status.HTTP_503_SERVICE_UNAVAILABLE
+        )
         return Response(HealthResponseSerializer(payload).data, status=response_status)
