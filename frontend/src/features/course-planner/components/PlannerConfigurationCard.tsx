@@ -194,7 +194,7 @@ export function PlannerConfigurationCard({
                     >
                       <span
                         aria-hidden="true"
-                        className="grid size-5 place-items-center rounded-md border border-current/25 text-[11px]"
+                        className="grid size-5 place-items-center rounded-md border border-current/25 text-[calc(11px*var(--app-font-scale))]"
                       >
                         {month}
                       </span>

@@ -108,22 +108,23 @@ export function AppShell({ bootstrap }: { bootstrap: CoreBootstrap }) {
           <AppSidebar navigation={navigation} />
 
           <SidebarInset className="min-h-0 overflow-hidden bg-muted/30">
-            <div className="flex min-h-0 flex-1 flex-col overflow-auto bg-background p-[15px]">
-              <div className="flex min-h-full w-full flex-1 flex-col bg-background">
-                {logoutMutation.isError ? (
-                  <Alert className="m-4 mb-0 border-warning/40 bg-warning/10 sm:m-6 sm:mb-0 lg:m-8 lg:mb-0">
-                    <AlertTriangle aria-hidden="true" />
-                    <AlertTitle>Deconectarea nu a reușit</AlertTitle>
-                    <AlertDescription>
-                      {logoutMutation.error instanceof ApiError
-                        ? logoutMutation.error.message
-                        : "Serverul nu a putut finaliza cererea. Încearcă din nou."}
-                    </AlertDescription>
-                  </Alert>
-                ) : null}
+            <div
+              className="min-h-0 flex-1 overflow-auto bg-background p-[15px] pb-6 sm:pb-8"
+              data-slot="app-content-scroll"
+            >
+              {logoutMutation.isError ? (
+                <Alert className="m-4 mb-0 border-warning/40 bg-warning/10 sm:m-6 sm:mb-0 lg:m-8 lg:mb-0">
+                  <AlertTriangle aria-hidden="true" />
+                  <AlertTitle>Deconectarea nu a reușit</AlertTitle>
+                  <AlertDescription>
+                    {logoutMutation.error instanceof ApiError
+                      ? logoutMutation.error.message
+                      : "Serverul nu a putut finaliza cererea. Încearcă din nou."}
+                  </AlertDescription>
+                </Alert>
+              ) : null}
 
-                <Outlet />
-              </div>
+              <Outlet />
             </div>
           </SidebarInset>
         </div>

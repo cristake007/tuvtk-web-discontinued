@@ -5,12 +5,14 @@ import { SectionTitle } from "@/components/ui/heading";
 import type { NavigationItem } from "@/features/core/types";
 import { getNavigationIcon } from "@/lib/navigation-icons";
 
+import type { FontScale } from "../fontScale";
 import type { CuloriInterfata } from "../useUserInterfaceSettings";
 
 type ScopedThemeStyle = CSSProperties & {
   "--background": string;
   "--brand-red": string;
   "--heading": string;
+  "--app-font-scale": string;
   "--primary": string;
 };
 
@@ -45,7 +47,7 @@ function RandNavigatiePrevizualizare({
     return (
       <div aria-hidden="true" className="flex items-center gap-1.5 px-3 py-1.5">
         <span className="h-px min-w-2 flex-1 bg-sidebar-border" />
-        <span className="max-w-16 truncate text-[8px] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
+        <span className="max-w-16 truncate text-[calc(8px*var(--app-font-scale))] font-semibold tracking-[0.12em] text-muted-foreground uppercase">
           {item.label}
         </span>
         <span className="h-px min-w-2 flex-1 bg-sidebar-border" />
@@ -58,7 +60,7 @@ function RandNavigatiePrevizualizare({
   return (
     <div
       className={[
-        "relative flex h-7 items-center gap-2 px-3 text-[11px] text-primary transition-colors",
+        "relative flex h-7 items-center gap-2 px-3 text-[calc(11px*var(--app-font-scale))] text-primary transition-colors",
         "before:absolute before:inset-y-0 before:left-0 before:w-[2.5px] before:bg-brand-red",
         activ ? "bg-primary/5 pl-3.5 font-semibold text-brand-red before:opacity-100" : "before:opacity-0",
       ].join(" ")}
@@ -72,12 +74,14 @@ function RandNavigatiePrevizualizare({
 export function LiveShellPreview({
   culori,
   elemente,
+  fontScale,
   logoUrl,
   numeAplicatie,
   organizationName,
 }: {
   culori: CuloriInterfata;
   elemente: NavigationItem[];
+  fontScale: FontScale;
   logoUrl: string | null;
   numeAplicatie: string;
   organizationName: string;
@@ -93,6 +97,7 @@ export function LiveShellPreview({
   const contrastRedus = luminanta !== null && luminanta < 0.4;
 
   const stilTema: ScopedThemeStyle = {
+    "--app-font-scale": String(fontScale),
     "--background": culori.culoare_fundal,
     "--brand-red": culori.culoare_accent,
     "--heading": culori.culoare_titluri,
@@ -156,10 +161,10 @@ export function LiveShellPreview({
             </p>
             <div className="h-2 w-1/2 rounded-full bg-foreground/10" />
             <div className="flex items-center gap-2 pt-1">
-              <span className="rounded-md bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground">
+              <span className="rounded-md bg-primary px-2.5 py-1 text-[calc(11px*var(--app-font-scale))] font-medium text-primary-foreground">
                 Buton principal
               </span>
-              <span className="rounded-full bg-brand-red px-2 py-0.5 text-[10px] font-medium text-white">
+              <span className="rounded-full bg-brand-red px-2 py-0.5 text-[calc(10px*var(--app-font-scale))] font-medium text-white">
                 Etichetă accent
               </span>
             </div>

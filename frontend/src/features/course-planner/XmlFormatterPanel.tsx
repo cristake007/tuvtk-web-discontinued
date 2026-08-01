@@ -42,7 +42,7 @@ export function XmlFormatterPanel() {
     <div className="flex w-full min-w-0 flex-1 flex-col gap-6">
       <AntetAplicatie titlu="XML cursuri" />
 
-      <section className="grid max-w-2xl gap-6 rounded-sm border bg-background p-6 shadow-sm">
+      <section className="grid w-full gap-6 rounded-sm border bg-background p-6 shadow-sm">
         <div>
           <SectionTitle>
             Generează XML pentru WordPress

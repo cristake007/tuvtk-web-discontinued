@@ -53,6 +53,7 @@ class PublicBrandingView(APIView):
             "culoare_accent": configuration["culoare_accent"],
             "culoare_fundal": configuration["culoare_fundal"],
             "culoare_titluri": configuration["culoare_titluri"],
+            "font_scale": configuration["font_scale"],
         }
         return Response(PublicBrandingSerializer(payload).data)
 

@@ -94,7 +94,7 @@ export function HeaderSearch({ navigation }: { navigation: NavigationItem[] }) {
           value={query}
         />
         <InputGroupAddon align="inline-end" className="pr-2.5">
-          <kbd className="hidden border border-border bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground shadow-xs sm:inline-flex">
+          <kbd className="hidden border border-border bg-background px-1.5 py-0.5 text-[calc(10px*var(--app-font-scale))] font-medium text-muted-foreground shadow-xs sm:inline-flex">
             Ctrl K
           </kbd>
         </InputGroupAddon>
@@ -115,7 +115,7 @@ export function HeaderSearch({ navigation }: { navigation: NavigationItem[] }) {
                     <span className="block truncate font-medium leading-5">
                       {item.label}
                     </span>
-                    <span className="block truncate text-[11px] leading-4 text-muted-foreground">
+                    <span className="block truncate text-[calc(11px*var(--app-font-scale))] leading-4 text-muted-foreground">
                       {item.path}
                     </span>
                   </span>

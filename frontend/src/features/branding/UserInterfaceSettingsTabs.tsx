@@ -7,6 +7,7 @@ import { BrandingPanel } from "./components/BrandingPanel";
 import { GeneralSettingsCard } from "./components/GeneralSettingsCard";
 import { LiveShellPreview } from "./components/LiveShellPreview";
 import { MenuSettingsCard } from "./components/MenuSettingsCard";
+import { TypographySettingsCard } from "./components/TypographySettingsCard";
 import { SeparatorTitleDialog } from "./SeparatorTitleDialog";
 import { useUserInterfaceSettings } from "./useUserInterfaceSettings";
 
@@ -18,7 +19,9 @@ export function UserInterfaceSettingsTabs() {
     deschideDialogRedenumire,
     deschideDialogSeparatorNou,
     dialogSeparatorDeschis,
+    dimensiuneaTextuluiEsteModificata,
     elementeMeniu,
+    fontScale,
     meniuEsteGol,
     meniuInCurs,
     navigationQuery,
@@ -28,6 +31,7 @@ export function UserInterfaceSettingsTabs() {
     ordineMutation,
     redenumesteSeparatorMutation,
     salveazaCulorile,
+    salveazaDimensiuneaTextului,
     salveazaNumele,
     salveazaOrdinea,
     salveazaSeparator,
@@ -36,6 +40,7 @@ export function UserInterfaceSettingsTabs() {
     setCulori,
     setDialogSeparatorDeschis,
     setElementeMeniu,
+    setFontScale,
     setNumeAplicatie,
     settingsQuery,
     stergeSeparator,
@@ -63,6 +68,7 @@ export function UserInterfaceSettingsTabs() {
       <LiveShellPreview
         culori={culori}
         elemente={elementeMeniu}
+        fontScale={fontScale}
         logoUrl={settingsQuery.data.logo_url}
         numeAplicatie={numeAplicatie}
         organizationName={settingsQuery.data.organization_name}
@@ -89,13 +95,22 @@ export function UserInterfaceSettingsTabs() {
         </TabsList>
 
         <TabsContent className="pt-4" value="general">
-          <GeneralSettingsCard
-            esteModificat={numeEsteModificat}
-            numeAplicatie={numeAplicatie}
-            onChangeNume={setNumeAplicatie}
-            onSubmit={salveazaNumele}
-            saving={configuratieMutation.isPending}
-          />
+          <div className="grid gap-4">
+            <GeneralSettingsCard
+              esteModificat={numeEsteModificat}
+              numeAplicatie={numeAplicatie}
+              onChangeNume={setNumeAplicatie}
+              onSubmit={salveazaNumele}
+              saving={configuratieMutation.isPending}
+            />
+            <TypographySettingsCard
+              esteModificat={dimensiuneaTextuluiEsteModificata}
+              fontScale={fontScale}
+              onChangeFontScale={setFontScale}
+              onSubmit={salveazaDimensiuneaTextului}
+              saving={configuratieMutation.isPending}
+            />
+          </div>
         </TabsContent>
 
         <TabsContent className="pt-4" value="branding">

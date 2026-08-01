@@ -101,7 +101,7 @@ export function WordMatcherPanel() {
     <div className="flex w-full min-w-0 flex-1 flex-col gap-6">
       <AntetAplicatie titlu="Word Matcher" />
 
-      <section className="grid max-w-3xl gap-6 rounded-sm border bg-background p-6 shadow-sm">
+      <section className="grid w-full gap-6 rounded-sm border bg-background p-6 shadow-sm">
         <div>
           <SectionTitle>
             Potrivește documentul Word cu programul cursurilor

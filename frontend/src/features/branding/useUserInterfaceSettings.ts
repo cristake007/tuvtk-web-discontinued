@@ -15,6 +15,7 @@ import {
   updateUserInterfaceNavigation,
   updateUserInterfaceSettings,
 } from "./api";
+import type { FontScale } from "./fontScale";
 import { userInterfaceQueryKeys } from "./queryKeys";
 
 export type CuloriInterfata = Pick<
@@ -70,6 +71,7 @@ export function useUserInterfaceSettings() {
 
   const [numeAplicatie, setNumeAplicatie] = useState("");
   const [culori, setCulori] = useState<CuloriInterfata>(culoriImplicite);
+  const [fontScale, setFontScale] = useState<FontScale>(1);
   const [elementeMeniu, setElementeMeniu] = useState<NavigationItem[]>([]);
   const [dialogSeparatorDeschis, setDialogSeparatorDeschis] = useState(false);
   const [separatorEditat, setSeparatorEditat] = useState<NavigationItem | null>(null);
@@ -85,6 +87,7 @@ export function useUserInterfaceSettings() {
       culoare_fundal: settingsQuery.data.culoare_fundal,
       culoare_titluri: settingsQuery.data.culoare_titluri,
     });
+    setFontScale(settingsQuery.data.font_scale);
   }, [settingsQuery.data]);
 
   useEffect(() => {
@@ -171,6 +174,11 @@ export function useUserInterfaceSettings() {
     configuratieMutation.mutate(culori);
   }
 
+  function salveazaDimensiuneaTextului(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    configuratieMutation.mutate({ font_scale: fontScale });
+  }
+
   function deschideDialogSeparatorNou() {
     setSeparatorEditat(null);
     setDialogSeparatorDeschis(true);
@@ -201,6 +209,8 @@ export function useUserInterfaceSettings() {
       culori.culoare_accent !== settingsQuery.data.culoare_accent ||
       culori.culoare_fundal !== settingsQuery.data.culoare_fundal ||
       culori.culoare_titluri !== settingsQuery.data.culoare_titluri);
+  const dimensiuneaTextuluiEsteModificata =
+    settingsQuery.data !== undefined && fontScale !== settingsQuery.data.font_scale;
   const ordineEsteModificata =
     navigationQuery.data !== undefined &&
     (elementeMeniu.length !== navigationQuery.data.length ||
@@ -219,7 +229,9 @@ export function useUserInterfaceSettings() {
     deschideDialogRedenumire,
     deschideDialogSeparatorNou,
     dialogSeparatorDeschis,
+    dimensiuneaTextuluiEsteModificata,
     elementeMeniu,
+    fontScale,
     meniuEsteGol: navigationQuery.isSuccess && elementeMeniu.length === 0,
     meniuInCurs,
     navigationQuery,
@@ -229,6 +241,7 @@ export function useUserInterfaceSettings() {
     ordineMutation,
     redenumesteSeparatorMutation,
     salveazaCulorile,
+    salveazaDimensiuneaTextului,
     salveazaNumele,
     salveazaOrdinea,
     salveazaSeparator,
@@ -237,6 +250,7 @@ export function useUserInterfaceSettings() {
     setCulori,
     setDialogSeparatorDeschis,
     setElementeMeniu,
+    setFontScale,
     setNumeAplicatie,
     settingsQuery,
     stergeSeparator: (key: string) => stergeSeparatorMutation.mutate(key),

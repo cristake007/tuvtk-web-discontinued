@@ -2,6 +2,15 @@ from rest_framework import serializers
 
 from apps.authentication.serializers import ErrorDetailSerializer, SessionUserSerializer
 
+from .models import ApplicationConfiguration
+
+
+class FontScaleChoiceField(serializers.ChoiceField):
+    def to_internal_value(self, data):
+        if isinstance(data, (int, float)) and not isinstance(data, bool):
+            data = float(data)
+        return super().to_internal_value(data)
+
 
 class ShellConfigurationSerializer(serializers.Serializer):
     site_name = serializers.CharField()
@@ -12,6 +21,7 @@ class ShellConfigurationSerializer(serializers.Serializer):
     culoare_accent = serializers.CharField()
     culoare_fundal = serializers.CharField()
     culoare_titluri = serializers.CharField()
+    font_scale = FontScaleChoiceField(choices=ApplicationConfiguration.FONT_SCALE_CHOICES)
 
 
 class PublicBrandingSerializer(serializers.Serializer):
@@ -22,6 +32,7 @@ class PublicBrandingSerializer(serializers.Serializer):
     culoare_accent = serializers.CharField()
     culoare_fundal = serializers.CharField()
     culoare_titluri = serializers.CharField()
+    font_scale = FontScaleChoiceField(choices=ApplicationConfiguration.FONT_SCALE_CHOICES)
 
 
 class ActualizareInterfataUtilizatorSerializer(serializers.Serializer):
@@ -30,6 +41,10 @@ class ActualizareInterfataUtilizatorSerializer(serializers.Serializer):
     culoare_accent = serializers.RegexField(r"^#[0-9A-Fa-f]{6}$", required=False)
     culoare_fundal = serializers.RegexField(r"^#[0-9A-Fa-f]{6}$", required=False)
     culoare_titluri = serializers.RegexField(r"^#[0-9A-Fa-f]{6}$", required=False)
+    font_scale = FontScaleChoiceField(
+        choices=ApplicationConfiguration.FONT_SCALE_CHOICES,
+        required=False,
+    )
 
     def validate(self, attrs):
         if not attrs:

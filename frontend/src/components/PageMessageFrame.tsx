@@ -24,7 +24,7 @@ export function PageMessageFrame({
   return (
     <section
       aria-labelledby={titleId}
-      className="flex flex-1 items-center justify-center p-4 sm:p-6 lg:p-8"
+      className="flex min-h-full items-center justify-center p-4 sm:p-6 lg:p-8"
     >
       <Card className="w-full max-w-2xl">
         <CardHeader className="items-center text-center">

@@ -150,6 +150,7 @@ export interface components {
       "payload"?: unknown;
       "can_update"?: boolean;
     };
+    "FontScaleEnum": 1 | 1.125 | 1.25;
     "FormatXmlRequest": components["schemas"]["FormatXmlRequestRequest"];
     "FormatXmlRequestRequest": {
       "input_file": string;
@@ -224,6 +225,7 @@ export interface components {
       "culoare_accent"?: string;
       "culoare_fundal"?: string;
       "culoare_titluri"?: string;
+      "font_scale"?: components["schemas"]["FontScaleEnum"];
     };
     "PatchedApplicationGroupWrite": components["schemas"]["PatchedApplicationGroupWriteRequest"];
     "PatchedApplicationGroupWriteRequest": {
@@ -268,6 +270,7 @@ export interface components {
       "culoare_accent": string;
       "culoare_fundal": string;
       "culoare_titluri": string;
+      "font_scale": components["schemas"]["FontScaleEnum"];
     };
     "PublicHoliday": {
       "id": string;
@@ -373,6 +376,7 @@ export interface components {
       "culoare_accent": string;
       "culoare_fundal": string;
       "culoare_titluri": string;
+      "font_scale": components["schemas"]["FontScaleEnum"];
     };
     "SourceEnum": "nager" | "internal";
     "SynchronizationResult": {

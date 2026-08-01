@@ -37,6 +37,7 @@ class UserInterfaceAdministrationApiTests(TestCase):
         )
         self.assertIsNone(response.json()["logo_url"])
         self.assertEqual(response.json()["culoare_titluri"], "#1b2230")
+        self.assertEqual(response.json()["font_scale"], 1.0)
 
     def test_regular_user_cannot_read_user_interface_settings(self):
         user = get_user_model().objects.create_user(
@@ -67,6 +68,7 @@ class UserInterfaceAdministrationApiTests(TestCase):
                     "culoare_accent": "#654321",
                     "culoare_fundal": "#fafafa",
                     "culoare_titluri": "#246824",
+                    "font_scale": 1.125,
                 }
             ),
             content_type="application/json",
@@ -79,6 +81,45 @@ class UserInterfaceAdministrationApiTests(TestCase):
         self.assertEqual(self.configuration.culoare_accent, "#654321")
         self.assertEqual(self.configuration.culoare_fundal, "#fafafa")
         self.assertEqual(self.configuration.culoare_titluri, "#246824")
+        self.assertEqual(self.configuration.font_scale, 1.125)
+
+    def test_font_scale_must_be_one_of_the_supported_values(self):
+        user = get_user_model().objects.create_user(
+            username="font-scale-editor",
+            password="test-password-123",
+            is_staff=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.patch(
+            USER_INTERFACE_PATH,
+            data=json.dumps({"font_scale": 1.5}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.configuration.refresh_from_db()
+        self.assertEqual(self.configuration.font_scale, 1.0)
+
+    def test_staff_user_can_restore_standard_font_scale(self):
+        self.configuration.font_scale = 1.125
+        self.configuration.save(update_fields=("font_scale", "updated_at"))
+        user = get_user_model().objects.create_user(
+            username="standard-font-scale-editor",
+            password="test-password-123",
+            is_staff=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.patch(
+            USER_INTERFACE_PATH,
+            data=json.dumps({"font_scale": 1}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.configuration.refresh_from_db()
+        self.assertEqual(self.configuration.font_scale, 1.0)
 
     def test_heading_color_must_be_a_six_digit_hex_value(self):
         user = get_user_model().objects.create_user(

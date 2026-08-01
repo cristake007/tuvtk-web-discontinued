@@ -1,5 +1,6 @@
-import { lazy, Suspense, type ReactNode } from "react";
+import { lazy, Suspense, useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { useMatches } from "react-router-dom";
 
 import { coreBootstrapQueryKey, fetchCoreBootstrap } from "@/api/core";
 import { ApplicationState } from "@/components/ApplicationState";
@@ -31,12 +32,46 @@ function DeferredView({
 }
 
 export function AuthenticationGate() {
+  const matches = useMatches();
   const bootstrapQuery = useQuery({
     queryKey: coreBootstrapQueryKey,
     queryFn: fetchCoreBootstrap,
     retry: false,
     staleTime: 60_000,
   });
+  const siteName = bootstrapQuery.data?.configuration.site_name;
+  const fontScale = bootstrapQuery.data?.configuration.font_scale;
+  const authenticated = Boolean(
+    bootstrapQuery.data?.authenticated && bootstrapQuery.data.user,
+  );
+  const pageTitle = matches
+    .map(
+      (match) =>
+        (match.handle as { pageTitle?: string } | undefined)?.pageTitle,
+    )
+    .findLast((title): title is string => Boolean(title));
+
+  useEffect(() => {
+    if (siteName) {
+      const currentPageTitle = authenticated ? pageTitle : "Autentificare";
+      document.title = currentPageTitle
+        ? `${currentPageTitle} | ${siteName}`
+        : siteName;
+    }
+  }, [authenticated, pageTitle, siteName]);
+
+  useEffect(() => {
+    if (fontScale === undefined) {
+      return;
+    }
+
+    const root = document.documentElement;
+    root.style.setProperty("--app-font-scale", String(fontScale));
+
+    return () => {
+      root.style.removeProperty("--app-font-scale");
+    };
+  }, [fontScale]);
 
   if (bootstrapQuery.isPending) {
     return (
@@ -74,6 +109,7 @@ export function AuthenticationGate() {
             culoare_accent: configuration.culoare_accent,
             culoare_fundal: configuration.culoare_fundal,
             culoare_titluri: configuration.culoare_titluri,
+            font_scale: configuration.font_scale,
           }}
         />
       </DeferredView>

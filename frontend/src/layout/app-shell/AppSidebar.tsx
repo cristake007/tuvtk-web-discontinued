@@ -45,8 +45,9 @@ const navigationLinkClassName = [
   "before:absolute before:inset-y-0 before:left-0 before:w-[3px]",
   "before:origin-center before:scale-y-0 before:bg-brand-red",
   "before:transition-transform before:duration-200 before:ease-out",
-  "hover:bg-primary/5 hover:pl-5 hover:text-brand-red hover:before:scale-y-100",
-  "data-active:bg-primary/5 data-active:pl-5 data-active:font-semibold",
+  "hover:bg-transparent! hover:pl-5 hover:text-brand-red hover:before:scale-y-100",
+  "active:bg-transparent! active:text-brand-red!",
+  "data-active:bg-transparent! data-active:pl-5 data-active:font-semibold",
   "data-active:text-brand-red data-active:before:scale-y-100",
   "group-data-[collapsible=icon]:before:hidden",
   "[&_svg]:size-5 [&_svg]:text-current",
@@ -82,7 +83,7 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
             aria-hidden="true"
             className="h-px min-w-3 flex-1 bg-sidebar-border"
           />
-          <span className="max-w-28 truncate text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground group-data-[collapsible=icon]:hidden">
+          <span className="max-w-28 truncate text-[calc(10px*var(--app-font-scale))] font-semibold uppercase tracking-[0.14em] text-muted-foreground group-data-[collapsible=icon]:hidden">
             {item.label}
           </span>
           <span
@@ -219,7 +220,10 @@ export function AppSidebar({ navigation }: AppSidebarProps) {
       <SidebarContent className="bg-white pt-[calc(var(--app-header-height)+0.5rem)] md:pt-2">
         <SidebarGroup className="p-0">
           <SidebarGroupContent>
-            <SidebarMenu aria-label="Navigație principală" className="gap-0">
+            <SidebarMenu
+              aria-label="Navigație principală"
+              className="gap-0 group-data-[collapsible=icon]:gap-2"
+            >
               {navigation.map((item) => (
                 <NavigationEntry item={item} key={item.key} />
               ))}

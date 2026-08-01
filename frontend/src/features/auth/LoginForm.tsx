@@ -124,18 +124,25 @@ export function LoginForm() {
   const serverError = getLoginError(loginMutation.error);
 
   return (
-    <div className="w-full max-w-[20rem]">
-      <div className="mb-5">
-        <PageTitle>Autentificare</PageTitle>
-        <p className="mt-1.5 text-base leading-6 text-muted-foreground">
+    <div className="w-full bg-transparent">
+      <div>
+        <PageTitle className="text-xl tracking-tight sm:text-2xl">
+          Autentificare
+        </PageTitle>
+        <p className="mt-2 text-sm leading-6 text-muted-foreground">
           Introdu datele contului tău pentru a continua.
         </p>
       </div>
 
-      <form aria-busy={loginMutation.isPending} noValidate onSubmit={handleSubmit}>
-        <FieldGroup className="gap-3.5">
+      <form
+        aria-busy={loginMutation.isPending}
+        className="mt-7"
+        noValidate
+        onSubmit={handleSubmit}
+      >
+        <FieldGroup className="gap-4">
           <Field data-invalid={Boolean(fieldErrors.username)}>
-            <FieldLabel className="text-xs" htmlFor="username">
+            <FieldLabel className="text-xs font-medium" htmlFor="username">
               Nume de utilizator
             </FieldLabel>
             <Input
@@ -144,7 +151,7 @@ export function LoginForm() {
               autoCapitalize="none"
               autoComplete="username"
               autoFocus
-              className="h-10 rounded-sm text-sm"
+              className="h-9 rounded-lg border-transparent bg-muted/70 px-3 text-sm shadow-none transition-colors focus-visible:bg-card"
               disabled={loginMutation.isPending}
               id="username"
               maxLength={150}
@@ -162,7 +169,7 @@ export function LoginForm() {
           </Field>
 
           <Field data-invalid={Boolean(fieldErrors.password)}>
-            <FieldLabel className="text-xs" htmlFor="password">
+            <FieldLabel className="text-xs font-medium" htmlFor="password">
               Parolă
             </FieldLabel>
             <div className="relative">
@@ -170,7 +177,7 @@ export function LoginForm() {
                 aria-describedby={fieldErrors.password ? "password-error" : undefined}
                 aria-invalid={Boolean(fieldErrors.password)}
                 autoComplete="current-password"
-                className="h-10 rounded-sm pr-10 text-sm"
+                className="h-9 rounded-lg border-transparent bg-muted/70 px-3 pr-9 text-sm shadow-none transition-colors focus-visible:bg-card"
                 disabled={loginMutation.isPending}
                 id="password"
                 name="password"
@@ -183,7 +190,7 @@ export function LoginForm() {
               <button
                 aria-label={passwordVisible ? "Ascunde parola" : "Afișează parola"}
                 aria-pressed={passwordVisible}
-                className="absolute inset-y-0 right-0 grid w-10 cursor-pointer place-items-center text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+                className="absolute inset-y-0 right-0 grid w-9 cursor-pointer place-items-center rounded-r-lg text-muted-foreground transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
                 disabled={loginMutation.isPending}
                 onClick={() => setPasswordVisible((current) => !current)}
                 type="button"
@@ -209,7 +216,7 @@ export function LoginForm() {
           ) : null}
 
           <Button
-            className="h-10 w-full cursor-pointer rounded-sm text-sm font-medium"
+            className="mt-1 h-10 w-full cursor-pointer rounded-lg border-primary bg-card text-sm font-semibold text-primary shadow-sm shadow-primary/15 transition-all hover:bg-primary hover:text-primary-foreground active:translate-y-px"
             disabled={loginMutation.isPending}
             type="submit"
           >

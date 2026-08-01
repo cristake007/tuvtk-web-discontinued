@@ -209,7 +209,7 @@ export function UpdateWordPressPanel() {
     <div className="flex w-full min-w-0 flex-1 flex-col gap-6">
       <AntetAplicatie titlu="Update WordPress" />
 
-      <section className="grid max-w-2xl gap-6 rounded-sm border bg-background p-6 shadow-sm">
+      <section className="grid w-full gap-6 rounded-sm border bg-background p-6 shadow-sm">
         <div>
           <SectionTitle>Conexiune WordPress</SectionTitle>
           <p className="mt-1 text-base leading-6 text-muted-foreground">
@@ -281,7 +281,7 @@ export function UpdateWordPressPanel() {
         </form>
       </section>
 
-      <section className="grid max-w-2xl gap-6 rounded-sm border bg-background p-6 shadow-sm">
+      <section className="grid w-full gap-6 rounded-sm border bg-background p-6 shadow-sm">
         <div>
           <SectionTitle>
             Previzualizează datele cursurilor

@@ -74,7 +74,7 @@ function AdminRailGroup({
               <li key={entry.name}>
                 <span className="flex items-center justify-between gap-2 px-2.5 py-1.5 text-sm text-muted-foreground/60">
                   {entry.name}
-                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
+                  <span className="rounded-full bg-muted px-1.5 py-0.5 text-[calc(10px*var(--app-font-scale))] font-medium tracking-wide text-muted-foreground uppercase">
                     Curând
                   </span>
                 </span>

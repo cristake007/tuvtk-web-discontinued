@@ -131,7 +131,7 @@ export function UtilizatorForm({
 
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6">
-      <form className="grid max-w-4xl gap-5" onSubmit={handleSubmit}>
+      <form className="grid w-full gap-5" onSubmit={handleSubmit}>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field data-invalid={Boolean(usernameError)}>
               <FieldLabel htmlFor="utilizator-username">Nume de utilizator</FieldLabel>

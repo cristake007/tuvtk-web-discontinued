@@ -85,15 +85,20 @@ class CoreBootstrapApiTests(TestCase):
             response.json()["configuration"]["culoare_titluri"],
             "#1b2230",
         )
+        self.assertEqual(response.json()["configuration"]["font_scale"], 1.0)
 
     def test_public_branding_returns_heading_color(self):
         self.configuration.culoare_titluri = "#246824"
-        self.configuration.save(update_fields=("culoare_titluri", "updated_at"))
+        self.configuration.font_scale = 1.25
+        self.configuration.save(
+            update_fields=("culoare_titluri", "font_scale", "updated_at")
+        )
 
         response = self.client.get("/api/v1/core/branding")
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["culoare_titluri"], "#246824")
+        self.assertEqual(response.json()["font_scale"], 1.25)
 
     def test_regular_user_receives_permitted_navigation(self):
         user = self.create_user("regular-user")

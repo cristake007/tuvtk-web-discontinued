@@ -34,6 +34,12 @@ class ApplicationDefinition(models.Model):
 
 
 class ApplicationConfiguration(models.Model):
+    FONT_SCALE_CHOICES = (
+        (1.0, "Standard"),
+        (1.125, "Mărit"),
+        (1.25, "Foarte mărit"),
+    )
+
     site_name = models.CharField(max_length=120, default="TUVTK")
     organization_name = models.CharField(
         max_length=180,
@@ -45,6 +51,7 @@ class ApplicationConfiguration(models.Model):
     culoare_accent = models.CharField(max_length=7, default="#d41131")
     culoare_fundal = models.CharField(max_length=7, default="#ffffff")
     culoare_titluri = models.CharField(max_length=7, default="#1b2230")
+    font_scale = models.FloatField(choices=FONT_SCALE_CHOICES, default=1.0)
     is_active = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
 

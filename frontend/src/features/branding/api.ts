@@ -29,6 +29,7 @@ export function updateUserInterfaceSettings(
       | "culoare_accent"
       | "culoare_fundal"
       | "culoare_titluri"
+      | "font_scale"
     >
   >,
 ): Promise<ShellConfiguration> {

@@ -14,6 +14,7 @@ DEFAULT_CONFIGURATION = {
     "culoare_accent": "#d41131",
     "culoare_fundal": "#ffffff",
     "culoare_titluri": "#1b2230",
+    "font_scale": 1.0,
 }
 
 
@@ -58,6 +59,7 @@ def serialize_shell_configuration(
         "culoare_accent": configuration.culoare_accent,
         "culoare_fundal": configuration.culoare_fundal,
         "culoare_titluri": configuration.culoare_titluri,
+        "font_scale": configuration.font_scale,
     }
 
 
