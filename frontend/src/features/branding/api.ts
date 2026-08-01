@@ -21,7 +21,16 @@ export function fetchUserInterfaceSettings(): Promise<ShellConfiguration> {
 }
 
 export function updateUserInterfaceSettings(
-  settings: Partial<Pick<ShellConfiguration, "site_name" | "culoare_primara" | "culoare_accent" | "culoare_fundal">>,
+  settings: Partial<
+    Pick<
+      ShellConfiguration,
+      | "site_name"
+      | "culoare_primara"
+      | "culoare_accent"
+      | "culoare_fundal"
+      | "culoare_titluri"
+    >
+  >,
 ): Promise<ShellConfiguration> {
   return apiRequest<ShellConfiguration>(userInterfacePath, {
     method: "PATCH",

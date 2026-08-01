@@ -30,6 +30,11 @@ const CAMPURI_CULORI: ReadonlyArray<{
     descriere: "Fundalul paginilor publice ale aplicației.",
     eticheta: "Culoare fundal",
   },
+  {
+    camp: "culoare_titluri",
+    descriere: "Titlurile de pagină, secțiune și card din toată aplicația.",
+    eticheta: "Culoare titluri",
+  },
 ];
 
 function CampCuloare({
@@ -128,7 +133,7 @@ export function BrandColorsSection({
         {esteModificat ? <UnsavedBadge /> : null}
       </div>
 
-      <fieldset className="mt-4 grid gap-5 sm:grid-cols-3" disabled={saving}>
+      <fieldset className="mt-4 grid gap-5 sm:grid-cols-2 xl:grid-cols-4" disabled={saving}>
         <legend className="sr-only">Culori de bază ale interfeței</legend>
         {CAMPURI_CULORI.map(({ camp, descriere, eticheta }) => (
           <CampCuloare

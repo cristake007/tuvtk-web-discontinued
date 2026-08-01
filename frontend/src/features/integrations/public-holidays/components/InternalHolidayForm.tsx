@@ -88,7 +88,7 @@ export function InternalHolidayForm({
 
         <CardFooter className="justify-end gap-2">
           {editing ? (
-            <Button onClick={onCancel} type="button" variant="ghost">
+            <Button onClick={onCancel} type="button" variant="outline">
               <X aria-hidden="true" />
               Renunță
             </Button>

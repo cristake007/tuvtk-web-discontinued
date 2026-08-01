@@ -7,6 +7,7 @@ import { AntetAplicatie } from "@/components/AntetAplicatie";
 import { FileUploadField } from "@/components/FileUploadField";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SectionTitle } from "@/components/ui/heading";
 import {
   NativeSelect,
   NativeSelectOption,
@@ -97,14 +98,14 @@ export function WordMatcherPanel() {
 
   return (
     <div className="flex w-full min-w-0 flex-1 flex-col gap-6">
-      <AntetAplicatie pictograma={FileSearch} titlu="Word Matcher" />
+      <AntetAplicatie titlu="Word Matcher" />
 
       <section className="grid max-w-3xl gap-6 rounded-sm border bg-background p-6 shadow-sm">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">
+          <SectionTitle>
             Potrivește documentul Word cu programul cursurilor
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          </SectionTitle>
+          <p className="mt-1 text-base leading-6 text-muted-foreground">
             Încarcă documentul Word cu programul de tipărit și un fișier cu titluri și
             coloane de lună (January–December). Cursurile vor fi potrivite automat pe
             baza titlului; poți corecta manual orice potrivire înainte de a genera
@@ -150,8 +151,8 @@ export function WordMatcherPanel() {
         <section className="grid min-w-0 gap-4 rounded-sm border bg-background p-6 shadow-sm">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <h2 className="text-lg font-semibold tracking-tight">Rezultatul potrivirii</h2>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <SectionTitle>Rezultatul potrivirii</SectionTitle>
+              <p className="mt-1 text-base leading-6 text-muted-foreground">
                 {assignedCount} din {preview.rows.length} rânduri au o potrivire selectată.
                 Corectează selecțiile de mai jos, apoi generează documentul final.
               </p>

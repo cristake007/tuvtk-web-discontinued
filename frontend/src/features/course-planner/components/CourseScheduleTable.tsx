@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { FileSpreadsheet } from "lucide-react";
 
+import { SectionTitle } from "@/components/ui/heading";
 import {
   Pagination,
   PaginationContent,
@@ -69,15 +70,15 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
     <section className="min-w-0 border-t pt-6" id="planificare-generata">
       <div className="flex flex-wrap items-start justify-between gap-3 px-1">
         <div>
-          <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+          <SectionTitle className="flex items-center gap-2">
             <FileSpreadsheet aria-hidden="true" className="size-4 text-primary" />
             Planificare generată
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          </SectionTitle>
+          <p className="mt-1 text-base leading-6 text-muted-foreground">
             {rows.length} cursuri distincte distribuite în lunile selectate.
           </p>
         </div>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {rows.length === 0 ? "Niciun curs" : `${pageStart + 1}–${pageStart + visibleRows.length}`} din {rows.length}
         </p>
       </div>
@@ -123,7 +124,7 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
 
       {pageCount > 1 ? (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-          <p className="text-sm text-muted-foreground">
+          <p className="text-xs text-muted-foreground">
             Pagina {currentPage} din {pageCount}
           </p>
           <Pagination className="mx-0 w-auto justify-end">

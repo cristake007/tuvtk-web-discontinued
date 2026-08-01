@@ -11,6 +11,7 @@ class ShellConfigurationSerializer(serializers.Serializer):
     culoare_primara = serializers.CharField()
     culoare_accent = serializers.CharField()
     culoare_fundal = serializers.CharField()
+    culoare_titluri = serializers.CharField()
 
 
 class PublicBrandingSerializer(serializers.Serializer):
@@ -20,6 +21,7 @@ class PublicBrandingSerializer(serializers.Serializer):
     culoare_primara = serializers.CharField()
     culoare_accent = serializers.CharField()
     culoare_fundal = serializers.CharField()
+    culoare_titluri = serializers.CharField()
 
 
 class ActualizareInterfataUtilizatorSerializer(serializers.Serializer):
@@ -27,6 +29,7 @@ class ActualizareInterfataUtilizatorSerializer(serializers.Serializer):
     culoare_primara = serializers.RegexField(r"^#[0-9A-Fa-f]{6}$", required=False)
     culoare_accent = serializers.RegexField(r"^#[0-9A-Fa-f]{6}$", required=False)
     culoare_fundal = serializers.RegexField(r"^#[0-9A-Fa-f]{6}$", required=False)
+    culoare_titluri = serializers.RegexField(r"^#[0-9A-Fa-f]{6}$", required=False)
 
     def validate(self, attrs):
         if not attrs:

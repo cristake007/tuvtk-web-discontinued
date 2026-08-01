@@ -1,5 +1,3 @@
-import { CalendarDays } from "lucide-react";
-
 import { AdminPageHeader } from "@/features/administration/AdminPageHeader";
 
 export function PublicHolidaysIntegrationHeader() {
@@ -11,7 +9,6 @@ export function PublicHolidaysIntegrationHeader() {
         { label: "Zile libere și sărbători" },
       ]}
       description="Configurează sincronizarea sărbătorilor legale și gestionează zilele interne utilizate în întreaga platformă."
-      icon={CalendarDays}
       title="Zile libere și sărbători"
     />
   );

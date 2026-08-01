@@ -58,15 +58,22 @@ export function AppShell({ bootstrap }: { bootstrap: CoreBootstrap }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    const { culoare_accent, culoare_fundal, culoare_primara } = bootstrap.configuration;
+    const {
+      culoare_accent,
+      culoare_fundal,
+      culoare_primara,
+      culoare_titluri,
+    } = bootstrap.configuration;
     root.style.setProperty("--primary", culoare_primara);
     root.style.setProperty("--brand-red", culoare_accent);
     root.style.setProperty("--background", culoare_fundal);
+    root.style.setProperty("--heading", culoare_titluri);
 
     return () => {
       root.style.removeProperty("--primary");
       root.style.removeProperty("--brand-red");
       root.style.removeProperty("--background");
+      root.style.removeProperty("--heading");
     };
   }, [bootstrap.configuration]);
 

@@ -19,13 +19,14 @@ import { userInterfaceQueryKeys } from "./queryKeys";
 
 export type CuloriInterfata = Pick<
   ShellConfiguration,
-  "culoare_primara" | "culoare_accent" | "culoare_fundal"
+  "culoare_primara" | "culoare_accent" | "culoare_fundal" | "culoare_titluri"
 >;
 
 const culoriImplicite: CuloriInterfata = {
   culoare_primara: "#164194",
   culoare_accent: "#d41131",
   culoare_fundal: "#ffffff",
+  culoare_titluri: "#1b2230",
 };
 
 function actualizeazaConfiguratiaDinCache(
@@ -82,6 +83,7 @@ export function useUserInterfaceSettings() {
       culoare_primara: settingsQuery.data.culoare_primara,
       culoare_accent: settingsQuery.data.culoare_accent,
       culoare_fundal: settingsQuery.data.culoare_fundal,
+      culoare_titluri: settingsQuery.data.culoare_titluri,
     });
   }, [settingsQuery.data]);
 
@@ -197,7 +199,8 @@ export function useUserInterfaceSettings() {
     settingsQuery.data !== undefined &&
     (culori.culoare_primara !== settingsQuery.data.culoare_primara ||
       culori.culoare_accent !== settingsQuery.data.culoare_accent ||
-      culori.culoare_fundal !== settingsQuery.data.culoare_fundal);
+      culori.culoare_fundal !== settingsQuery.data.culoare_fundal ||
+      culori.culoare_titluri !== settingsQuery.data.culoare_titluri);
   const ordineEsteModificata =
     navigationQuery.data !== undefined &&
     (elementeMeniu.length !== navigationQuery.data.length ||

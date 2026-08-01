@@ -223,6 +223,7 @@ export interface components {
       "culoare_primara"?: string;
       "culoare_accent"?: string;
       "culoare_fundal"?: string;
+      "culoare_titluri"?: string;
     };
     "PatchedApplicationGroupWrite": components["schemas"]["PatchedApplicationGroupWriteRequest"];
     "PatchedApplicationGroupWriteRequest": {
@@ -266,6 +267,7 @@ export interface components {
       "culoare_primara": string;
       "culoare_accent": string;
       "culoare_fundal": string;
+      "culoare_titluri": string;
     };
     "PublicHoliday": {
       "id": string;
@@ -370,6 +372,7 @@ export interface components {
       "culoare_primara": string;
       "culoare_accent": string;
       "culoare_fundal": string;
+      "culoare_titluri": string;
     };
     "SourceEnum": "nager" | "internal";
     "SynchronizationResult": {

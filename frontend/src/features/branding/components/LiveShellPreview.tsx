@@ -1,6 +1,7 @@
 import { type CSSProperties, useMemo } from "react";
 import { AlertTriangle, Bell, Sparkles, UserRound } from "lucide-react";
 
+import { SectionTitle } from "@/components/ui/heading";
 import type { NavigationItem } from "@/features/core/types";
 import { getNavigationIcon } from "@/lib/navigation-icons";
 
@@ -9,6 +10,7 @@ import type { CuloriInterfata } from "../useUserInterfaceSettings";
 type ScopedThemeStyle = CSSProperties & {
   "--background": string;
   "--brand-red": string;
+  "--heading": string;
   "--primary": string;
 };
 
@@ -93,6 +95,7 @@ export function LiveShellPreview({
   const stilTema: ScopedThemeStyle = {
     "--background": culori.culoare_fundal,
     "--brand-red": culori.culoare_accent,
+    "--heading": culori.culoare_titluri,
     "--primary": culori.culoare_primara,
   };
 
@@ -100,7 +103,7 @@ export function LiveShellPreview({
     <section aria-label="Previzualizare live a interfeței" className="grid gap-2">
       <div className="flex items-center gap-2">
         <Sparkles aria-hidden="true" className="size-4 text-primary" />
-        <h2 className="text-sm font-semibold tracking-tight">Previzualizare live</h2>
+        <SectionTitle>Previzualizare live</SectionTitle>
         <span className="text-xs text-muted-foreground">
           Reflectă modificările nesalvate din formularele de mai jos.
         </span>
@@ -145,7 +148,9 @@ export function LiveShellPreview({
           </nav>
 
           <div className="flex-1 space-y-3 bg-background p-4">
-            <div className="h-2 w-3/4 rounded-full bg-foreground/15" />
+            <p className="text-sm font-semibold leading-snug text-heading">
+              Titlu de pagină
+            </p>
             <div className="h-2 w-1/2 rounded-full bg-foreground/10" />
             <div className="flex items-center gap-2 pt-1">
               <span className="rounded-md bg-primary px-2.5 py-1 text-[11px] font-medium text-primary-foreground">

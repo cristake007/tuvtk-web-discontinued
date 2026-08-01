@@ -1,10 +1,11 @@
 import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { FileCode, FileSpreadsheet, FileText, History } from "lucide-react";
+import { FileCode, FileSpreadsheet, FileText } from "lucide-react";
 
 import { AntetAplicatie } from "@/components/AntetAplicatie";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { SectionTitle } from "@/components/ui/heading";
 import {
   Pagination,
   PaginationContent,
@@ -146,7 +147,7 @@ export function CoursePlanHistoryTable() {
 
   return (
     <div className="flex min-w-0 flex-col gap-5">
-      <AntetAplicatie pictograma={History} titlu="Istoric generări" />
+      <AntetAplicatie titlu="Istoric generări" />
 
       {error ? (
         <Alert aria-live="polite" variant="destructive">
@@ -216,8 +217,8 @@ export function CoursePlanHistoryTable() {
         ) : (
           <div className="flex min-h-64 flex-col items-center justify-center px-6 text-center">
             <FileSpreadsheet aria-hidden="true" className="size-8 text-muted-foreground" />
-            <h2 className="mt-3 font-medium">Nu există generări salvate</h2>
-            <p className="mt-1 max-w-md text-sm text-muted-foreground">
+            <SectionTitle className="mt-3">Nu există generări salvate</SectionTitle>
+            <p className="mt-1 max-w-md text-base leading-6 text-muted-foreground">
               Prima planificare generată va apărea automat în acest tabel.
             </p>
           </div>
@@ -225,7 +226,7 @@ export function CoursePlanHistoryTable() {
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           {historyQuery.data?.count ?? 0} generări · pagina {page} din {pageCount}
         </p>
         <Pagination className="mx-0 w-auto justify-end">

@@ -151,7 +151,7 @@ function ElementMeniuSortabil<Element extends ElementSortabil>({
           onClick={() => onStergeSeparator(element.key)}
           size="sm"
           type="button"
-          variant="ghost"
+          variant="destructive"
         >
           Elimină
         </Button>

@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { SectionTitle } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
 
 import type { PublicHoliday } from "../types";
@@ -121,7 +122,7 @@ export function PublicHolidayTable({
                               : "Zilele Nager.Date se elimină prin sincronizare"
                           }
                           type="button"
-                          variant="outline"
+                          variant="destructive"
                         >
                           <Trash2 aria-hidden="true" />
                         </Button>
@@ -135,8 +136,10 @@ export function PublicHolidayTable({
         ) : (
           <div className="flex min-h-56 flex-col items-center justify-center px-6 text-center">
             <CalendarDays aria-hidden="true" className="size-8 text-muted-foreground" />
-            <h2 className="mt-3 font-medium">Nu există zile salvate pentru {year}</h2>
-            <p className="mt-1 max-w-md text-sm text-muted-foreground">
+            <SectionTitle className="mt-3">
+              Nu există zile salvate pentru {year}
+            </SectionTitle>
+            <p className="mt-1 max-w-md text-base leading-6 text-muted-foreground">
               Rulează sincronizarea Nager.Date sau adaugă o zi internă.
             </p>
           </div>

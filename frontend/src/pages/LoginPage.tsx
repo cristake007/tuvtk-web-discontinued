@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Quote } from "lucide-react";
 
@@ -10,6 +10,13 @@ import {
 } from "@/features/auth/loginQuotes";
 import { PublicBrandMark } from "@/features/branding/PublicBrandMark";
 import type { PublicBranding } from "@/features/branding/types";
+
+type LoginThemeStyle = CSSProperties & {
+  "--background": string;
+  "--brand-red": string;
+  "--heading": string;
+  "--primary": string;
+};
 
 function RotatingQuote() {
   const quotesQuery = useQuery({
@@ -68,13 +75,20 @@ function RotatingQuote() {
 }
 
 export function LoginPage({ branding }: { branding: PublicBranding }) {
+  const themeStyle: LoginThemeStyle = {
+    "--background": branding.culoare_fundal,
+    "--brand-red": branding.culoare_accent,
+    "--heading": branding.culoare_titluri,
+    "--primary": branding.culoare_primara,
+  };
+
   return (
-    <main className="relative min-h-svh bg-background">
+    <main className="relative min-h-svh bg-background" style={themeStyle}>
       <div className="grid min-h-svh w-full lg:grid-cols-2">
         <section className="flex min-h-[44svh] items-center justify-center px-6 py-10 sm:px-10 lg:min-h-svh lg:px-12 xl:px-16">
           <div className="w-full max-w-md text-center">
             <PublicBrandMark branding={branding} className="mx-auto" compact />
-            <p className="mt-3 text-xl font-semibold tracking-tight text-foreground">
+            <p className="mt-3 text-base font-semibold leading-snug text-heading">
               {branding.organization_name}
             </p>
 

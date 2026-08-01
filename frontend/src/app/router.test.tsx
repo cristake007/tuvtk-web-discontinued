@@ -24,7 +24,7 @@ function bootstrap(accessibleApplicationKeys: string[] = []) {
     authenticated: true,
     configuration: {
       site_name: "TUVTK", organization_name: "TUVTK", sidebar_title: "Workspace",
-      logo_url: null, culoare_primara: "#164194", culoare_accent: "#d41131", culoare_fundal: "#ffffff",
+      logo_url: null, culoare_primara: "#164194", culoare_accent: "#d41131", culoare_fundal: "#ffffff", culoare_titluri: "#1b2230",
     },
     user: normalUser,
     navigation: [],

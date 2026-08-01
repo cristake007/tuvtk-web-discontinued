@@ -3,6 +3,7 @@ import { ArrowRight, LayoutGrid, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { SectionTitle } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
 import {
   administrationGroups,
@@ -117,9 +118,7 @@ export function AdministrationPage() {
               <section className="grid min-w-0 gap-3" key={group.name}>
                 <div className="flex items-center gap-2 px-1">
                   <Icon aria-hidden="true" className="size-5 shrink-0 text-primary" />
-                  <h2 className="text-lg font-semibold tracking-tight text-primary">
-                    {group.name}
-                  </h2>
+                  <SectionTitle>{group.name}</SectionTitle>
                 </div>
 
                 <Card className="gap-0 rounded-md bg-background py-0">

@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Globe, RefreshCcw, Upload, XCircle } from "lucide-react";
+import { CheckCircle2, RefreshCcw, Upload, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 import { AntetAplicatie } from "@/components/AntetAplicatie";
@@ -9,6 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
+import { SectionTitle } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -190,12 +191,12 @@ export function UpdateWordPressPanel() {
 
   return (
     <div className="flex w-full min-w-0 flex-1 flex-col gap-6">
-      <AntetAplicatie pictograma={Globe} titlu="Update WordPress" />
+      <AntetAplicatie titlu="Update WordPress" />
 
       <section className="grid max-w-2xl gap-6 rounded-sm border bg-background p-6 shadow-sm">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">Conexiune WordPress</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <SectionTitle>Conexiune WordPress</SectionTitle>
+          <p className="mt-1 text-base leading-6 text-muted-foreground">
             Conectează-te folosind o parolă de aplicație WordPress. Parola nu este salvată pe
             server, doar adresa și utilizatorul.
           </p>
@@ -266,10 +267,10 @@ export function UpdateWordPressPanel() {
 
       <section className="grid max-w-2xl gap-6 rounded-sm border bg-background p-6 shadow-sm">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">
+          <SectionTitle>
             Previzualizează datele cursurilor
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          </SectionTitle>
+          <p className="mt-1 text-base leading-6 text-muted-foreground">
             Încarcă un fișier cu coloanele Title, Permalink și coloane de lună
             (January–December) pentru a vedea perioadele propuse înainte de actualizare.
           </p>
@@ -300,8 +301,8 @@ export function UpdateWordPressPanel() {
       {rows ? (
         <section className="grid min-w-0 gap-4 rounded-sm border bg-background p-6 shadow-sm">
           <div>
-            <h2 className="text-lg font-semibold tracking-tight">Cursuri găsite</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <SectionTitle>Cursuri găsite</SectionTitle>
+            <p className="mt-1 text-base leading-6 text-muted-foreground">
               {hasCredentials
                 ? "Verifică perioadele curente de pe WordPress, apoi actualizează cursurile dorite."
                 : "Conectează-te la WordPress mai sus pentru a putea verifica și actualiza cursurile."}

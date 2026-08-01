@@ -36,6 +36,7 @@ class UserInterfaceAdministrationApiTests(TestCase):
             "TÜV Thüringen Karpat",
         )
         self.assertIsNone(response.json()["logo_url"])
+        self.assertEqual(response.json()["culoare_titluri"], "#1b2230")
 
     def test_regular_user_cannot_read_user_interface_settings(self):
         user = get_user_model().objects.create_user(
@@ -65,6 +66,7 @@ class UserInterfaceAdministrationApiTests(TestCase):
                     "culoare_primara": "#123456",
                     "culoare_accent": "#654321",
                     "culoare_fundal": "#fafafa",
+                    "culoare_titluri": "#246824",
                 }
             ),
             content_type="application/json",
@@ -76,6 +78,25 @@ class UserInterfaceAdministrationApiTests(TestCase):
         self.assertEqual(self.configuration.culoare_primara, "#123456")
         self.assertEqual(self.configuration.culoare_accent, "#654321")
         self.assertEqual(self.configuration.culoare_fundal, "#fafafa")
+        self.assertEqual(self.configuration.culoare_titluri, "#246824")
+
+    def test_heading_color_must_be_a_six_digit_hex_value(self):
+        user = get_user_model().objects.create_user(
+            username="heading-color-editor",
+            password="test-password-123",
+            is_staff=True,
+        )
+        self.client.force_login(user)
+
+        response = self.client.patch(
+            USER_INTERFACE_PATH,
+            data=json.dumps({"culoare_titluri": "verde"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.configuration.refresh_from_db()
+        self.assertEqual(self.configuration.culoare_titluri, "#1b2230")
 
     def test_staff_user_can_reorder_main_navigation(self):
         user = get_user_model().objects.create_user(

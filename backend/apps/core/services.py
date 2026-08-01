@@ -13,6 +13,7 @@ DEFAULT_CONFIGURATION = {
     "culoare_primara": "#164194",
     "culoare_accent": "#d41131",
     "culoare_fundal": "#ffffff",
+    "culoare_titluri": "#1b2230",
 }
 
 
@@ -56,6 +57,7 @@ def serialize_shell_configuration(
         "culoare_primara": configuration.culoare_primara,
         "culoare_accent": configuration.culoare_accent,
         "culoare_fundal": configuration.culoare_fundal,
+        "culoare_titluri": configuration.culoare_titluri,
     }
 
 

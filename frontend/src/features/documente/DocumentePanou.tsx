@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { Files } from "lucide-react";
 
 import { AntetAplicatie } from "@/components/AntetAplicatie";
 import { QueryApplicationState } from "@/components/QueryApplicationState";
@@ -38,7 +37,7 @@ export function DocumentePanou() {
 
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6" aria-label="Documente">
-      <AntetAplicatie pictograma={Files} titlu={rezumat.titlu} />
+      <AntetAplicatie titlu={rezumat.titlu} />
 
       <Card>
         <CardHeader>
@@ -49,7 +48,7 @@ export function DocumentePanou() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-sm leading-6 text-muted-foreground">
+          <p className="text-base leading-6 text-muted-foreground">
             Momentan nu există documente disponibile.
           </p>
         </CardContent>

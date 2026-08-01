@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { SectionTitle } from "@/components/ui/heading";
 
 import { formatSelectedMonths } from "../constants";
 import type { GenerateScheduleResponse } from "../types";
@@ -74,11 +75,11 @@ export function PlannerSummaryCard({
   return (
     <aside className="h-fit border-t pt-6 xl:sticky xl:top-6 xl:border-t-0 xl:border-l xl:pl-6">
       <div>
-        <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+        <SectionTitle className="flex items-center gap-2">
           <ListChecks aria-hidden="true" className="size-4 text-primary" />
           Rezumat
-        </h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        </SectionTitle>
+        <p className="mt-1 text-base leading-6 text-muted-foreground">
           Verifică selecția înainte de generare și descarcă rezultatul curent.
         </p>
       </div>

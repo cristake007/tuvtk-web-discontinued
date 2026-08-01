@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { AntetAplicatie } from "@/components/AntetAplicatie";
 import { FileUploadField } from "@/components/FileUploadField";
 import { Button } from "@/components/ui/button";
+import { SectionTitle } from "@/components/ui/heading";
 import { formatApiError } from "@/lib/api-errors";
 import { saveBlob } from "@/lib/download";
 
@@ -39,14 +40,14 @@ export function XmlFormatterPanel() {
 
   return (
     <div className="flex w-full min-w-0 flex-1 flex-col gap-6">
-      <AntetAplicatie pictograma={FileCode2} titlu="XML cursuri" />
+      <AntetAplicatie titlu="XML cursuri" />
 
       <section className="grid max-w-2xl gap-6 rounded-sm border bg-background p-6 shadow-sm">
         <div>
-          <h2 className="text-lg font-semibold tracking-tight">
+          <SectionTitle>
             Generează XML pentru WordPress
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          </SectionTitle>
+          <p className="mt-1 text-base leading-6 text-muted-foreground">
             Încarcă un fișier CSV sau Excel cu coloanele Title, Permalink și coloane de
             lună (January–December sau Luna 1–Luna 12) pentru a obține un fișier XML
             pregătit pentru import în WordPress.

@@ -66,7 +66,7 @@ const plannerModules = [
 export function CoursePlannerPage() {
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6">
-      <AntetAplicatie pictograma={CalendarRange} titlu="Planificator cursuri" />
+      <AntetAplicatie titlu="Planificator cursuri" />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {plannerModules.map((module) => {
@@ -89,7 +89,7 @@ export function CoursePlannerPage() {
                 </CardAction>
               </CardHeader>
               <CardContent>
-                <p className="text-sm leading-6 text-muted-foreground">{module.description}</p>
+                <p className="text-base leading-6 text-muted-foreground">{module.description}</p>
               </CardContent>
               <CardFooter className="mt-auto justify-end">
                 <Button

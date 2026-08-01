@@ -142,7 +142,7 @@ export function NagerDateSettingsCard({
           </div>
         </div>
 
-        <dl className="grid content-start gap-3 rounded-lg bg-muted/40 p-4 text-sm">
+        <dl className="grid content-start gap-3 rounded-lg bg-muted/40 p-4 text-xs text-muted-foreground">
           <div className="flex justify-between gap-4">
             <dt className="text-muted-foreground">Ultima încercare</dt>
             <dd className="text-right font-medium">
@@ -171,7 +171,7 @@ export function NagerDateSettingsCard({
             </dd>
           </div>
           {settings.last_error ? (
-            <div className="rounded-md bg-destructive/10 p-3 text-destructive">
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {settings.last_error}
             </div>
           ) : null}

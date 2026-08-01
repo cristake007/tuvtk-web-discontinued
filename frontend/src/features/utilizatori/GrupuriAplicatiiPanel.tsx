@@ -189,7 +189,7 @@ function GrupDialog({
                 </label>
               ))}
             </div>
-            <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{selectionQuery.data?.count ?? 0} utilizatori</span>
               <div className="flex gap-2"><Button disabled={pending || !selectionQuery.data?.previous} onClick={() => setUserPage((page) => page - 1)} size="sm" type="button" variant="outline">Anterior</Button><Button disabled={pending || !selectionQuery.data?.next} onClick={() => setUserPage((page) => page + 1)} size="sm" type="button" variant="outline">Următor</Button></div>
             </div>
@@ -243,9 +243,79 @@ export function GrupuriAplicatiiPanel() {
         <div className="relative flex-1 sm:max-w-xl"><Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" /><Input aria-label="Caută grupuri" className="pl-9" onChange={(event) => { const value = event.currentTarget.value; setSearch(value); }} placeholder="Caută după numele grupului..." type="search" value={search} /></div>
         <Button className="shrink-0" onClick={() => { setSelectedGroup(null); setDialogOpen(true); }} type="button"><Plus aria-hidden="true" />Adaugă grup</Button>
       </div>
-      <Card className="gap-0 py-0"><CardContent className="grid gap-0 p-0">{filteredGroups.map((group) => <div className="flex items-center gap-4 border-b p-4 last:border-b-0" key={group.id}><UsersRound aria-hidden="true" className="size-5 shrink-0 text-primary" /><div className="min-w-0 flex-1"><p className="font-medium">{group.name}</p><p className="mt-1 text-sm text-muted-foreground">{group.applications.length ? group.applications.map((application) => application.name).join(", ") : "Fără aplicații selectate"} · {group.users.length} utilizatori</p></div><Button aria-label={`Editează grupul ${group.name}`} onClick={() => { setSelectedGroup(group); setDialogOpen(true); }} size="icon-sm" type="button" variant="outline"><Pencil aria-hidden="true" /></Button><Button aria-label={`Șterge grupul ${group.name}`} onClick={() => setGroupToDelete(group)} size="icon-sm" type="button" variant="outline"><Trash2 aria-hidden="true" /></Button></div>)}{filteredGroups.length === 0 ? <div className="flex min-h-52 flex-col items-center justify-center px-6 text-center"><UsersRound aria-hidden="true" className="size-9 text-muted-foreground" /><p className="mt-3 font-medium">Nu am găsit grupuri</p></div> : null}</CardContent></Card>
+      <Card className="gap-0 py-0">
+        <CardContent className="grid gap-0 p-0">
+          {filteredGroups.map((group) => (
+            <div
+              className="flex items-center gap-4 border-b p-4 last:border-b-0"
+              key={group.id}
+            >
+              <UsersRound aria-hidden="true" className="size-5 shrink-0 text-primary" />
+              <div className="min-w-0 flex-1">
+                <p className="font-medium">{group.name}</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  {group.applications.length
+                    ? group.applications.map((application) => application.name).join(", ")
+                    : "Fără aplicații selectate"}{" "}
+                  · {group.users.length} utilizatori
+                </p>
+              </div>
+              <Button
+                aria-label={`Editează grupul ${group.name}`}
+                onClick={() => {
+                  setSelectedGroup(group);
+                  setDialogOpen(true);
+                }}
+                size="icon-sm"
+                type="button"
+                variant="outline"
+              >
+                <Pencil aria-hidden="true" />
+              </Button>
+              <Button
+                aria-label={`Șterge grupul ${group.name}`}
+                onClick={() => setGroupToDelete(group)}
+                size="icon-sm"
+                type="button"
+                variant="destructive"
+              >
+                <Trash2 aria-hidden="true" />
+              </Button>
+            </div>
+          ))}
+          {filteredGroups.length === 0 ? (
+            <div className="flex min-h-52 flex-col items-center justify-center px-6 text-center">
+              <UsersRound aria-hidden="true" className="size-9 text-muted-foreground" />
+              <p className="mt-3 font-medium">Nu am găsit grupuri</p>
+            </div>
+          ) : null}
+        </CardContent>
+      </Card>
       <GrupDialog applications={applicationsQuery.data} error={saveMutation.error} group={selectedGroup} onOpenChange={(open) => { setDialogOpen(open); if (!open) { setSelectedGroup(null); saveMutation.reset(); } }} onSubmit={(values) => saveMutation.mutate(values)} open={dialogOpen} pending={saveMutation.isPending} />
-      <AlertDialog onOpenChange={(open) => !open && setGroupToDelete(null)} open={Boolean(groupToDelete)}><AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Ștergi grupul?</AlertDialogTitle><AlertDialogDescription>Grupul „{groupToDelete?.name}” va fi eliminat. Utilizatorii nu vor mai primi accesul acordat prin acest grup.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Anulează</AlertDialogCancel><AlertDialogAction disabled={deleteMutation.isPending} onClick={() => groupToDelete && deleteMutation.mutate(groupToDelete.id)}>{deleteMutation.isPending ? "Se șterge…" : "Șterge"}</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
+      <AlertDialog
+        onOpenChange={(open) => !open && setGroupToDelete(null)}
+        open={Boolean(groupToDelete)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Ștergi grupul?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Grupul „{groupToDelete?.name}” va fi eliminat. Utilizatorii nu vor mai primi
+              accesul acordat prin acest grup.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Anulează</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={deleteMutation.isPending}
+              onClick={() => groupToDelete && deleteMutation.mutate(groupToDelete.id)}
+              variant="destructive"
+            >
+              {deleteMutation.isPending ? "Se șterge…" : "Șterge"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }

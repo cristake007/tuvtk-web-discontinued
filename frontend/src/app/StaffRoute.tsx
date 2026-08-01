@@ -1,5 +1,7 @@
 import { Outlet } from "react-router-dom";
 
+import { PageTitle } from "@/components/ui/heading";
+
 import { useAuthenticatedBootstrap } from "./AuthenticatedBootstrapContext";
 import { canAccessStaffRoute } from "./routeAccess";
 
@@ -17,8 +19,8 @@ export function AccessDenied() {
   return (
     <section className="flex min-w-0 flex-1 items-start justify-center py-10">
       <div className="w-full max-w-xl rounded-xl border bg-card p-6 text-card-foreground shadow-sm">
-        <h1 className="text-lg font-semibold">Acces interzis</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+        <PageTitle>Acces interzis</PageTitle>
+        <p className="mt-2 text-base leading-6 text-muted-foreground">
           Nu ai permisiunea necesară pentru această pagină.
         </p>
       </div>

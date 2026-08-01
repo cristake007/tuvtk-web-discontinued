@@ -44,6 +44,7 @@ class ApplicationConfiguration(models.Model):
     culoare_primara = models.CharField(max_length=7, default="#164194")
     culoare_accent = models.CharField(max_length=7, default="#d41131")
     culoare_fundal = models.CharField(max_length=7, default="#ffffff")
+    culoare_titluri = models.CharField(max_length=7, default="#1b2230")
     is_active = models.BooleanField(default=True)
     updated_at = models.DateTimeField(auto_now=True)
 

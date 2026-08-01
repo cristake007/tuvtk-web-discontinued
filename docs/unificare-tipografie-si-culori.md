@@ -178,10 +178,41 @@ Adaugă `culoare_titluri` ca al patrulea câmp de culoare configurabil, alături
 
 ---
 
+# Faza 6 — Standardizarea elementelor HTML semantice (container-e, text, liste)
+
+## Problema
+Dincolo de titluri (Fazele 0-4), alegerea elementului HTML de bază pentru restul marcajului e inconsecventă. Verificat în cod:
+
+- `features/branding/SortableMenuList.tsx:74` și `:121` — lista de elemente de meniu e un `<div role="list">` care conține `<div role="listitem">`, în loc de `<ul>`/`<li>` native. Nu există niciun motiv tehnic pentru asta — `useSortable` din `@dnd-kit/sortable` se atașează prin `ref`, nu impune un anume tip de element.
+- Wrapper-ul rădăcină de pagină e aproape peste tot `<section className="flex min-w-0 flex-1 flex-col gap-6">` (7 din 10 pagini) — corect și consecvent — dar 3 pagini adaugă în plus `bg-background` la același wrapper, fără un motiv vizibil de ce doar acelea. `AdministrationLayout.tsx` folosește `<div>` pentru wrapper-ul de layout (rail + `<Outlet/>`) — corect, pentru că nu e o pagină, e o compunere de layout, deci rămâne `<div>`, nu se schimbă.
+- Nu există nicio folosire a `<code>` în aplicație, deși `globals.css` are deja o regulă `code, .mono { font-family: ui-monospace, ... }` gata pregătită. Orice text tehnic afișat static (cod hex, cale, identificator) în afara unui `<input>` ar trebui să fie `<code>`, nu un `<span>`/`<div>` cu `font-mono` adăugat manual.
+
+## Reguli
+- Container de nivel de pagină sau de grupare tematică (are sens de sine stătător, ar putea avea propriul heading): `<section>`.
+- Container pur de layout (poziționare flex/grid, fără sens tematic propriu — ex. o compunere de tip rail+conținut): `<div>`.
+- Text tip propoziție/paragraf (descrieri, explicații): `<p>`.
+- Fragment de text în interiorul unui rând (etichetă scurtă, valoare, contor, text de badge): `<span>`.
+- Listă de elemente similare, repetate (rânduri de meniu, rezultate de căutare, elemente sortabile, orice ce azi e randat cu `.map()` într-un container): `<ul>`/`<li>` native. `role="list"`/`role="listitem"` pe un `<div>` se folosește *doar* dacă un element `<li>` chiar rupe vizual layout-ul (browserele adaugă `display: list-item` implicit, ușor de suprascris cu `list-none` dacă e nevoie) — nu implicit, din obișnuință.
+- Valoare tehnică afișată ca text static (cod hex, cale de rută, nume de fișier, identificator) în afara unui `<input>`: `<code>`. Nu mai adăuga `font-mono` manual pe `<span>`/`<div>` pentru asta — `code` are deja stilul din `globals.css`.
+
+## Cerințe
+1. `SortableMenuList.tsx`: schimbă `<div ... role="list">` în `<ul ...>` și `<div ... role="listitem">` în `<li ...>`. Păstrează restul claselor și `ref`-ul de la `useSortable` neschimbate. Verifică vizual (captură de ecran) că lista arată identic — un `<ul>` fără `list-style` explicit poate primi implicit marcatori/indentare din stilurile browser-ului dacă nu există deja un reset global; confirmă că `globals.css`/reset-ul Tailwind acoperă asta (de regulă `list-style: none` e parte din reset-ul standard Tailwind, dar confirmă, nu presupune).
+2. Cele 7 wrappere de pagină cu `<section className="flex min-w-0 flex-1 flex-col gap-6">`: decide o singură variantă (cu sau fără `bg-background`) verificând dacă acea clasă schimbă ceva vizual sau e redundantă (culoarea de fundal vine oricum de la părinte) — apoi aplic-o uniform pe toate cele 7.
+3. Fă un audit țintit (nu exhaustiv pe toate cele 291 de `<div>`, doar pe cele care randează conținut, nu layout) pentru cazuri unde un `<div>`/`<span>` e folosit acolo unde textul e de fapt o propoziție completă (ar trebui `<p>`) sau unde o listă `.map()` randează rânduri fără element de listă real. Pornește de la paginile deja atinse în Fazele 0-4 din `/administrare`, apoi extinde la restul aplicației din lista de la Faza 4.
+4. Nu atinge elementele cu `role="group"`/`role="list"` din `components/ui/*` (`item.tsx`, `button-group.tsx`, `field.tsx`, `carousel.tsx`, `input-group.tsx`) — sunt primitive shadcn generice, cu semantică ARIA aleasă intenționat de biblioteca sursă, nu cod propriu al aplicației.
+
+## Verificare
+- `npm run typecheck`, `npm run lint`, `npx vitest run`.
+- Grep de regresie: `grep -rn 'role="list"\|role="listitem"' frontend/src --include=*.tsx` — singurele rezultate rămase trebuie să fie în `components/ui/`, nu în `features/`/`pages/`.
+- Captură de ecran pe pagina `/administrare/sistem/interfata-utilizator`, tab Meniu — lista de elemente sortabile trebuie să arate identic cu înainte.
+
+---
+
 # Verificare finală (după toate fazele)
 
 - `npm run typecheck`, `npm run lint`, `npx vitest run` — zero erori.
 - Grep-urile din secțiunea „Diagnostic" rulate din nou, cu rezultatul documentat într-un tabel „înainte/după" în raportul final.
+- Grep-ul din Faza 6 (`role="list"`/`role="listitem"` în afara `components/ui/`) rulat din nou — trebuie să nu mai returneze nimic din `features/`/`pages/`.
 - Captură de ecran pentru fiecare pagină principală a aplicației (listă: toate din `/administrare`, `tablou-de-bord`, `documente`, `planificator-cursuri` + sub-paginile lui, `login`).
 - Testare manuală cu un cititor de ecran (VoiceOver/NVDA) pe cel puțin o pagină, navigare pe headinguri („H"), pentru a confirma că ierarhia h1 → h2 → h3 e acum reală și completă.
 
@@ -189,6 +220,7 @@ Adaugă `culoare_titluri` ca al patrulea câmp de culoare configurabil, alături
 
 - Nu redenumi rute, nu muta fișiere de pagină, nu schimba structura routerului (`app/router.tsx`) dincolo de ce e strict necesar pentru importuri.
 - Nu schimba `buttonVariants`, `badgeVariants` sau alte definiții structurale din `components/ui/` în afara `CardTitle` (Faza 0).
+- Nu atinge marcajul ARIA din primitivele shadcn generice (`components/ui/*`) — Faza 6 privește doar codul propriu al aplicației (`features/`, `pages/`).
 - Nu introduce o bibliotecă nouă de componente sau un sistem de design token separat de Tailwind/`globals.css` existent.
 - Nu atinge `AntetAplicatie.tsx`/`CoursePlannerPage` dincolo de a nota inconsecvența (vezi Faza 2) — e în afara scopului dacă nu se decide explicit altfel.
 - Nu face commit și nu face push fără aprobare explicită după fiecare fază — fiecare fază de mai sus e gândită ca un punct natural de revizuire separat.

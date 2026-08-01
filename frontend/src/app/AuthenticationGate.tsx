@@ -74,6 +74,7 @@ export function AuthenticationGate() {
             culoare_primara: configuration.culoare_primara,
             culoare_accent: configuration.culoare_accent,
             culoare_fundal: configuration.culoare_fundal,
+            culoare_titluri: configuration.culoare_titluri,
           }}
         />
       </DeferredView>

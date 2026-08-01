@@ -4,6 +4,7 @@ import { CalendarCheck2, FileSpreadsheet, Save, Sparkles } from "lucide-react";
 
 import { FileUploadField } from "@/components/FileUploadField";
 import { Button } from "@/components/ui/button";
+import { SectionTitle } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -72,11 +73,11 @@ export function PlannerConfigurationCard({
     <form className="grid gap-8" noValidate onSubmit={onGenerate}>
       <section className="grid gap-6">
         <div>
-          <h2 className="flex items-center gap-2 text-lg font-semibold tracking-tight">
+          <SectionTitle className="flex items-center gap-2">
             <Sparkles aria-hidden="true" className="size-4 text-primary" />
             Configurare planificare
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
+          </SectionTitle>
+          <p className="mt-1 text-base leading-6 text-muted-foreground">
             Fișierul, lunile și regulile de distribuție folosite pentru această generare.
           </p>
         </div>

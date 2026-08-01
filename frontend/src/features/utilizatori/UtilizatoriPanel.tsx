@@ -8,6 +8,7 @@ import { ApplicationState } from "@/components/ApplicationState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { SectionTitle } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
 import {
   Pagination,
@@ -213,7 +214,7 @@ export function UtilizatoriPanel() {
             </SelectContent>
           </Select>
 
-          <div className="flex min-h-9 items-center justify-end gap-2 text-sm text-muted-foreground">
+          <div className="flex min-h-9 items-center justify-end gap-2 text-xs text-muted-foreground">
             <span>{count} conturi</span>
           </div>
         </CardContent>
@@ -310,8 +311,8 @@ export function UtilizatoriPanel() {
         ) : (
           <div className="flex min-h-72 flex-col items-center justify-center px-6 text-center">
             <Users aria-hidden="true" className="size-9 text-muted-foreground" />
-            <h2 className="mt-3 font-medium">Nu am găsit utilizatori</h2>
-            <p className="mt-1 max-w-md text-sm text-muted-foreground">
+            <SectionTitle className="mt-3">Nu am găsit utilizatori</SectionTitle>
+            <p className="mt-1 max-w-md text-base leading-6 text-muted-foreground">
               Modifică termenul de căutare sau filtrele aplicate.
             </p>
           </div>
@@ -319,7 +320,7 @@ export function UtilizatoriPanel() {
       </Card>
 
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground">
           Pagina {page} din {pageCount}
         </p>
         <Pagination className="mx-0 w-auto justify-end">

@@ -8,6 +8,7 @@ const root = process.cwd();
 const sourceRoot = path.join(root, "src");
 const failures = [];
 const effectHooks = new Set(["useEffect", "useLayoutEffect"]);
+const manualHeadingTextSizes = new Set(["text-2xl", "text-3xl", "text-lg", "text-xl"]);
 
 async function collectSourceFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -45,6 +46,34 @@ function hasJsxAttribute(attributes, name) {
   );
 }
 
+function getStaticJsxAttributeText(attributes, name) {
+  const attribute = attributes.properties.find(
+    (property) =>
+      ts.isJsxAttribute(property) &&
+      ts.isIdentifier(property.name) &&
+      property.name.text === name,
+  );
+
+  if (!attribute || !ts.isJsxAttribute(attribute) || !attribute.initializer) {
+    return null;
+  }
+
+  if (ts.isStringLiteral(attribute.initializer)) {
+    return attribute.initializer.text;
+  }
+
+  if (
+    ts.isJsxExpression(attribute.initializer) &&
+    attribute.initializer.expression &&
+    (ts.isStringLiteral(attribute.initializer.expression) ||
+      ts.isNoSubstitutionTemplateLiteral(attribute.initializer.expression))
+  ) {
+    return attribute.initializer.expression.text;
+  }
+
+  return null;
+}
+
 function inspectFile(fileName, sourceText) {
   const sourceFile = ts.createSourceFile(
     fileName,
@@ -60,6 +89,9 @@ function inspectFile(fileName, sourceText) {
 
   const relativePath = path.relative(sourceRoot, fileName).replaceAll(path.sep, "/");
   const isUiPrimitive = relativePath.startsWith("components/ui/");
+  const permitsManualHeadingClasses =
+    relativePath === "components/ui/heading.tsx" ||
+    relativePath === "features/administration/AdminPageHeader.tsx";
   const expectedPageExport =
     relativePath.startsWith("pages/") && relativePath.endsWith("Page.tsx")
       ? path.basename(fileName, ".tsx")
@@ -94,6 +126,26 @@ function inspectFile(fileName, sourceText) {
       !hasJsxAttribute(node.attributes, "alt")
     ) {
       report(sourceFile, node, "Images must provide an alt attribute.");
+    }
+
+    if (
+      !permitsManualHeadingClasses &&
+      (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) &&
+      ts.isIdentifier(node.tagName) &&
+      ["h1", "h2"].includes(node.tagName.text)
+    ) {
+      const className = getStaticJsxAttributeText(node.attributes, "className");
+      const hasManualHeadingTextSize = className
+        ?.split(/\s+/)
+        .some((classToken) => manualHeadingTextSizes.has(classToken));
+
+      if (hasManualHeadingTextSize) {
+        report(
+          sourceFile,
+          node,
+          "Folosește `PageTitle`/`SectionTitle` din `@/components/ui/heading`, nu clase scrise manual.",
+        );
+      }
     }
 
     if (

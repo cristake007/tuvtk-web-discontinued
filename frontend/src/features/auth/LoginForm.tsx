@@ -8,6 +8,7 @@ import { ApiError } from "@/api/http";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { PageTitle } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
 
 import { login } from "./api";
@@ -125,10 +126,8 @@ export function LoginForm() {
   return (
     <div className="w-full max-w-[20rem]">
       <div className="mb-5">
-        <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          Autentificare
-        </h1>
-        <p className="mt-1.5 text-sm leading-5 text-muted-foreground">
+        <PageTitle>Autentificare</PageTitle>
+        <p className="mt-1.5 text-base leading-6 text-muted-foreground">
           Introdu datele contului tău pentru a continua.
         </p>
       </div>
