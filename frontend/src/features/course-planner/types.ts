@@ -18,3 +18,9 @@ export type CoursePlannerHoliday = {
   name: string;
   source_label: string;
 };
+
+export type WordMatchPreviewResponse = components["schemas"]["WordMatchPreviewResponse"];
+export type WordMatchRow = components["schemas"]["WordMatchRow"];
+export type WordMatchCandidate = components["schemas"]["WordMatchCandidate"];
+export type WordMatchScheduleOption = components["schemas"]["WordMatchScheduleOption"];
+export type WordMatchAssignment = components["schemas"]["WordMatchAssignment"];

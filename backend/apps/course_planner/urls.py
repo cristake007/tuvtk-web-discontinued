@@ -6,7 +6,10 @@ from .views import (
     CoursePlannerHolidaysView,
     CoursePlannerSettingsView,
     ExportScheduleView,
+    FormatXmlView,
     GenerateScheduleView,
+    WordMatchGenerateView,
+    WordMatchPreviewView,
 )
 
 app_name = "course-planner"
@@ -22,4 +25,7 @@ urlpatterns = [
         name="history-file",
     ),
     path("export", ExportScheduleView.as_view(), name="export"),
+    path("format-xml", FormatXmlView.as_view(), name="format-xml"),
+    path("word-match/preview", WordMatchPreviewView.as_view(), name="word-match-preview"),
+    path("word-match/generate", WordMatchGenerateView.as_view(), name="word-match-generate"),
 ]

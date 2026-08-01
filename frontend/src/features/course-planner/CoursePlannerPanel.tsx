@@ -24,6 +24,7 @@ const defaultSettings: CoursePlannerSettings = {
   year: new Date().getFullYear(),
   months: [],
   randomness: 5,
+  xml_start_post_id: 20000,
 };
 
 type ExcelDownloadRequest = {
@@ -196,6 +197,9 @@ export function CoursePlannerPanel() {
                 : [...current.months, month].sort((left, right) => left - right),
             }));
             clearResult();
+          }}
+          onXmlStartPostIdChange={(xml_start_post_id) => {
+            setSettings((current) => ({ ...current, xml_start_post_id }));
           }}
           onYearChange={(year) => {
             setSettings((current) => ({ ...current, year }));

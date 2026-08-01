@@ -2,11 +2,19 @@ import { lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 
 import { ApplicationState } from "@/components/ApplicationState";
+import { AdministrationHeader } from "@/features/administration/AdministrationHeader";
+import { AdministrationUserInterfaceHeader } from "@/features/branding/AdministrationUserInterfaceHeader";
+import { IntegrationsHeader } from "@/features/integrations/IntegrationsHeader";
+import { PublicHolidaysIntegrationHeader } from "@/features/integrations/public-holidays/PublicHolidaysIntegrationHeader";
+import { GrupuriAplicatiiHeader } from "@/features/utilizatori/GrupuriAplicatiiHeader";
+import { UtilizatoriHeader } from "@/features/utilizatori/UtilizatoriHeader";
+import { UtilizatorFormHeader } from "@/features/utilizatori/UtilizatorFormHeader";
 import { DocumentePage } from "@/pages/DocumentePage";
 import { ModulePlaceholderPage } from "@/pages/ModulePlaceholderPage";
 import { TablouDeBordPage } from "@/pages/TablouDeBordPage";
 import { WorkspaceCardPage } from "@/pages/WorkspaceCardPage";
 
+import { AdministrationLayout } from "./AdministrationLayout";
 import { AuthenticationGate } from "./AuthenticationGate";
 import { ApplicationAccessRoute } from "./ApplicationAccessRoute";
 import { StaffRoute } from "./StaffRoute";
@@ -25,6 +33,21 @@ const CoursePlannerGeneratorPage = lazy(async () => {
 const CoursePlannerHistoryPage = lazy(async () => {
   const module = await import("@/pages/CoursePlannerHistoryPage");
   return { default: module.CoursePlannerHistoryPage };
+});
+
+const CoursePlannerXmlPage = lazy(async () => {
+  const module = await import("@/pages/CoursePlannerXmlPage");
+  return { default: module.CoursePlannerXmlPage };
+});
+
+const CoursePlannerWordMatcherPage = lazy(async () => {
+  const module = await import("@/pages/CoursePlannerWordMatcherPage");
+  return { default: module.CoursePlannerWordMatcherPage };
+});
+
+const UpdateWordPressPage = lazy(async () => {
+  const module = await import("@/pages/UpdateWordPressPage");
+  return { default: module.UpdateWordPressPage };
 });
 
 const AdministrationPage = lazy(async () => {
@@ -106,6 +129,54 @@ function CoursePlannerHistoryRoute() {
       }
     >
       <CoursePlannerHistoryPage />
+    </Suspense>
+  );
+}
+
+function CoursePlannerXmlRoute() {
+  return (
+    <Suspense
+      fallback={
+        <ApplicationState
+          description="Se încarcă instrumentele pentru formatarea XML."
+          loading
+          title="Se încarcă XML cursuri"
+        />
+      }
+    >
+      <CoursePlannerXmlPage />
+    </Suspense>
+  );
+}
+
+function CoursePlannerWordMatcherRoute() {
+  return (
+    <Suspense
+      fallback={
+        <ApplicationState
+          description="Se încarcă instrumentele pentru potrivirea cursurilor."
+          loading
+          title="Se încarcă Word Matcher"
+        />
+      }
+    >
+      <CoursePlannerWordMatcherPage />
+    </Suspense>
+  );
+}
+
+function UpdateWordPressRoute() {
+  return (
+    <Suspense
+      fallback={
+        <ApplicationState
+          description="Se încarcă instrumentele pentru actualizarea WordPress."
+          loading
+          title="Se încarcă Update WordPress"
+        />
+      }
+    >
+      <UpdateWordPressPage />
     </Suspense>
   );
 }
@@ -307,23 +378,60 @@ export const appRoutes = [
           { path: "planificator-cursuri", element: <CoursePlannerRoute /> },
           { path: "planificator-cursuri/generator", element: <CoursePlannerGeneratorRoute /> },
           { path: "planificator-cursuri/istoric", element: <CoursePlannerHistoryRoute /> },
-          { path: "planificator-cursuri/xml", element: <ModulePlaceholderPage title="XML cursuri" description="Modulul pentru pregătirea și validarea fișierelor XML va fi disponibil aici." /> },
-          { path: "planificator-cursuri/word-matcher", element: <ModulePlaceholderPage title="Word Matcher" description="Modulul pentru potrivirea datelor cursurilor cu documentele Word va fi disponibil aici." /> },
-          { path: "planificator-cursuri/update-wordpress", element: <ModulePlaceholderPage title="Update WordPress" description="Modulul pentru actualizarea conținutului WordPress va fi disponibil aici." /> },
+          { path: "planificator-cursuri/xml", element: <CoursePlannerXmlRoute /> },
+          { path: "planificator-cursuri/word-matcher", element: <CoursePlannerWordMatcherRoute /> },
+          { path: "planificator-cursuri/update-wordpress", element: <UpdateWordPressRoute /> },
         ],
       },
       {
         path: "administrare",
         element: <StaffRoute />,
         children: [
-          { index: true, element: <AdministrationRoute /> },
-          { path: "sistem/interfata-utilizator", element: <AdministrationUserInterfaceRoute /> },
-          { path: "utilizatori", element: <UtilizatoriRoute /> },
-          { path: "utilizatori/adaugare", element: <UtilizatorFormRoute /> },
-          { path: "utilizatori/:userId", element: <UtilizatorFormRoute /> },
-          { path: "grupuri", element: <GrupuriAplicatiiRoute /> },
-          { path: "integrari", element: <IntegrationsRoute /> },
-          { path: "integrari/zile-libere", element: <PublicHolidaysIntegrationRoute /> },
+          {
+            element: <AdministrationLayout />,
+            children: [
+              {
+                index: true,
+                element: <AdministrationRoute />,
+                handle: { header: <AdministrationHeader /> },
+              },
+              {
+                path: "sistem/interfata-utilizator",
+                element: <AdministrationUserInterfaceRoute />,
+                handle: { header: <AdministrationUserInterfaceHeader /> },
+              },
+              {
+                path: "utilizatori",
+                element: <UtilizatoriRoute />,
+                handle: { header: <UtilizatoriHeader /> },
+              },
+              {
+                path: "utilizatori/adaugare",
+                element: <UtilizatorFormRoute />,
+                handle: { header: <UtilizatorFormHeader /> },
+              },
+              {
+                path: "utilizatori/:userId",
+                element: <UtilizatorFormRoute />,
+                handle: { header: <UtilizatorFormHeader /> },
+              },
+              {
+                path: "grupuri",
+                element: <GrupuriAplicatiiRoute />,
+                handle: { header: <GrupuriAplicatiiHeader /> },
+              },
+              {
+                path: "integrari",
+                element: <IntegrationsRoute />,
+                handle: { header: <IntegrationsHeader /> },
+              },
+              {
+                path: "integrari/zile-libere",
+                element: <PublicHolidaysIntegrationRoute />,
+                handle: { header: <PublicHolidaysIntegrationHeader /> },
+              },
+            ],
+          },
         ],
       },
       {

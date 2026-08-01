@@ -71,7 +71,7 @@ export function ListaMeniuSortabila<Element extends ElementSortabil>({
         items={elemente.map((element) => element.key)}
         strategy={verticalListSortingStrategy}
       >
-        <div className="divide-y rounded-lg border" role="list">
+        <div className="divide-y border-t" role="list">
           {elemente.map((element) => (
             <ElementMeniuSortabil
               disabled={disabled}

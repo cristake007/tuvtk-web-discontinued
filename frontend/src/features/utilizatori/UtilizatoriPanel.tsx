@@ -135,22 +135,12 @@ export function UtilizatoriPanel() {
 
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6 bg-background">
-      <header className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
-        <div>
-          <p className="text-sm font-medium text-primary">Administrare</p>
-          <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-            Utilizatori
-          </h1>
-          <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-            Gestionează conturile care se pot autentifica în platformă, starea lor și
-            accesul administrativ.
-          </p>
-        </div>
-        <Button className="shrink-0" onClick={() => navigate("/administrare/utilizatori/adaugare")} type="button">
+      <div className="flex justify-end">
+        <Button onClick={() => navigate("/administrare/utilizatori/adaugare")} type="button">
           <Plus aria-hidden="true" />
           Adaugă utilizator
         </Button>
-      </header>
+      </div>
 
       <Card className="gap-0 py-0">
         <CardContent className="grid gap-3 border-b p-4 xl:grid-cols-[minmax(18rem,1fr)_12rem_12rem_12rem_auto]">

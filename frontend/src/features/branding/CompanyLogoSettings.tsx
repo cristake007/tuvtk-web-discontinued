@@ -5,14 +5,6 @@ import { toast } from "sonner";
 import { ApplicationState } from "@/components/ApplicationState";
 import { FileUploadField } from "@/components/FileUploadField";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 
 import { useCompanyLogoSettings } from "./useCompanyLogoSettings";
 
@@ -84,16 +76,13 @@ export function CompanyLogoSettings() {
   }
 
   return (
-    <Card className="max-w-4xl shadow-sm">
-      <CardHeader className="border-b">
-        <CardTitle>Sigla companiei</CardTitle>
-        <CardDescription>
-          Sigla este afișată în antetul meniului lateral pentru utilizatorii
-          autentificați.
-        </CardDescription>
-      </CardHeader>
+    <div>
+      <h3 className="text-sm font-medium">Sigla companiei</h3>
+      <p className="mt-1 text-sm text-muted-foreground">
+        Sigla este afișată în antetul meniului lateral pentru utilizatorii autentificați.
+      </p>
 
-      <CardContent className="grid gap-6 pt-1 lg:grid-cols-[minmax(0,1fr)_18rem]">
+      <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
         <FileUploadField
           accept=".svg,image/svg+xml"
           description="Este acceptat un singur fișier SVG UTF-8, cu dimensiunea maximă de 256 KB."
@@ -127,9 +116,9 @@ export function CompanyLogoSettings() {
             încărcare.
           </p>
         </div>
-      </CardContent>
+      </div>
 
-      <CardFooter className="flex flex-wrap gap-2">
+      <div className="mt-4 flex flex-wrap gap-2">
         <Button
           disabled={!selectedFile || isSaving}
           onClick={uploadSelectedLogo}
@@ -147,7 +136,7 @@ export function CompanyLogoSettings() {
           <Trash2 aria-hidden="true" />
           {removePending ? "Se elimină…" : "Elimină sigla"}
         </Button>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 }

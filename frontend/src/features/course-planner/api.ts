@@ -7,6 +7,9 @@ import type {
   CoursePlannerInput,
   CoursePlannerSettings,
   GenerateScheduleResponse,
+  WordMatchAssignment,
+  WordMatchPreviewResponse,
+  WordMatchScheduleOption,
 } from "./types";
 
 const coursePlannerPath = "/api/v1/course-planner";
@@ -81,5 +84,44 @@ export function exportCourseSchedule(generationId: string): Promise<Blob> {
   return apiDownload(`${coursePlannerPath}/export`, {
     method: "POST",
     body: JSON.stringify({ generation_id: generationId }),
+  });
+}
+
+export function formatXmlSchedule(inputFile: File): Promise<Blob> {
+  const formData = new FormData();
+  formData.append("input_file", inputFile);
+
+  return apiDownload(`${coursePlannerPath}/format-xml`, {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export function previewWordMatch(input: {
+  wordFile: File;
+  scheduleFile: File;
+}): Promise<WordMatchPreviewResponse> {
+  const formData = new FormData();
+  formData.append("word_file", input.wordFile);
+  formData.append("schedule_file", input.scheduleFile);
+
+  return apiRequest<WordMatchPreviewResponse>(`${coursePlannerPath}/word-match/preview`, {
+    method: "POST",
+    body: formData,
+  });
+}
+
+export function generateWordMatch(input: {
+  wordFileB64: string;
+  scheduleOptions: WordMatchScheduleOption[];
+  matches: WordMatchAssignment[];
+}): Promise<Blob> {
+  return apiDownload(`${coursePlannerPath}/word-match/generate`, {
+    method: "POST",
+    body: JSON.stringify({
+      word_file_b64: input.wordFileB64,
+      schedule_options: input.scheduleOptions,
+      matches: input.matches,
+    }),
   });
 }

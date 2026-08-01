@@ -1,154 +1,14 @@
 import { useMemo, useState } from "react";
-import {
-  ArrowRight,
-  Database,
-  Mail,
-  PlugZap,
-  Search,
-  Settings2,
-  SlidersHorizontal,
-  Users,
-  type LucideIcon,
-} from "lucide-react";
+import { ArrowRight, LayoutGrid, Search } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-
-type AdministrationEntry = {
-  description: string;
-  href?: string;
-  name: string;
-};
-
-type AdministrationGroup = {
-  entries: AdministrationEntry[];
-  icon: LucideIcon;
-  name: string;
-};
-
-const administrationGroups: AdministrationGroup[] = [
-  {
-    entries: [
-      {
-        description:
-          "Configurează identitatea vizuală și opțiunile de prezentare ale platformei.",
-        href: "/administrare/sistem/interfata-utilizator",
-        name: "Interfață utilizator",
-      },
-      {
-        description: "Parametrii generali utilizați în întreaga platformă.",
-        name: "Setări generale",
-      },
-      {
-        description: "Politicile de autentificare și securitate a accesului.",
-        name: "Autentificare",
-      },
-      {
-        description: "Preferințele pentru notificările din aplicație.",
-        name: "Notificări",
-      },
-    ],
-    icon: Settings2,
-    name: "Sistem",
-  },
-  {
-    entries: [
-      {
-        description: "Gestionarea conturilor utilizatorilor platformei.",
-        href: "/administrare/utilizatori",
-        name: "Utilizatori",
-      },
-      {
-        description:
-          "Creează grupuri, atribuie utilizatori și stabilește aplicațiile disponibile.",
-        href: "/administrare/grupuri",
-        name: "Grupuri și acces aplicații",
-      },
-      {
-        description: "Organizarea utilizatorilor în echipe și departamente.",
-        name: "Echipe și departamente",
-      },
-      {
-        description: "Istoricul autentificărilor și al sesiunilor utilizatorilor.",
-        name: "Istoric autentificări",
-      },
-    ],
-    icon: Users,
-    name: "Utilizatori",
-  },
-  {
-    entries: [
-      {
-        description: "Serviciul utilizat pentru trimiterea e-mailurilor.",
-        name: "E-mailuri de ieșire",
-      },
-      {
-        description: "Conturile de e-mail conectate la platformă.",
-        name: "Conturi e-mail",
-      },
-      {
-        description: "Modelele reutilizabile pentru mesajele trimise.",
-        name: "Șabloane e-mail",
-      },
-    ],
-    icon: Mail,
-    name: "Mesagerie",
-  },
-  {
-    entries: [
-      {
-        description: "Elementele, ordinea și accesul în meniul aplicației.",
-        name: "Navigație aplicație",
-      },
-      {
-        description: "Procesele automate executate în fundal.",
-        name: "Sarcini programate",
-      },
-      {
-        description: "Istoricul acțiunilor administrative importante.",
-        name: "Jurnal de activitate",
-      },
-    ],
-    icon: SlidersHorizontal,
-    name: "Configurare",
-  },
-  {
-    entries: [
-      {
-        description: "Importul controlat al datelor în platformă.",
-        name: "Import date",
-      },
-      {
-        description: "Fișierele încărcate și utilizate de module.",
-        name: "Fișiere atașate",
-      },
-      {
-        description: "Evenimentele și erorile tehnice ale aplicației.",
-        name: "Jurnal aplicație",
-      },
-    ],
-    icon: Database,
-    name: "Date",
-  },
-  {
-    entries: [
-      {
-        description:
-          "Sincronizează sărbătorile legale și gestionează zilele interne nelucrătoare.",
-        href: "/administrare/integrari/zile-libere",
-        name: "Zile libere și sărbători",
-      },
-      {
-        description: "Configurează serviciile externe disponibile în platformă.",
-        href: "/administrare/integrari",
-        name: "Toate integrările",
-      },
-    ],
-    icon: PlugZap,
-    name: "Integrări",
-  },
-];
+import {
+  administrationGroups,
+  type AdministrationEntry,
+  type AdministrationGroup,
+} from "@/features/administration/navigation";
 
 function normalizeSearchValue(value: string) {
   return value
@@ -198,12 +58,12 @@ function AdministrationEntryRow({ entry }: { entry: AdministrationEntry }) {
 
 export function AdministrationPage() {
   const [searchQuery, setSearchQuery] = useState("");
+  const normalizedQuery = normalizeSearchValue(searchQuery.trim());
+  const hasQuery = normalizedQuery.length > 0;
 
   const filteredGroups = useMemo(() => {
-    const normalizedQuery = normalizeSearchValue(searchQuery.trim());
-
-    if (!normalizedQuery) {
-      return administrationGroups;
+    if (!hasQuery) {
+      return [];
     }
 
     return administrationGroups.reduce<AdministrationGroup[]>((groups, group) => {
@@ -222,20 +82,10 @@ export function AdministrationPage() {
 
       return groups;
     }, []);
-  }, [searchQuery]);
+  }, [hasQuery, normalizedQuery]);
 
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6 bg-background">
-      <header>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-          Administrare
-        </h1>
-        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-          Gestionează setările generale, utilizatorii, comunicarea, datele și
-          serviciile externe ale platformei.
-        </p>
-      </header>
-
       <div className="relative w-full">
         <Search
           aria-hidden="true"
@@ -251,40 +101,47 @@ export function AdministrationPage() {
         />
       </div>
 
-      <div className="grid min-w-0 gap-10">
-        {filteredGroups.map((group) => {
-          const Icon = group.icon;
+      {!hasQuery ? (
+        <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-16 text-center">
+          <LayoutGrid aria-hidden="true" className="size-6 text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">
+            Alege o secțiune din meniu sau caută o setare.
+          </p>
+        </div>
+      ) : filteredGroups.length > 0 ? (
+        <div className="grid min-w-0 gap-10">
+          {filteredGroups.map((group) => {
+            const Icon = group.icon;
 
-          return (
-            <section className="grid min-w-0 gap-3" key={group.name}>
-              <div className="flex items-center gap-2 px-1">
-                <Icon aria-hidden="true" className="size-5 shrink-0 text-primary" />
-                <h2 className="text-lg font-semibold tracking-tight text-primary">
-                  {group.name}
-                </h2>
-              </div>
+            return (
+              <section className="grid min-w-0 gap-3" key={group.name}>
+                <div className="flex items-center gap-2 px-1">
+                  <Icon aria-hidden="true" className="size-5 shrink-0 text-primary" />
+                  <h2 className="text-lg font-semibold tracking-tight text-primary">
+                    {group.name}
+                  </h2>
+                </div>
 
-              <Card className="gap-0 rounded-md bg-background py-0">
-                {group.entries.map((entry) => (
-                  <AdministrationEntryRow entry={entry} key={entry.name} />
-                ))}
-              </Card>
-            </section>
-          );
-        })}
-
-        {filteredGroups.length === 0 ? (
-          <Card className="border-dashed bg-background">
-            <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
-              <Search aria-hidden="true" className="size-5 text-muted-foreground" />
-              <p className="font-medium">Nu am găsit rezultate</p>
-              <p className="text-sm text-muted-foreground">
-                Încearcă un alt termen de căutare.
-              </p>
-            </CardContent>
-          </Card>
-        ) : null}
-      </div>
+                <Card className="gap-0 rounded-md bg-background py-0">
+                  {group.entries.map((entry) => (
+                    <AdministrationEntryRow entry={entry} key={entry.name} />
+                  ))}
+                </Card>
+              </section>
+            );
+          })}
+        </div>
+      ) : (
+        <Card className="border-dashed bg-background">
+          <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
+            <Search aria-hidden="true" className="size-5 text-muted-foreground" />
+            <p className="font-medium">Nu am găsit rezultate</p>
+            <p className="text-sm text-muted-foreground">
+              Încearcă un alt termen de căutare.
+            </p>
+          </CardContent>
+        </Card>
+      )}
     </section>
   );
 }

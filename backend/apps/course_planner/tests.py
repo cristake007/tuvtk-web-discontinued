@@ -12,7 +12,7 @@ from openpyxl import load_workbook
 from apps.core.models import ApplicationDefinition
 from apps.public_holidays.models import PublicHoliday
 
-from .files import create_excel_export
+from .files import create_excel_export, create_xml_export, parse_xml_events
 from .models import CoursePlanGeneration
 from .scheduler import CourseScheduler
 
@@ -114,6 +114,10 @@ class CoursePlannerApiTests(TestCase):
             ),
             self.client.get(
                 f"/api/v1/course-planner/history/{generation_id}/files/excel"
+            ),
+            self.client.post(
+                "/api/v1/course-planner/format-xml",
+                {"input_file": self.course_file()},
             ),
         ]
 
@@ -287,12 +291,14 @@ class CoursePlannerApiTests(TestCase):
                 "year": 2028,
                 "months": [3, 4],
                 "randomness": 7,
+                "xml_start_post_id": 30000,
             },
             content_type="application/json",
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["months"], [3, 4])
+        self.assertEqual(response.json()["xml_start_post_id"], 30000)
         self.assertNotIn("holidays", response.json())
 
     @patch(
@@ -353,3 +359,86 @@ class CoursePlannerApiTests(TestCase):
         self.assertEqual(schedule["B2"].value, "/curs/first")
         self.assertEqual(schedule["B3"].value, "/curs/second")
         workbook.close()
+
+    def test_format_xml_converts_uploaded_schedule_to_wordpress_xml(self):
+        upload = SimpleUploadedFile(
+            "cursuri.csv",
+            b"Title;Permalink;January;February\n"
+            b"Auditor ISO 9001;/curs/auditor-iso-9001;11-12.01.2027;\n"
+            b"Manager calitate;/curs/manager-calitate;;08.02.2027\n",
+            content_type="text/csv",
+        )
+
+        response = self.client.post(
+            "/api/v1/course-planner/format-xml",
+            {"input_file": upload},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response["Content-Type"].startswith("application/xml"))
+        content = response.content.decode("utf-8")
+        self.assertIn("<title>Auditor ISO 9001</title>", content)
+        self.assertIn("<mec_start_date>2027-01-11</mec_start_date>", content)
+        self.assertIn("<mec_end_date>2027-01-12</mec_end_date>", content)
+        self.assertIn("<title>Manager calitate</title>", content)
+        self.assertIn("<mec_start_date>2027-02-08</mec_start_date>", content)
+        self.assertIn("<mec_read_more>/curs/auditor-iso-9001</mec_read_more>", content)
+
+    def test_format_xml_uses_configured_start_post_id(self):
+        self.client.put(
+            "/api/v1/course-planner/settings",
+            data={"year": 2028, "months": [1], "randomness": 5, "xml_start_post_id": 50000},
+            content_type="application/json",
+        )
+        upload = SimpleUploadedFile(
+            "cursuri.csv",
+            b"Title;Permalink;January\nAuditor ISO 9001;/curs/auditor;05.01.2027\n",
+            content_type="text/csv",
+        )
+
+        response = self.client.post(
+            "/api/v1/course-planner/format-xml",
+            {"input_file": upload},
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertIn("<ID>50001</ID>", response.content.decode("utf-8"))
+
+    def test_format_xml_rejects_file_without_date_columns(self):
+        upload = SimpleUploadedFile(
+            "cursuri.csv",
+            b"Title;Permalink\nAuditor ISO 9001;/curs/auditor-iso-9001\n",
+            content_type="text/csv",
+        )
+
+        response = self.client.post(
+            "/api/v1/course-planner/format-xml",
+            {"input_file": upload},
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("coloane de dată", response.json()["detail"])
+
+    def test_parse_xml_events_reads_luna_columns(self):
+        events = parse_xml_events(
+            b"Title;Permalink;Luna 1;Luna 2\n"
+            b"Curs test;/curs/test;10.03.2027;15-16.04.2027\n",
+            ".csv",
+        )
+
+        self.assertEqual(
+            events,
+            [
+                {"course_name": "Curs test", "date_range": "10.03.2027", "permalink": "/curs/test"},
+                {"course_name": "Curs test", "date_range": "15-16.04.2027", "permalink": "/curs/test"},
+            ],
+        )
+
+    def test_create_xml_export_expands_multi_month_range(self):
+        xml_content = create_xml_export(
+            [{"course_name": "Curs test", "date_range": "28.01-02.02.2027", "permalink": ""}],
+            20000,
+        )
+
+        self.assertIn("<mec_start_date>2027-01-28</mec_start_date>", xml_content)
+        self.assertIn("<mec_end_date>2027-02-02</mec_end_date>", xml_content)

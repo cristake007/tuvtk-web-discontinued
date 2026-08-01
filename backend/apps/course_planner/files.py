@@ -1,9 +1,13 @@
+import calendar
 import csv
 import io
 import re
 import unicodedata
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any, Iterable
+from xml.dom import minidom
+from xml.etree import ElementTree as ET
 from zipfile import BadZipFile
 
 from openpyxl import Workbook, load_workbook
@@ -21,6 +25,15 @@ HEADER_ALIASES = {
     "investment": ("investitie", "investment", "pret", "price"),
 }
 REQUIRED_HEADERS = ("title", "duration", "permalink")
+
+XML_HEADER_ALIASES = {
+    "title": ("title", "titlu", "nume curs"),
+    "permalink": ("permalink", "link", "url"),
+}
+XML_REQUIRED_HEADERS = ("title", "permalink")
+MONTH_COLUMN_ALIASES = {
+    calendar.month_name[index].casefold(): index for index in range(1, 13)
+} | {f"luna {index}": index for index in range(1, 13)}
 
 
 class CourseFileError(ValueError):
@@ -69,14 +82,19 @@ def _header_map(row: list[Any]) -> dict[str, int]:
     }
 
 
-def _header_score(headers: dict[str, int]) -> int:
-    return sum(
-        any(alias in headers for alias in HEADER_ALIASES[name])
-        for name in REQUIRED_HEADERS
-    )
+def _header_score(
+    headers: dict[str, int],
+    aliases: dict[str, tuple[str, ...]],
+    required: tuple[str, ...],
+) -> int:
+    return sum(any(alias in headers for alias in aliases[name]) for name in required)
 
 
-def _select_header_row(rows: list[list[Any]]) -> tuple[int, dict[str, int]]:
+def _select_header_row(
+    rows: list[list[Any]],
+    aliases: dict[str, tuple[str, ...]] = HEADER_ALIASES,
+    required: tuple[str, ...] = REQUIRED_HEADERS,
+) -> tuple[int, dict[str, int]]:
     best_index: int | None = None
     best_headers: dict[str, int] = {}
     best_score = -1
@@ -86,13 +104,13 @@ def _select_header_row(rows: list[list[Any]]) -> tuple[int, dict[str, int]]:
         if not headers:
             continue
 
-        score = _header_score(headers)
+        score = _header_score(headers, aliases, required)
         if score > best_score:
             best_index = index
             best_headers = headers
             best_score = score
 
-        if score == len(REQUIRED_HEADERS):
+        if score == len(required):
             return index, headers
 
     if best_index is None:
@@ -101,12 +119,16 @@ def _select_header_row(rows: list[list[Any]]) -> tuple[int, dict[str, int]]:
     return best_index, best_headers
 
 
-def _has_complete_header(rows: list[list[Any]]) -> bool:
+def _has_complete_header(
+    rows: list[list[Any]],
+    aliases: dict[str, tuple[str, ...]] = HEADER_ALIASES,
+    required: tuple[str, ...] = REQUIRED_HEADERS,
+) -> bool:
     try:
-        _, headers = _select_header_row(rows)
+        _, headers = _select_header_row(rows, aliases, required)
     except CourseFileError:
         return False
-    return _header_score(headers) == len(REQUIRED_HEADERS)
+    return _header_score(headers, aliases, required) == len(required)
 
 
 def _parse_csv_rows(decoded: str, delimiter: str) -> list[list[Any]]:
@@ -127,7 +149,11 @@ def _parse_csv_rows(decoded: str, delimiter: str) -> list[list[Any]]:
     return parsed_rows
 
 
-def _read_csv(data: bytes) -> list[list[Any]]:
+def _read_csv(
+    data: bytes,
+    aliases: dict[str, tuple[str, ...]] = HEADER_ALIASES,
+    required: tuple[str, ...] = REQUIRED_HEADERS,
+) -> list[list[Any]]:
     decoded: str | None = None
     for encoding in ("utf-8-sig", "utf-8", "cp1250", "latin-1"):
         try:
@@ -172,7 +198,7 @@ def _read_csv(data: bytes) -> list[list[Any]]:
         rows = _parse_csv_rows(decoded, delimiter)
         if fallback_rows is None:
             fallback_rows = rows
-        if _has_complete_header(rows):
+        if _has_complete_header(rows, aliases, required):
             return rows
 
     return fallback_rows or []
@@ -205,18 +231,23 @@ def _read_xls(data: bytes) -> list[list[Any]]:
     return [sheet.row_values(index) for index in range(sheet.nrows)]
 
 
-def parse_course_file(data: bytes, extension: str) -> list[CourseInput]:
-    readers = {
-        ".csv": _read_csv,
-        ".xlsx": _read_xlsx,
-        ".xls": _read_xls,
-    }
-    reader = readers.get(extension.casefold())
-    if reader is None:
+def _read_tabular_rows(
+    data: bytes,
+    extension: str,
+    aliases: dict[str, tuple[str, ...]] = HEADER_ALIASES,
+    required: tuple[str, ...] = REQUIRED_HEADERS,
+) -> list[list[Any]]:
+    normalized_extension = extension.casefold()
+    if normalized_extension not in {".csv", ".xlsx", ".xls"}:
         raise CourseFileError("Formatul fișierului nu este acceptat.")
 
     try:
-        rows = reader(data)
+        if normalized_extension == ".csv":
+            rows = _read_csv(data, aliases, required)
+        elif normalized_extension == ".xlsx":
+            rows = _read_xlsx(data)
+        else:
+            rows = _read_xls(data)
     except CourseFileError:
         raise
     except (
@@ -233,6 +264,11 @@ def parse_course_file(data: bytes, extension: str) -> list[CourseInput]:
     if not rows:
         raise CourseFileError("Fișierul nu conține date.")
 
+    return rows
+
+
+def parse_course_file(data: bytes, extension: str) -> list[CourseInput]:
+    rows = _read_tabular_rows(data, extension)
     header_row_index, headers = _select_header_row(rows)
 
     def find_column(name: str, *, required: bool = True) -> int | None:
@@ -352,3 +388,181 @@ def create_excel_export(
     output = io.BytesIO()
     workbook.save(output)
     return output.getvalue()
+
+
+def parse_xml_events(data: bytes, extension: str) -> list[dict[str, str]]:
+    rows = _read_tabular_rows(data, extension, XML_HEADER_ALIASES, XML_REQUIRED_HEADERS)
+    header_row_index, headers = _select_header_row(rows, XML_HEADER_ALIASES, XML_REQUIRED_HEADERS)
+
+    def find_column(name: str) -> int:
+        for alias in XML_HEADER_ALIASES[name]:
+            if alias in headers:
+                return headers[alias]
+        expected = XML_HEADER_ALIASES[name][0]
+        raise CourseFileError(f'Coloana obligatorie „{expected}” lipsește.')
+
+    title_index = find_column("title")
+    permalink_index = find_column("permalink")
+    month_columns = sorted(
+        index for header, index in headers.items() if header in MONTH_COLUMN_ALIASES
+    )
+    if not month_columns:
+        raise CourseFileError(
+            "Fișierul nu conține coloane de dată recunoscute "
+            "(January-December sau Luna 1-Luna 12)."
+        )
+
+    events: list[dict[str, str]] = []
+    for row in rows[header_row_index + 1 :]:
+
+        def cell(index: int) -> Any:
+            return row[index] if index < len(row) else None
+
+        title = _display_value(cell(title_index))
+        if not title:
+            continue
+        permalink = _display_value(cell(permalink_index))
+        for month_index in month_columns:
+            date_value = _display_value(cell(month_index))
+            if date_value:
+                events.append(
+                    {
+                        "course_name": title,
+                        "date_range": date_value,
+                        "permalink": permalink,
+                    }
+                )
+        if len(events) > MAX_COURSES * 3:
+            raise CourseFileError(f"Fișierul poate conține cel mult {MAX_COURSES} de cursuri.")
+
+    if not events:
+        raise CourseFileError("Fișierul nu conține date valide despre cursuri.")
+
+    return events
+
+
+def create_xml_export(events: list[dict[str, str]], start_post_id: int) -> str:
+    def parse_date_range(date_range: str) -> tuple[str, str]:
+        normalized = (date_range or "").strip()
+
+        single_day = re.match(r"^(\d{1,2})\.(\d{1,2})\.(\d{4})$", normalized)
+        if single_day:
+            day, month, parsed_year = single_day.groups()
+            iso_date = f"{parsed_year}-{month.zfill(2)}-{day.zfill(2)}"
+            return iso_date, iso_date
+
+        multi_day_same_month = re.match(
+            r"^(\d{1,2})\s*-\s*(\d{1,2})\.(\d{1,2})\.(\d{4})$",
+            normalized,
+        )
+        if multi_day_same_month:
+            start_day, end_day, month, parsed_year = multi_day_same_month.groups()
+            return (
+                f"{parsed_year}-{month.zfill(2)}-{start_day.zfill(2)}",
+                f"{parsed_year}-{month.zfill(2)}-{end_day.zfill(2)}",
+            )
+
+        multi_day_with_month = re.match(
+            r"^(\d{1,2})\.(\d{1,2})\s*-\s*(\d{1,2})\.(\d{1,2})\.(\d{4})$",
+            normalized,
+        )
+        if multi_day_with_month:
+            (
+                start_day,
+                start_month,
+                end_day,
+                end_month,
+                parsed_year,
+            ) = multi_day_with_month.groups()
+            return (
+                f"{parsed_year}-{start_month.zfill(2)}-{start_day.zfill(2)}",
+                f"{parsed_year}-{end_month.zfill(2)}-{end_day.zfill(2)}",
+            )
+
+        raise CourseFileError(f"Format de dată neacceptat: {date_range}")
+
+    root = ET.Element("events")
+    courses: dict[str, list[dict[str, str]]] = {}
+    for event in events:
+        courses.setdefault(event["course_name"], []).append(event)
+
+    event_id = int(start_post_id)
+
+    for course_name, course_events in courses.items():
+        for period_index, event in enumerate(course_events, start=1):
+            event_id += 1
+            start_date, end_date = parse_date_range(str(event["date_range"]).strip())
+            start_day_seconds = 8 * 3600
+            end_day_seconds = 18 * 3600
+            start_datetime = f"{start_date} 08:00 AM"
+            end_datetime = f"{end_date} 06:00 PM"
+
+            item = ET.SubElement(root, "item")
+            ET.SubElement(item, "ID").text = str(event_id)
+            ET.SubElement(item, "title").text = course_name
+            ET.SubElement(item, "content").text = ""
+
+            post = ET.SubElement(item, "post")
+            ET.SubElement(post, "ID").text = str(event_id)
+            ET.SubElement(post, "post_author").text = "5"
+            ET.SubElement(post, "post_date").text = f"{start_date} 00:00:00"
+            ET.SubElement(post, "post_date_gmt").text = f"{start_date} 00:00:00"
+            ET.SubElement(post, "post_title").text = course_name
+            ET.SubElement(post, "post_status").text = "draft"
+
+            meta = ET.SubElement(item, "meta")
+            ET.SubElement(meta, "mec_more_info_title").text = f"perioada {period_index}"
+            ET.SubElement(meta, "mec_read_more").text = event.get("permalink", "")
+            ET.SubElement(meta, "mec_color").text = ""
+            ET.SubElement(meta, "mec_location_id").text = "1"
+            ET.SubElement(meta, "mec_organizer_id").text = "1"
+            ET.SubElement(meta, "mec_allday").text = "1"
+            ET.SubElement(meta, "mec_start_date").text = start_date
+            ET.SubElement(meta, "mec_start_time_hour").text = "8"
+            ET.SubElement(meta, "mec_start_time_minutes").text = "00"
+            ET.SubElement(meta, "mec_start_time_ampm").text = "AM"
+            ET.SubElement(meta, "mec_start_day_seconds").text = str(start_day_seconds)
+            ET.SubElement(meta, "mec_start_datetime").text = start_datetime
+            ET.SubElement(meta, "mec_end_date").text = end_date
+            ET.SubElement(meta, "mec_end_time_hour").text = "6"
+            ET.SubElement(meta, "mec_end_time_minutes").text = "00"
+            ET.SubElement(meta, "mec_end_time_ampm").text = "PM"
+            ET.SubElement(meta, "mec_end_day_seconds").text = str(end_day_seconds)
+            ET.SubElement(meta, "mec_end_datetime").text = end_datetime
+            ET.SubElement(meta, "mec_repeat_status").text = "0"
+
+            mec_date = ET.SubElement(meta, "mec_date")
+            date_start = ET.SubElement(mec_date, "start")
+            ET.SubElement(date_start, "date").text = start_date
+            ET.SubElement(date_start, "hour").text = "8"
+            ET.SubElement(date_start, "minutes").text = "00"
+            ET.SubElement(date_start, "ampm").text = "AM"
+            date_end = ET.SubElement(mec_date, "end")
+            ET.SubElement(date_end, "date").text = end_date
+            ET.SubElement(date_end, "hour").text = "6"
+            ET.SubElement(date_end, "minutes").text = "00"
+            ET.SubElement(date_end, "ampm").text = "PM"
+            ET.SubElement(mec_date, "allday").text = "1"
+
+            mec_block = ET.SubElement(item, "mec")
+            ET.SubElement(mec_block, "id").text = ""
+            ET.SubElement(mec_block, "post_id").text = str(event_id)
+            ET.SubElement(mec_block, "start").text = start_date
+            ET.SubElement(mec_block, "end").text = end_date
+            ET.SubElement(mec_block, "repeat").text = "0"
+            ET.SubElement(mec_block, "time_start").text = str(start_day_seconds)
+            ET.SubElement(mec_block, "time_end").text = str(end_day_seconds)
+
+            time_block = ET.SubElement(item, "time")
+            ET.SubElement(time_block, "start").text = "All Day"
+            ET.SubElement(time_block, "end").text = ""
+            ET.SubElement(time_block, "start_raw").text = "8:00 am"
+            ET.SubElement(time_block, "end_raw").text = "6:00 pm"
+            ET.SubElement(time_block, "start_timestamp").text = str(
+                int(datetime.strptime(start_date, "%Y-%m-%d").timestamp()) + start_day_seconds
+            )
+            ET.SubElement(time_block, "end_timestamp").text = str(
+                int(datetime.strptime(end_date, "%Y-%m-%d").timestamp()) + end_day_seconds
+            )
+
+    return minidom.parseString(ET.tostring(root)).toprettyxml(indent="    ")

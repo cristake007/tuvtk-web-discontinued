@@ -1,7 +1,9 @@
+import base64
 from pathlib import Path
 
 from django.http import FileResponse, HttpResponse
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from drf_spectacular.types import OpenApiTypes
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -15,7 +17,13 @@ from apps.public_holidays.calendar import get_holiday_dates
 from config.error_serializers import first_serializer_error
 from config.formats import ROMANIAN_DATE_FORMAT
 
-from .files import CourseFileError, create_excel_export, parse_course_file
+from .files import (
+    CourseFileError,
+    create_excel_export,
+    create_xml_export,
+    parse_course_file,
+    parse_xml_events,
+)
 from .models import CoursePlanGeneration
 from .serializers import (
     CoursePlanGenerationSerializer,
@@ -25,9 +33,13 @@ from .serializers import (
     CoursePlannerHolidaySerializer,
     CoursePlannerSettingsSerializer,
     ExportScheduleSerializer,
+    FormatXmlRequestSerializer,
     GenerateScheduleResponseSerializer,
     GenerateScheduleSerializer,
     UnscheduledCoursesSerializer,
+    WordMatchGenerateRequestSerializer,
+    WordMatchPreviewRequestSerializer,
+    WordMatchPreviewResponseSerializer,
 )
 from .services import (
     ScheduleGenerationError,
@@ -38,6 +50,7 @@ from .services import (
     serialize_settings,
     update_course_planner_settings,
 )
+from .word_matching import ScheduleRow, apply_word_matches, build_word_match_preview, normalize_title, parse_schedule_file
 
 
 class CoursePlanHistoryPagination(PageNumberPagination):
@@ -326,5 +339,156 @@ class ExportScheduleView(APIView):
         response["Content-Disposition"] = (
             f'attachment; filename="planificare_cursuri_{generation.year}.xlsx"'
         )
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
+
+
+class FormatXmlView(APIView):
+    parser_classes = [MultiPartParser, FormParser]
+    application_key = "course-planner"
+    permission_classes = [HasApplicationAccess]
+
+    @extend_schema(
+        operation_id="course_planner_format_xml",
+        request=FormatXmlRequestSerializer,
+        responses={
+            (200, "application/xml"): OpenApiTypes.BINARY,
+            400: CoursePlannerErrorDetailSerializer,
+        },
+        summary="Convert a course schedule file into a WordPress import XML",
+        tags=["course-planner"],
+    )
+    def post(self, request):
+        serializer = FormatXmlRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {"detail": first_serializer_error(serializer.errors)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        upload = serializer.validated_data["input_file"]
+        extension = Path(upload.name).suffix.casefold()
+        xml_start_post_id = get_course_planner_settings().xml_start_post_id
+
+        try:
+            events = parse_xml_events(upload.read(), extension)
+            xml_content = create_xml_export(events, xml_start_post_id)
+        except CourseFileError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        year = timezone.localdate().year
+        response = HttpResponse(
+            xml_content.encode("utf-8"),
+            content_type="application/xml",
+        )
+        response["Content-Disposition"] = (
+            f'attachment; filename="formatted_courses_{year}.xml"'
+        )
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
+
+
+class WordMatchPreviewView(APIView):
+    parser_classes = [MultiPartParser, FormParser]
+    application_key = "course-planner"
+    permission_classes = [HasApplicationAccess]
+
+    @extend_schema(
+        operation_id="course_planner_word_match_preview",
+        request=WordMatchPreviewRequestSerializer,
+        responses={
+            200: WordMatchPreviewResponseSerializer,
+            400: CoursePlannerErrorDetailSerializer,
+        },
+        summary="Preview matches between a Word document and a course schedule file",
+        tags=["course-planner"],
+    )
+    def post(self, request):
+        serializer = WordMatchPreviewRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {"detail": first_serializer_error(serializer.errors)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        word_upload = serializer.validated_data["word_file"]
+        schedule_upload = serializer.validated_data["schedule_file"]
+        schedule_extension = Path(schedule_upload.name).suffix.casefold()
+
+        try:
+            word_file_bytes = word_upload.read()
+            schedule_rows = parse_schedule_file(schedule_upload.read(), schedule_extension)
+            preview = build_word_match_preview(word_file_bytes, schedule_rows)
+        except CourseFileError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        preview["word_file_b64"] = base64.b64encode(word_file_bytes).decode("ascii")
+        return Response(WordMatchPreviewResponseSerializer(preview).data)
+
+
+class WordMatchGenerateView(APIView):
+    application_key = "course-planner"
+    permission_classes = [HasApplicationAccess]
+
+    @extend_schema(
+        operation_id="course_planner_word_match_generate",
+        request=WordMatchGenerateRequestSerializer,
+        responses={
+            (
+                200,
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            ): OpenApiTypes.BINARY,
+            400: CoursePlannerErrorDetailSerializer,
+        },
+        summary="Apply confirmed matches and generate the updated Word document",
+        tags=["course-planner"],
+    )
+    def post(self, request):
+        serializer = WordMatchGenerateRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                {"detail": first_serializer_error(serializer.errors)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        values = serializer.validated_data
+        schedule_rows = [
+            ScheduleRow(
+                row_index=option["row_index"],
+                title=option["title"],
+                normalized_title=normalize_title(option["title"]),
+                dates=tuple((option["dates"] + ["", "", ""])[:3]),
+            )
+            for option in values["schedule_options"]
+        ]
+        matches = {
+            item["word_row_index"]: item["schedule_row_index"] for item in values["matches"]
+        }
+
+        try:
+            output_bytes, _matched_count, _skipped_count = apply_word_matches(
+                values["word_file_b64"],
+                schedule_rows,
+                matches,
+            )
+        except CourseFileError as exc:
+            return Response(
+                {"detail": str(exc)},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        response = HttpResponse(
+            output_bytes,
+            content_type=(
+                "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+            ),
+        )
+        response["Content-Disposition"] = 'attachment; filename="matched_courses.docx"'
         response["X-Content-Type-Options"] = "nosniff"
         return response

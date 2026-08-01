@@ -4,6 +4,7 @@ import { CalendarCheck2, FileSpreadsheet, Save, Sparkles } from "lucide-react";
 
 import { FileUploadField } from "@/components/FileUploadField";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -37,6 +38,7 @@ type PlannerConfigurationCardProps = {
   onSave: () => void;
   onSelectAllMonths: () => void;
   onToggleMonth: (month: number) => void;
+  onXmlStartPostIdChange: (value: number) => void;
   onYearChange: (year: number) => void;
   savePending: boolean;
   settings: CoursePlannerSettings;
@@ -52,6 +54,7 @@ export function PlannerConfigurationCard({
   onSave,
   onSelectAllMonths,
   onToggleMonth,
+  onXmlStartPostIdChange,
   onYearChange,
   savePending,
   settings,
@@ -138,6 +141,29 @@ export function PlannerConfigurationCard({
               </div>
               <span className="text-xs font-normal leading-5 text-muted-foreground">
                 1 păstrează mai mult spațiu între cursuri, iar 10 distribuie mai liber.
+              </span>
+            </div>
+
+            <div className="grid content-start gap-2 text-sm font-medium sm:col-span-2">
+              <label htmlFor="xml-start-post-id">ID inițial pentru XML WordPress</label>
+              <Input
+                disabled={busy}
+                id="xml-start-post-id"
+                inputMode="numeric"
+                max={2_147_483_647}
+                min={1}
+                onChange={(event) => {
+                  const value = Number(event.target.value);
+                  if (Number.isInteger(value) && value >= 1) {
+                    onXmlStartPostIdChange(value);
+                  }
+                }}
+                type="number"
+                value={settings.xml_start_post_id}
+              />
+              <span className="text-xs font-normal leading-5 text-muted-foreground">
+                Primul ID de postare folosit la generarea fișierului XML pentru cursuri
+                noi.
               </span>
             </div>
           </div>

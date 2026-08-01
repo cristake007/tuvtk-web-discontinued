@@ -46,6 +46,20 @@ export interface components {
     "CompanyLogoUploadRequest": {
       "logo": string;
     };
+    "ConnectionSettings": {
+      "wp_base_url": string;
+      "wp_username": string;
+    };
+    "ConnectRequest": components["schemas"]["ConnectRequestRequest"];
+    "ConnectRequestRequest": {
+      "wp_base_url": string;
+      "wp_username": string;
+      "wp_app_password": string;
+    };
+    "ConnectResponse": {
+      "user_id": number | null;
+      "user_name": string;
+    };
     "CoreBootstrap": {
       "authenticated": boolean;
       "configuration": components["schemas"]["ShellConfiguration"];
@@ -95,11 +109,13 @@ export interface components {
       "year": number;
       "months": Array<number>;
       "randomness": number;
+      "xml_start_post_id": number;
     };
     "CoursePlannerSettingsRequest": {
       "year": number;
       "months": Array<number>;
       "randomness": number;
+      "xml_start_post_id": number;
     };
     "DatabaseHealth": {
       "alias": string;
@@ -116,6 +132,27 @@ export interface components {
     "ExportSchedule": components["schemas"]["ExportScheduleRequest"];
     "ExportScheduleRequest": {
       "generation_id": string;
+    };
+    "FetchCurrentDatesRequest": components["schemas"]["FetchCurrentDatesRequestRequest"];
+    "FetchCurrentDatesRequestRequest": {
+      "wp_base_url": string;
+      "wp_username": string;
+      "wp_app_password": string;
+      "permalink"?: string;
+      "slug"?: string;
+      "post_id"?: number | null;
+      "excel_dates"?: Array<string>;
+    };
+    "FetchCurrentDatesResponse": {
+      "post_id": number | null;
+      "existing_valid_dates"?: Array<string>;
+      "final_dates"?: Array<string>;
+      "payload"?: unknown;
+      "can_update"?: boolean;
+    };
+    "FormatXmlRequest": components["schemas"]["FormatXmlRequestRequest"];
+    "FormatXmlRequestRequest": {
+      "input_file": string;
     };
     "FrequencyEnum": "1_month" | "6_months" | "1_year";
     "GenerateSchedule": components["schemas"]["GenerateScheduleRequest"];
@@ -176,16 +213,6 @@ export interface components {
       "application_key": string;
       "is_separator": boolean;
     };
-    "NavigationItemRequest": {
-      "key": string;
-      "label": string;
-      "path": string;
-      "icon": string;
-      "position": number;
-      "parent_key": string | null;
-      "application_key": string;
-      "is_separator": boolean;
-    };
     "OrdineMeniu": components["schemas"]["OrdineMeniuRequest"];
     "OrdineMeniuRequest": {
       "chei": Array<string>;
@@ -209,6 +236,10 @@ export interface components {
       "local_name"?: string;
       "description"?: string;
     };
+    "PatchedTitluSeparatorMeniu": components["schemas"]["PatchedTitluSeparatorMeniuRequest"];
+    "PatchedTitluSeparatorMeniuRequest": {
+      "label"?: string;
+    };
     "PatchedUserWrite": components["schemas"]["PatchedUserWriteRequest"];
     "PatchedUserWriteRequest": {
       "username"?: string;
@@ -220,6 +251,13 @@ export interface components {
       "is_staff"?: boolean;
       "group_ids"?: Array<number>;
       "direct_application_ids"?: Array<number>;
+    };
+    "PreviewResponse": {
+      "rows": Array<components["schemas"]["SafeCourseDateRow"]>;
+    };
+    "PreviewUpload": components["schemas"]["PreviewUploadRequest"];
+    "PreviewUploadRequest": {
+      "input_file": string;
     };
     "PublicBranding": {
       "site_name": string;
@@ -269,6 +307,16 @@ export interface components {
       "automatic_sync": boolean;
       "frequency": components["schemas"]["FrequencyEnum"];
     };
+    "ResolvePostIdRequest": components["schemas"]["ResolvePostIdRequestRequest"];
+    "ResolvePostIdRequestRequest": {
+      "wp_base_url": string;
+      "wp_username"?: string;
+      "permalink"?: string;
+      "slug"?: string;
+    };
+    "ResolvePostIdResponse": {
+      "post_id": number;
+    };
     "RezumatDocumente": {
       "titlu": string;
       "descriere": string;
@@ -282,6 +330,20 @@ export interface components {
       "module": Array<{
         [key: string]: unknown;
       }>;
+    };
+    "SafeCourseDateRow": {
+      "row_index": number;
+      "title": string;
+      "permalink": string;
+      "slug": string;
+      "post_id": number | null;
+      "existing_valid_dates": Array<string>;
+      "excel_dates": Array<string>;
+      "final_dates": Array<string>;
+      "status": string;
+      "error": string | null;
+      "can_update": boolean;
+      "payload": unknown;
     };
     "ScheduledCourse": {
       "title": string;
@@ -319,6 +381,10 @@ export interface components {
       "removed": number;
     };
     "SynchronizationResultStatusEnum": "success" | "skipped" | "failed";
+    "TitluSeparatorMeniu": components["schemas"]["TitluSeparatorMeniuRequest"];
+    "TitluSeparatorMeniuRequest": {
+      "label": string;
+    };
     "UnscheduledCourseFields": {
       "unscheduled_courses": {
         [key: string]: Array<string>;
@@ -328,6 +394,29 @@ export interface components {
       "code": string;
       "detail": string;
       "fields": components["schemas"]["UnscheduledCourseFields"];
+    };
+    "UpdateRowRequest": components["schemas"]["UpdateRowRequestRequest"];
+    "UpdateRowRequestRequest": {
+      "wp_base_url": string;
+      "wp_username": string;
+      "wp_app_password": string;
+      "permalink"?: string;
+      "slug"?: string;
+      "post_id"?: number | null;
+      "final_dates": Array<string>;
+    };
+    "UpdateRowResponse": {
+      "post_id": number | null;
+      "status"?: string;
+      "updated"?: boolean;
+      "final_dates"?: Array<string>;
+    };
+    "UpdateWordPressErrorDetail": {
+      "code": string;
+      "detail": string;
+      "fields": {
+        [key: string]: unknown;
+      };
     };
     "UserAccount": {
       "id": number;
@@ -376,6 +465,57 @@ export interface components {
       "is_staff"?: boolean;
       "group_ids"?: Array<number>;
       "direct_application_ids"?: Array<number>;
+    };
+    "WordMatchAssignment": components["schemas"]["WordMatchAssignmentRequest"];
+    "WordMatchAssignmentRequest": {
+      "word_row_index": number;
+      "schedule_row_index": number;
+    };
+    "WordMatchCandidate": {
+      "row_index": number;
+      "title": string;
+      "dates": Array<string>;
+      "score": number;
+      "word_coverage": number;
+      "schedule_coverage": number;
+      "exact": boolean;
+    };
+    "WordMatchGenerateRequest": components["schemas"]["WordMatchGenerateRequestRequest"];
+    "WordMatchGenerateRequestRequest": {
+      "word_file_b64": string;
+      "schedule_options": Array<components["schemas"]["WordMatchScheduleOptionInputRequest"]>;
+      "matches"?: Array<components["schemas"]["WordMatchAssignmentRequest"]>;
+    };
+    "WordMatchPreviewRequest": components["schemas"]["WordMatchPreviewRequestRequest"];
+    "WordMatchPreviewRequestRequest": {
+      "word_file": string;
+      "schedule_file": string;
+    };
+    "WordMatchPreviewResponse": {
+      "rows": Array<components["schemas"]["WordMatchRow"]>;
+      "schedule_options": Array<components["schemas"]["WordMatchScheduleOption"]>;
+      "matched_count": number;
+      "skipped_count": number;
+      "word_file_b64": string;
+    };
+    "WordMatchRow": {
+      "word_row_index": number;
+      "word_title": string;
+      "selected_row_index": number | null;
+      "status": components["schemas"]["WordMatchRowStatusEnum"];
+      "candidates": Array<components["schemas"]["WordMatchCandidate"]>;
+    };
+    "WordMatchRowStatusEnum": "matched" | "needs review";
+    "WordMatchScheduleOption": {
+      "row_index": number;
+      "title": string;
+      "dates": Array<string>;
+    };
+    "WordMatchScheduleOptionInput": components["schemas"]["WordMatchScheduleOptionInputRequest"];
+    "WordMatchScheduleOptionInputRequest": {
+      "row_index": number;
+      "title": string;
+      "dates": Array<string>;
     };
   };
 }

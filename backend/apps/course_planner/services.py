@@ -78,11 +78,14 @@ def update_course_planner_settings(
     year: int,
     months: list[int],
     randomness: int,
+    xml_start_post_id: int | None = None,
 ) -> CoursePlannerSettings:
     settings = get_course_planner_settings()
     settings.year = year
     settings.months = list(dict.fromkeys(months))
     settings.randomness = randomness
+    if xml_start_post_id is not None:
+        settings.xml_start_post_id = xml_start_post_id
     settings.full_clean()
     settings.save()
     return settings
@@ -93,6 +96,7 @@ def serialize_settings(settings: CoursePlannerSettings) -> dict[str, Any]:
         "year": settings.year,
         "months": settings.months,
         "randomness": settings.randomness,
+        "xml_start_post_id": settings.xml_start_post_id,
     }
 
 

@@ -33,6 +33,10 @@ class CoursePlannerSettings(models.Model):
         validators=[MinValueValidator(1), MaxValueValidator(10)],
     )
     holidays = models.JSONField(default=list, blank=True)
+    xml_start_post_id = models.PositiveIntegerField(
+        default=20000,
+        validators=[MinValueValidator(1), MaxValueValidator(2_147_483_647)],
+    )
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:

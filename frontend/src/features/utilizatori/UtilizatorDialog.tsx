@@ -131,18 +131,6 @@ export function UtilizatorForm({
 
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6">
-      <header>
-        <p className="text-sm font-medium text-primary">Administrare</p>
-        <h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">
-          {editing ? "Editează utilizatorul" : "Adaugă utilizator"}
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground">
-            {editing
-              ? "Actualizează datele contului, starea și accesul administrativ."
-              : "Creează un cont nou pentru accesul la platformă."}
-        </p>
-      </header>
-
       <form className="grid max-w-4xl gap-5" onSubmit={handleSubmit}>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field data-invalid={Boolean(usernameError)}>
