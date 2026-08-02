@@ -32,10 +32,7 @@ import {
   downloadCoursePlanFile,
   fetchCoursePlanHistory,
 } from "./api";
-import type {
-  CoursePlanFileType,
-  CoursePlanGeneration,
-} from "./types";
+import type { CoursePlanFileType, CoursePlanGeneration } from "./types";
 
 const pageSize = 25;
 const monthNames = [
@@ -97,9 +94,7 @@ function FileDownloadButton({
   return (
     <Button
       aria-label={
-        file.available
-          ? `Descarcă fișierul ${label}`
-          : `Fișierul ${label} nu este disponibil`
+        file.available ? `Descarcă fișierul ${label}` : `Fișierul ${label} nu este disponibil`
       }
       disabled={!file.available || pending}
       onClick={() =>
@@ -138,10 +133,7 @@ export function CoursePlanHistoryTable() {
     onSuccess: (blob, request) => saveBlob(blob, request.filename),
   });
 
-  const pageCount = Math.max(
-    1,
-    Math.ceil((historyQuery.data?.count ?? 0) / pageSize),
-  );
+  const pageCount = Math.max(1, Math.ceil((historyQuery.data?.count ?? 0) / pageSize));
   const previousDisabled = page <= 1 || historyQuery.isFetching;
   const nextDisabled = page >= pageCount || historyQuery.isFetching;
 
@@ -166,10 +158,7 @@ export function CoursePlanHistoryTable() {
       {downloadMutation.error ? (
         <Alert aria-live="polite" variant="destructive">
           <AlertDescription>
-            {formatApiError(
-              downloadMutation.error,
-              "Fișierul nu a putut fi descărcat.",
-            )}
+            {formatApiError(downloadMutation.error, "Fișierul nu a putut fi descărcat.")}
           </AlertDescription>
         </Alert>
       ) : null}
@@ -194,10 +183,7 @@ export function CoursePlanHistoryTable() {
                   <TableCell className="whitespace-nowrap">
                     {formatRomanianDateTime(generation.created_at)}
                   </TableCell>
-                  <TableCell
-                    className="max-w-80 truncate"
-                    title={generation.source_filename}
-                  >
+                  <TableCell className="max-w-80 truncate" title={generation.source_filename}>
                     <code className="font-medium">{generation.source_filename}</code>
                   </TableCell>
                   <TableCell>{generation.year}</TableCell>
@@ -207,9 +193,7 @@ export function CoursePlanHistoryTable() {
                   <TableCell className="text-right tabular-nums">
                     {generation.course_count}
                   </TableCell>
-                  <TableCell>
-                    {generation.created_by ?? "Utilizator șters"}
-                  </TableCell>
+                  <TableCell>{generation.created_by ?? "Utilizator șters"}</TableCell>
                   <TableCell>
                     <div className="flex justify-end gap-2">
                       {(["excel", "word", "xml"] as const).map((fileType) => (

@@ -6,16 +6,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar";
+import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 
-import {
-  getNavigationIcon,
-  isNavigationPathActive,
-  type NavigationNode,
-} from "./navigation";
+import { getNavigationIcon, isNavigationPathActive, type NavigationNode } from "./navigation";
 
 const flyoutLinkClassName = [
   "relative min-h-8 cursor-pointer whitespace-nowrap rounded-none px-4 py-0.5 text-primary",
@@ -64,12 +57,7 @@ export function MeniuFlyoutNavigatie({
           <Icon aria-hidden="true" />
           <span className="whitespace-nowrap">{item.label}</span>
         </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="start"
-          className="w-max min-w-40"
-          side="right"
-          sideOffset={8}
-        >
+        <DropdownMenuContent align="start" className="w-max min-w-40" side="right" sideOffset={8}>
           {item.children.map((copil) => {
             const copilEsteActiv = isNavigationPathActive(caleCurenta, copil.path);
 

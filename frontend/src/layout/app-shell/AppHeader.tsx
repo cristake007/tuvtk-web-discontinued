@@ -109,11 +109,7 @@ export function AppHeader({
 
         <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
           <NotificationMenu />
-          <UserMenu
-            logoutPending={logoutPending}
-            onLogout={onLogout}
-            user={user}
-          />
+          <UserMenu logoutPending={logoutPending} onLogout={onLogout} user={user} />
         </div>
       </div>
     </header>

@@ -108,9 +108,7 @@ export function NagerDateSettingsCard({
               className="cursor-pointer"
               disabled={!values.enabled}
               id="public-holidays-automatic"
-              onCheckedChange={(automatic_sync) =>
-                onChange({ ...values, automatic_sync })
-              }
+              onCheckedChange={(automatic_sync) => onChange({ ...values, automatic_sync })}
             />
           </div>
 
@@ -179,12 +177,7 @@ export function NagerDateSettingsCard({
       </CardContent>
 
       <CardFooter className="justify-between gap-3">
-        <Button
-          disabled={savePending}
-          onClick={onSave}
-          type="button"
-          variant="outline"
-        >
+        <Button disabled={savePending} onClick={onSave} type="button" variant="outline">
           <Save aria-hidden="true" />
           Salvează setările
         </Button>

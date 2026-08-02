@@ -3,10 +3,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import { coreBootstrapQueryKey } from "@/api/core";
-import {
-  apiAuthorizationFailureEvent,
-  type ApiAuthorizationFailureDetail,
-} from "@/api/http";
+import { apiAuthorizationFailureEvent, type ApiAuthorizationFailureDetail } from "@/api/http";
 
 import { router } from "./router";
 

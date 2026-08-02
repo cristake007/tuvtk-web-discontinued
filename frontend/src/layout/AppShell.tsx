@@ -58,12 +58,8 @@ export function AppShell({ bootstrap }: { bootstrap: CoreBootstrap }) {
 
   useEffect(() => {
     const root = document.documentElement;
-    const {
-      culoare_accent,
-      culoare_fundal,
-      culoare_primara,
-      culoare_titluri,
-    } = bootstrap.configuration;
+    const { culoare_accent, culoare_fundal, culoare_primara, culoare_titluri } =
+      bootstrap.configuration;
     root.style.setProperty("--primary", culoare_primara);
     root.style.setProperty("--brand-red", culoare_accent);
     root.style.setProperty("--background", culoare_fundal);
@@ -92,10 +88,7 @@ export function AppShell({ bootstrap }: { bootstrap: CoreBootstrap }) {
 
   return (
     <TooltipProvider delay={0}>
-      <SidebarProvider
-        className="h-svh min-h-svh flex-col overflow-hidden"
-        style={shellStyle}
-      >
+      <SidebarProvider className="h-svh min-h-svh flex-col overflow-hidden" style={shellStyle}>
         <AppHeader
           configuration={bootstrap.configuration}
           logoutPending={logoutMutation.isPending}

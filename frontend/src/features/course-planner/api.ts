@@ -75,9 +75,7 @@ export function downloadCoursePlanFile(input: {
   generationId: string;
   fileType: CoursePlanFileType;
 }): Promise<Blob> {
-  return apiDownload(
-    `${coursePlannerPath}/history/${input.generationId}/files/${input.fileType}`,
-  );
+  return apiDownload(`${coursePlannerPath}/history/${input.generationId}/files/${input.fileType}`);
 }
 
 export function exportCourseSchedule(generationId: string): Promise<Blob> {

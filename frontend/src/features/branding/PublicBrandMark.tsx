@@ -35,10 +35,7 @@ export function PublicBrandMark({
         />
       ) : (
         <span
-          className={cn(
-            "font-bold tracking-tight text-primary",
-            compact ? "text-2xl" : "text-4xl",
-          )}
+          className={cn("font-bold tracking-tight text-primary", compact ? "text-2xl" : "text-4xl")}
         >
           {branding.site_name}
         </span>

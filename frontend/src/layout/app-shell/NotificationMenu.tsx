@@ -30,9 +30,7 @@ export function NotificationMenu() {
       <DropdownMenuContent align="end" className="w-80 p-1" sideOffset={8}>
         <DropdownMenuGroup>
           <DropdownMenuLabel className="px-3 py-2.5">
-            <span className="block text-sm font-semibold text-foreground">
-              Notifications
-            </span>
+            <span className="block text-sm font-semibold text-foreground">Notifications</span>
             <span className="mt-0.5 block text-xs font-normal text-muted-foreground">
               Updates that require your attention will appear here.
             </span>
@@ -43,12 +41,8 @@ export function NotificationMenu() {
           <span className="grid size-9 place-items-center rounded-sm bg-primary/5 text-primary">
             <Bell aria-hidden="true" className="size-4" />
           </span>
-          <p className="mt-3 text-sm font-medium text-foreground">
-            No new notifications
-          </p>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            You are up to date.
-          </p>
+          <p className="mt-3 text-sm font-medium text-foreground">No new notifications</p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">You are up to date.</p>
         </div>
       </DropdownMenuContent>
     </DropdownMenu>

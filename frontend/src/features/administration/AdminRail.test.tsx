@@ -12,12 +12,13 @@ describe("AdminRail", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("link", { name: "Zile libere și sărbători" }),
-    ).toHaveAttribute("aria-current", "page");
-    expect(
-      screen.getByRole("link", { name: "Toate integrările" }),
-    ).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("link", { name: "Zile libere și sărbători" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: "Toate integrările" })).not.toHaveAttribute(
+      "aria-current",
+    );
   });
 
   it("activează intrarea tuturor integrărilor pe ruta-index", () => {
@@ -27,11 +28,12 @@ describe("AdminRail", () => {
       </MemoryRouter>,
     );
 
-    expect(
-      screen.getByRole("link", { name: "Toate integrările" }),
-    ).toHaveAttribute("aria-current", "page");
-    expect(
-      screen.getByRole("link", { name: "Zile libere și sărbători" }),
-    ).not.toHaveAttribute("aria-current");
+    expect(screen.getByRole("link", { name: "Toate integrările" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: "Zile libere și sărbători" })).not.toHaveAttribute(
+      "aria-current",
+    );
   });
 });

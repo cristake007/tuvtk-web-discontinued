@@ -13,10 +13,7 @@ type WorkflowPageProps = {
  */
 export function WorkflowPage({ ariaLabel, children }: WorkflowPageProps) {
   return (
-    <section
-      aria-label={ariaLabel}
-      className="relative flex min-h-full min-w-0 flex-1"
-    >
+    <section aria-label={ariaLabel} className="relative flex min-h-full min-w-0 flex-1">
       {children}
     </section>
   );

@@ -104,9 +104,7 @@ for (const [path, source] of cssSources) {
   }
 
   for (const match of source.matchAll(/#[0-9a-f]{3,8}\b|\b(?:rgb|rgba|hsl|hsla|oklch)\(/gi)) {
-    errors.push(
-      `${displayPath}: raw color value ${match[0]} must be represented by a theme token`,
-    );
+    errors.push(`${displayPath}: raw color value ${match[0]} must be represented by a theme token`);
   }
 }
 

@@ -65,7 +65,6 @@ export function PublicHolidaysIntegrationPanel() {
 
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6">
-
       {holidaysQuery.isError ? (
         <Alert variant="destructive">
           <AlertDescription>

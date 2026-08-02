@@ -283,12 +283,10 @@ export function UpdateWordPressPanel() {
 
       <section className="grid w-full gap-6 rounded-sm border bg-background p-6 shadow-sm">
         <div>
-          <SectionTitle>
-            Previzualizează datele cursurilor
-          </SectionTitle>
+          <SectionTitle>Previzualizează datele cursurilor</SectionTitle>
           <p className="mt-1 text-base leading-6 text-muted-foreground">
-            Încarcă un fișier cu coloanele Title, Permalink și coloane de lună
-            (January–December) pentru a vedea perioadele propuse înainte de actualizare.
+            Încarcă un fișier cu coloanele Title, Permalink și coloane de lună (January–December)
+            pentru a vedea perioadele propuse înainte de actualizare.
           </p>
         </div>
 
@@ -322,88 +320,88 @@ export function UpdateWordPressPanel() {
               {rows.length === 0
                 ? "Fișierul a fost procesat, dar nu conține cursuri care pot fi actualizate."
                 : hasCredentials
-                ? "Verifică perioadele curente de pe WordPress, apoi actualizează cursurile dorite."
-                : "Conectează-te la WordPress mai sus pentru a putea verifica și actualiza cursurile."}
+                  ? "Verifică perioadele curente de pe WordPress, apoi actualizează cursurile dorite."
+                  : "Conectează-te la WordPress mai sus pentru a putea verifica și actualiza cursurile."}
             </p>
           </div>
 
           {rows.length ? (
             <div className="min-w-0 overflow-hidden rounded-sm border">
               <Table className="min-w-[54rem]">
-              <TableHeader className="bg-muted/70">
-                <TableRow className="hover:bg-transparent">
-                  <TableHead>Curs</TableHead>
-                  <TableHead>Zile din fișier</TableHead>
-                  <TableHead>Zile propuse</TableHead>
-                  <TableHead>Stare</TableHead>
-                  <TableHead className="text-right">Acțiuni</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {rows.map((row) => {
-                  const state = rowStates[row.row_index];
-                  const busy = state?.phase === "verifying" || state?.phase === "updating";
-                  return (
-                    <TableRow className="even:bg-muted/25" key={row.row_index}>
-                      <TableCell className="max-w-56 truncate font-medium" title={row.title}>
-                        {row.title}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {row.excel_dates.length ? row.excel_dates.join(", ") : "—"}
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {(state?.finalDates ?? row.final_dates).length
-                          ? (state?.finalDates ?? row.final_dates).join(", ")
-                          : "—"}
-                      </TableCell>
-                      <TableCell>
-                        {row.status === "error" ? (
-                          <Badge variant="destructive">
-                            <XCircle aria-hidden="true" className="size-3" />
-                            {row.error}
-                          </Badge>
-                        ) : state?.phase === "updated" ? (
-                          <Badge variant="secondary">
-                            <CheckCircle2 aria-hidden="true" className="size-3" />
-                            {state.message}
-                          </Badge>
-                        ) : state?.phase === "error" ? (
-                          <Badge variant="destructive">
-                            <XCircle aria-hidden="true" className="size-3" />
-                            {state.message}
-                          </Badge>
-                        ) : state?.phase === "verified" ? (
-                          <Badge variant="outline">Verificat</Badge>
-                        ) : (
-                          <Badge variant="outline">Pregătit</Badge>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            disabled={!hasCredentials || !row.can_update || busy}
-                            onClick={() => void handleVerify(row)}
-                            size="sm"
-                            type="button"
-                            variant="outline"
-                          >
-                            <RefreshCcw aria-hidden="true" className="size-3.5" />
-                            {state?.phase === "verifying" ? "Se verifică…" : "Verifică"}
-                          </Button>
-                          <Button
-                            disabled={!hasCredentials || !row.can_update || busy}
-                            onClick={() => void handleUpdate(row)}
-                            size="sm"
-                            type="button"
-                          >
-                            {state?.phase === "updating" ? "Se actualizează…" : "Actualizează"}
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
+                <TableHeader className="bg-muted/70">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead>Curs</TableHead>
+                    <TableHead>Zile din fișier</TableHead>
+                    <TableHead>Zile propuse</TableHead>
+                    <TableHead>Stare</TableHead>
+                    <TableHead className="text-right">Acțiuni</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {rows.map((row) => {
+                    const state = rowStates[row.row_index];
+                    const busy = state?.phase === "verifying" || state?.phase === "updating";
+                    return (
+                      <TableRow className="even:bg-muted/25" key={row.row_index}>
+                        <TableCell className="max-w-56 truncate font-medium" title={row.title}>
+                          {row.title}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {row.excel_dates.length ? row.excel_dates.join(", ") : "—"}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {(state?.finalDates ?? row.final_dates).length
+                            ? (state?.finalDates ?? row.final_dates).join(", ")
+                            : "—"}
+                        </TableCell>
+                        <TableCell>
+                          {row.status === "error" ? (
+                            <Badge variant="destructive">
+                              <XCircle aria-hidden="true" className="size-3" />
+                              {row.error}
+                            </Badge>
+                          ) : state?.phase === "updated" ? (
+                            <Badge variant="secondary">
+                              <CheckCircle2 aria-hidden="true" className="size-3" />
+                              {state.message}
+                            </Badge>
+                          ) : state?.phase === "error" ? (
+                            <Badge variant="destructive">
+                              <XCircle aria-hidden="true" className="size-3" />
+                              {state.message}
+                            </Badge>
+                          ) : state?.phase === "verified" ? (
+                            <Badge variant="outline">Verificat</Badge>
+                          ) : (
+                            <Badge variant="outline">Pregătit</Badge>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button
+                              disabled={!hasCredentials || !row.can_update || busy}
+                              onClick={() => void handleVerify(row)}
+                              size="sm"
+                              type="button"
+                              variant="outline"
+                            >
+                              <RefreshCcw aria-hidden="true" className="size-3.5" />
+                              {state?.phase === "verifying" ? "Se verifică…" : "Verifică"}
+                            </Button>
+                            <Button
+                              disabled={!hasCredentials || !row.can_update || busy}
+                              onClick={() => void handleUpdate(row)}
+                              size="sm"
+                              type="button"
+                            >
+                              {state?.phase === "updating" ? "Se actualizează…" : "Actualizează"}
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
               </Table>
             </div>
           ) : (

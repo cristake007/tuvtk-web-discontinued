@@ -126,20 +126,13 @@ export function LoginForm() {
   return (
     <div className="w-full bg-transparent">
       <div>
-        <PageTitle className="text-xl tracking-tight sm:text-2xl">
-          Autentificare
-        </PageTitle>
+        <PageTitle className="text-xl tracking-tight sm:text-2xl">Autentificare</PageTitle>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
           Introdu datele contului tău pentru a continua.
         </p>
       </div>
 
-      <form
-        aria-busy={loginMutation.isPending}
-        className="mt-7"
-        noValidate
-        onSubmit={handleSubmit}
-      >
+      <form aria-busy={loginMutation.isPending} className="mt-7" noValidate onSubmit={handleSubmit}>
         <FieldGroup className="gap-4">
           <Field data-invalid={Boolean(fieldErrors.username)}>
             <FieldLabel className="text-xs font-medium" htmlFor="username">
@@ -209,9 +202,7 @@ export function LoginForm() {
 
           {serverError ? (
             <Alert aria-live="polite" className="py-2.5" variant="destructive">
-              <AlertDescription className="text-xs leading-5">
-                {serverError}
-              </AlertDescription>
+              <AlertDescription className="text-xs leading-5">{serverError}</AlertDescription>
             </Alert>
           ) : null}
 

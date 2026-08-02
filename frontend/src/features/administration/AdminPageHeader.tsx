@@ -58,9 +58,7 @@ export function AdminPageHeader({
           </div>
           {action ? <div className="flex shrink-0 flex-wrap gap-2">{action}</div> : null}
         </div>
-        <p className="mt-2 max-w-3xl text-base leading-6 text-muted-foreground">
-          {description}
-        </p>
+        <p className="mt-2 max-w-3xl text-base leading-6 text-muted-foreground">{description}</p>
       </div>
     </header>
   );

@@ -64,9 +64,7 @@ export function InternalHolidayForm({
             <Input
               id="internal-holiday-name"
               maxLength={255}
-              onChange={(event) =>
-                onChange({ ...values, local_name: event.target.value })
-              }
+              onChange={(event) => onChange({ ...values, local_name: event.target.value })}
               placeholder="Exemplu: Zi liberă companie"
               required
               value={values.local_name}
@@ -76,9 +74,7 @@ export function InternalHolidayForm({
             <Label htmlFor="internal-holiday-description">Descriere</Label>
             <Textarea
               id="internal-holiday-description"
-              onChange={(event) =>
-                onChange({ ...values, description: event.target.value })
-              }
+              onChange={(event) => onChange({ ...values, description: event.target.value })}
               placeholder="Motivul sau regulile aplicabile acestei zile interne."
               rows={3}
               value={values.description}

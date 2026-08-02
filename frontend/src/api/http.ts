@@ -59,13 +59,8 @@ function normalizeErrorPayload(body: unknown, status: number): ApiErrorPayload {
               ? "permission_denied"
               : "api_error",
       detail:
-        typeof candidate.detail === "string"
-          ? candidate.detail
-          : `API request failed: ${status}`,
-      fields:
-        candidate.fields && typeof candidate.fields === "object"
-          ? candidate.fields
-          : {},
+        typeof candidate.detail === "string" ? candidate.detail : `API request failed: ${status}`,
+      fields: candidate.fields && typeof candidate.fields === "object" ? candidate.fields : {},
     };
   }
 
@@ -145,9 +140,7 @@ async function fetchCsrfCookie(): Promise<void> {
   await csrfCookieRequest;
 }
 
-async function buildRequestHeaders(
-  options: ApiRequestOptions,
-): Promise<{
+async function buildRequestHeaders(options: ApiRequestOptions): Promise<{
   headers: Headers;
   requestOptions: RequestInit;
   authorizationHandling: "global" | "ignore";
@@ -156,8 +149,7 @@ async function buildRequestHeaders(
   const headers = new Headers(requestOptions.headers);
   headers.set("Accept", "application/json");
 
-  const bodyIsFormData =
-    typeof FormData !== "undefined" && requestOptions.body instanceof FormData;
+  const bodyIsFormData = typeof FormData !== "undefined" && requestOptions.body instanceof FormData;
   if (requestOptions.body && !bodyIsFormData && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
@@ -187,10 +179,7 @@ function notifyAuthorizationFailure(
   authorizationHandling: "global" | "ignore",
   payload: ApiErrorPayload,
 ): void {
-  if (
-    authorizationHandling === "global" &&
-    (status === 401 || status === 403)
-  ) {
+  if (authorizationHandling === "global" && (status === 401 || status === 403)) {
     window.dispatchEvent(
       new CustomEvent<ApiAuthorizationFailureDetail>(apiAuthorizationFailureEvent, {
         detail: { ...payload, status },
@@ -199,12 +188,8 @@ function notifyAuthorizationFailure(
   }
 }
 
-export async function apiRequest<T>(
-  path: string,
-  options: ApiRequestOptions = {},
-): Promise<T> {
-  const { headers, requestOptions, authorizationHandling } =
-    await buildRequestHeaders(options);
+export async function apiRequest<T>(path: string, options: ApiRequestOptions = {}): Promise<T> {
+  const { headers, requestOptions, authorizationHandling } = await buildRequestHeaders(options);
   const response = await fetch(path, {
     ...requestOptions,
     credentials: "same-origin",
@@ -222,12 +207,8 @@ export async function apiRequest<T>(
   return body as T;
 }
 
-export async function apiDownload(
-  path: string,
-  options: ApiRequestOptions = {},
-): Promise<Blob> {
-  const { headers, requestOptions, authorizationHandling } =
-    await buildRequestHeaders(options);
+export async function apiDownload(path: string, options: ApiRequestOptions = {}): Promise<Blob> {
+  const { headers, requestOptions, authorizationHandling } = await buildRequestHeaders(options);
 
   // DRF performs renderer negotiation before the view returns FileResponse.
   // A wildcard allows the endpoint to return its real file MIME while JSON

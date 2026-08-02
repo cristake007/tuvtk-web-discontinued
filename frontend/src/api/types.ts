@@ -1,8 +1,4 @@
-export type {
-  AuthenticationSession,
-  LoginCredentials,
-  ShellUser,
-} from "@/features/auth/types";
+export type { AuthenticationSession, LoginCredentials, ShellUser } from "@/features/auth/types";
 export type {
   CoreBootstrap,
   DatabaseHealth,

@@ -117,7 +117,9 @@ export function UserInterfaceSettingsTabs() {
           <BrandingPanel
             culori={culori}
             culorileSuntModificate={culorileSuntModificate}
-            onChangeCuloare={(camp, valoare) => setCulori((curente) => ({ ...curente, [camp]: valoare }))}
+            onChangeCuloare={(camp, valoare) =>
+              setCulori((curente) => ({ ...curente, [camp]: valoare }))
+            }
             onSubmitCulori={salveazaCulorile}
             savingCulori={configuratieMutation.isPending}
           />

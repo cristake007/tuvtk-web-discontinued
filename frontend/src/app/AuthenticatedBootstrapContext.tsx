@@ -10,7 +10,9 @@ export function useAuthenticatedBootstrap(): CoreBootstrap {
   const bootstrap = useContext(AuthenticatedBootstrapContext);
 
   if (!bootstrap) {
-    throw new Error("Bootstrapul autentificat este disponibil numai în spatele AuthenticationGate.");
+    throw new Error(
+      "Bootstrapul autentificat este disponibil numai în spatele AuthenticationGate.",
+    );
   }
 
   return bootstrap;

@@ -7,11 +7,5 @@ export function ModulePlaceholderPage({
   title: string;
   description: string;
 }) {
-  return (
-    <PageMessageFrame
-      context="Modul în pregătire"
-      description={description}
-      title={title}
-    />
-  );
+  return <PageMessageFrame context="Modul în pregătire" description={description} title={title} />;
 }

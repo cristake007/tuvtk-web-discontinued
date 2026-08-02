@@ -2,11 +2,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import { ArrowRight, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import type { NavigationItem } from "@/features/core/types";
 
 export function HeaderSearch({ navigation }: { navigation: NavigationItem[] }) {
@@ -112,9 +108,7 @@ export function HeaderSearch({ navigation }: { navigation: NavigationItem[] }) {
                   type="button"
                 >
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate font-medium leading-5">
-                      {item.label}
-                    </span>
+                    <span className="block truncate font-medium leading-5">{item.label}</span>
                     <span className="block truncate text-[calc(11px*var(--app-font-scale))] leading-4 text-muted-foreground">
                       {item.path}
                     </span>

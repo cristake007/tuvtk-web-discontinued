@@ -7,8 +7,7 @@ export function validateCompanyLogo(file: LogoFileMetadata | undefined): string 
     return null;
   }
 
-  const isSvg =
-    file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg");
+  const isSvg = file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg");
 
   if (!isSvg) {
     return "Selectează un fișier SVG.";

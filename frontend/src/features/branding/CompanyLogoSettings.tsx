@@ -108,18 +108,13 @@ export function CompanyLogoSettings() {
             )}
           </div>
           <p className="text-xs leading-5 text-muted-foreground">
-            Scripturile, resursele externe și stilurile nesigure sunt respinse la
-            încărcare.
+            Scripturile, resursele externe și stilurile nesigure sunt respinse la încărcare.
           </p>
         </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        <Button
-          disabled={!selectedFile || isSaving}
-          onClick={uploadSelectedLogo}
-          type="button"
-        >
+        <Button disabled={!selectedFile || isSaving} onClick={uploadSelectedLogo} type="button">
           <ImageUp aria-hidden="true" />
           {uploadPending ? "Se încarcă…" : "Încarcă sigla"}
         </Button>

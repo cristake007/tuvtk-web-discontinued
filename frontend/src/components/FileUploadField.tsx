@@ -128,9 +128,7 @@ export function FileUploadField({
               </span>
 
               <span className="grid gap-1">
-                <span className="max-w-full truncate font-medium text-foreground">
-                  {file.name}
-                </span>
+                <span className="max-w-full truncate font-medium text-foreground">{file.name}</span>
                 <span className="text-xs text-muted-foreground">
                   {formatFileSize(file.size)} · apasă pentru a înlocui fișierul
                 </span>

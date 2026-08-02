@@ -8,11 +8,7 @@ type WorkflowEmptyStateProps = {
   title: string;
 };
 
-export function WorkflowEmptyState({
-  description,
-  icon: Icon,
-  title,
-}: WorkflowEmptyStateProps) {
+export function WorkflowEmptyState({ description, icon: Icon, title }: WorkflowEmptyStateProps) {
   return (
     <ContentEmptyState
       className="border bg-muted/10"

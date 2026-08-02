@@ -79,7 +79,8 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
           </p>
         </div>
         <p className="text-xs text-muted-foreground">
-          {rows.length === 0 ? "Niciun curs" : `${pageStart + 1}–${pageStart + visibleRows.length}`} din {rows.length}
+          {rows.length === 0 ? "Niciun curs" : `${pageStart + 1}–${pageStart + visibleRows.length}`}{" "}
+          din {rows.length}
         </p>
       </div>
 

@@ -19,9 +19,36 @@ type ScopedThemeStyle = CSSProperties & {
 const MAX_ELEMENTE_PREVIZUALIZATE = 6;
 
 const elementeImplicite: NavigationItem[] = [
-  { application_key: "core", icon: "LayoutDashboard", is_separator: false, key: "prev-1", label: "Tablou de bord", parent_key: null, path: "/", position: 0 },
-  { application_key: "core", icon: "Users", is_separator: false, key: "prev-2", label: "Utilizatori", parent_key: null, path: "/", position: 1 },
-  { application_key: "core", icon: "Settings2", is_separator: false, key: "prev-3", label: "Administrare", parent_key: null, path: "/", position: 2 },
+  {
+    application_key: "core",
+    icon: "LayoutDashboard",
+    is_separator: false,
+    key: "prev-1",
+    label: "Tablou de bord",
+    parent_key: null,
+    path: "/",
+    position: 0,
+  },
+  {
+    application_key: "core",
+    icon: "Users",
+    is_separator: false,
+    key: "prev-2",
+    label: "Utilizatori",
+    parent_key: null,
+    path: "/",
+    position: 1,
+  },
+  {
+    application_key: "core",
+    icon: "Settings2",
+    is_separator: false,
+    key: "prev-3",
+    label: "Administrare",
+    parent_key: null,
+    path: "/",
+    position: 2,
+  },
 ];
 
 function luminantaPerceputa(hex: string): number | null {
@@ -36,13 +63,7 @@ function luminantaPerceputa(hex: string): number | null {
   return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 }
 
-function RandNavigatiePrevizualizare({
-  activ,
-  item,
-}: {
-  activ: boolean;
-  item: NavigationItem;
-}) {
+function RandNavigatiePrevizualizare({ activ, item }: { activ: boolean; item: NavigationItem }) {
   if (item.is_separator) {
     return (
       <div aria-hidden="true" className="flex items-center gap-1.5 px-3 py-1.5">
@@ -62,7 +83,9 @@ function RandNavigatiePrevizualizare({
       className={[
         "relative flex h-7 items-center gap-2 px-3 text-[calc(11px*var(--app-font-scale))] text-primary transition-colors",
         "before:absolute before:inset-y-0 before:left-0 before:w-[2.5px] before:bg-brand-red",
-        activ ? "bg-primary/5 pl-3.5 font-semibold text-brand-red before:opacity-100" : "before:opacity-0",
+        activ
+          ? "bg-primary/5 pl-3.5 font-semibold text-brand-red before:opacity-100"
+          : "before:opacity-0",
       ].join(" ")}
     >
       <Icon aria-hidden="true" className="size-3.5 shrink-0" />
@@ -114,10 +137,7 @@ export function LiveShellPreview({
         </p>
       </div>
 
-      <div
-        className="w-full overflow-hidden rounded-xl border shadow-sm"
-        style={stilTema}
-      >
+      <div className="w-full overflow-hidden rounded-xl border shadow-sm" style={stilTema}>
         <div className="flex h-11 items-center gap-3 border-b border-border/70 bg-white px-3">
           {logoUrl ? (
             <img
@@ -156,9 +176,7 @@ export function LiveShellPreview({
           </nav>
 
           <div className="flex-1 space-y-3 bg-background p-4">
-            <p className="text-sm font-semibold leading-snug text-heading">
-              Titlu de pagină
-            </p>
+            <p className="text-sm font-semibold leading-snug text-heading">Titlu de pagină</p>
             <div className="h-2 w-1/2 rounded-full bg-foreground/10" />
             <div className="flex items-center gap-2 pt-1">
               <span className="rounded-md bg-primary px-2.5 py-1 text-[calc(11px*var(--app-font-scale))] font-medium text-primary-foreground">

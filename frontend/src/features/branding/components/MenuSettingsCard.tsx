@@ -50,8 +50,8 @@ export function MenuSettingsCard({
           <div>
             <CardTitle>Ordinea meniului</CardTitle>
             <CardDescription className="mt-1">
-              Trage elementele principale în poziția dorită sau adaugă separatoare pentru
-              a grupa vizual secțiunile meniului.
+              Trage elementele principale în poziția dorită sau adaugă separatoare pentru a grupa
+              vizual secțiunile meniului.
             </CardDescription>
           </div>
         </div>
@@ -89,7 +89,11 @@ export function MenuSettingsCard({
           <Plus aria-hidden="true" />
           Adaugă separator
         </Button>
-        <Button disabled={elemente.length === 0 || disabled} onClick={onSalveazaOrdinea} type="button">
+        <Button
+          disabled={elemente.length === 0 || disabled}
+          onClick={onSalveazaOrdinea}
+          type="button"
+        >
           <Save aria-hidden="true" />
           {ordinePending ? "Se salvează…" : "Salvează ordinea"}
         </Button>

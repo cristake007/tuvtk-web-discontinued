@@ -3,11 +3,7 @@ import { ChevronDown } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
 import { Card } from "@/components/ui/card";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 
 import { administrationGroups, type AdministrationGroup } from "./navigation";
@@ -17,18 +13,10 @@ function grupConineRutaActiva(group: AdministrationGroup, pathname: string) {
 }
 
 function intrareaAreRutaDescendenta(group: AdministrationGroup, href: string) {
-  return group.entries.some(
-    (entry) => entry.href && entry.href.startsWith(`${href}/`),
-  );
+  return group.entries.some((entry) => entry.href && entry.href.startsWith(`${href}/`));
 }
 
-function AdminRailGroup({
-  group,
-  pathname,
-}: {
-  group: AdministrationGroup;
-  pathname: string;
-}) {
+function AdminRailGroup({ group, pathname }: { group: AdministrationGroup; pathname: string }) {
   const Icon = group.icon;
   const contineRutaActiva = grupConineRutaActiva(group, pathname);
   const [deschis, setDeschis] = useState(contineRutaActiva);

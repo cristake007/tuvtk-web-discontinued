@@ -42,9 +42,7 @@ describe("CoursePlanHistoryTable", () => {
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Încearcă din nou" }));
 
-    expect(
-      await screen.findByText("Nu există generări salvate"),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Nu există generări salvate")).toBeInTheDocument();
   });
 
   it("afișează empty state-ul tabelului pentru un istoric fără rezultate", async () => {
@@ -56,9 +54,7 @@ describe("CoursePlanHistoryTable", () => {
     });
     renderTable();
 
-    expect(
-      await screen.findByText("Nu există generări salvate"),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Nu există generări salvate")).toBeInTheDocument();
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
   });
 });

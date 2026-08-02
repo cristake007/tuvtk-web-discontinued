@@ -11,10 +11,7 @@ type StaticCatalogPageProps = {
  */
 export function StaticCatalogPage({ children }: StaticCatalogPageProps) {
   return (
-    <section
-      className="flex min-w-0 flex-1 flex-col gap-6"
-      data-state-contract="static-catalog"
-    >
+    <section className="flex min-w-0 flex-1 flex-col gap-6" data-state-contract="static-catalog">
       {children}
     </section>
   );

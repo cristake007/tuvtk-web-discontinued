@@ -2,9 +2,7 @@ import { apiRequest } from "@/api/http";
 
 import type { AuthenticationSession, LoginCredentials } from "./types";
 
-export function login(
-  credentials: LoginCredentials,
-): Promise<AuthenticationSession> {
+export function login(credentials: LoginCredentials): Promise<AuthenticationSession> {
   return apiRequest<AuthenticationSession>("/api/v1/auth/login", {
     authorizationHandling: "ignore",
     method: "POST",

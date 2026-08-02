@@ -227,7 +227,15 @@ function UtilizatorFormRoute() {
 
 function GrupuriAplicatiiRoute() {
   return (
-    <Suspense fallback={<ApplicationState description="Se încarcă grupurile și accesul la aplicații." loading title="Se încarcă grupurile" />}>
+    <Suspense
+      fallback={
+        <ApplicationState
+          description="Se încarcă grupurile și accesul la aplicații."
+          loading
+          title="Se încarcă grupurile"
+        />
+      }
+    >
       <GrupuriAplicatiiPage />
     </Suspense>
   );
@@ -307,68 +315,132 @@ export const appRoutes = [
       },
       {
         element: <ApplicationAccessRoute applicationKey="contacte" />,
-        children: [{
-          path: "crm/contacte",
-          element: <ModulePlaceholderPage title="Contacte" description="Modulul pentru gestionarea contactelor va fi disponibil aici." />,
-          handle: { pageTitle: "Contacte" },
-        }],
+        children: [
+          {
+            path: "crm/contacte",
+            element: (
+              <ModulePlaceholderPage
+                title="Contacte"
+                description="Modulul pentru gestionarea contactelor va fi disponibil aici."
+              />
+            ),
+            handle: { pageTitle: "Contacte" },
+          },
+        ],
       },
       {
         element: <ApplicationAccessRoute applicationKey="oportunitati" />,
-        children: [{
-          path: "crm/oportunitati",
-          element: <ModulePlaceholderPage title="Oportunități" description="Modulul pentru gestionarea oportunităților va fi disponibil aici." />,
-          handle: { pageTitle: "Oportunități" },
-        }],
+        children: [
+          {
+            path: "crm/oportunitati",
+            element: (
+              <ModulePlaceholderPage
+                title="Oportunități"
+                description="Modulul pentru gestionarea oportunităților va fi disponibil aici."
+              />
+            ),
+            handle: { pageTitle: "Oportunități" },
+          },
+        ],
       },
       {
         element: <ApplicationAccessRoute applicationKey="activitati" />,
-        children: [{
-          path: "crm/activitati",
-          element: <ModulePlaceholderPage title="Activități" description="Modulul pentru gestionarea activităților va fi disponibil aici." />,
-          handle: { pageTitle: "Activități" },
-        }],
+        children: [
+          {
+            path: "crm/activitati",
+            element: (
+              <ModulePlaceholderPage
+                title="Activități"
+                description="Modulul pentru gestionarea activităților va fi disponibil aici."
+              />
+            ),
+            handle: { pageTitle: "Activități" },
+          },
+        ],
       },
       {
         element: <ApplicationAccessRoute applicationKey="instruiri" />,
-        children: [{
-          path: "training/in-pregatire",
-          element: <ModulePlaceholderPage title="Training" description="Modulele pentru Training vor fi definite ulterior." />,
-          handle: { pageTitle: "Training" },
-        }],
+        children: [
+          {
+            path: "training/in-pregatire",
+            element: (
+              <ModulePlaceholderPage
+                title="Training"
+                description="Modulele pentru Training vor fi definite ulterior."
+              />
+            ),
+            handle: { pageTitle: "Training" },
+          },
+        ],
       },
       {
         element: <ApplicationAccessRoute applicationKey="certificari" />,
-        children: [{
-          path: "certificari/in-pregatire",
-          element: <ModulePlaceholderPage title="Certificări" description="Modulele pentru Certificări vor fi definite ulterior." />,
-          handle: { pageTitle: "Certificări" },
-        }],
+        children: [
+          {
+            path: "certificari/in-pregatire",
+            element: (
+              <ModulePlaceholderPage
+                title="Certificări"
+                description="Modulele pentru Certificări vor fi definite ulterior."
+              />
+            ),
+            handle: { pageTitle: "Certificări" },
+          },
+        ],
       },
       {
         element: <ApplicationAccessRoute applicationKey="industrial" />,
-        children: [{
-          path: "industrial/in-pregatire",
-          element: <ModulePlaceholderPage title="Industrial" description="Modulele pentru Industrial vor fi definite ulterior." />,
-          handle: { pageTitle: "Industrial" },
-        }],
+        children: [
+          {
+            path: "industrial/in-pregatire",
+            element: (
+              <ModulePlaceholderPage
+                title="Industrial"
+                description="Modulele pentru Industrial vor fi definite ulterior."
+              />
+            ),
+            handle: { pageTitle: "Industrial" },
+          },
+        ],
       },
       {
         element: <ApplicationAccessRoute applicationKey="documente" />,
-        children: [{
-          path: "documente",
-          element: <DocumentePage />,
-          handle: { pageTitle: "Documente" },
-        }],
+        children: [
+          {
+            path: "documente",
+            element: <DocumentePage />,
+            handle: { pageTitle: "Documente" },
+          },
+        ],
       },
       {
         element: <ApplicationAccessRoute applicationKey="planificator-cursuri" />,
         children: [
-          { path: "planificator-cursuri/generator", element: <CoursePlannerGeneratorRoute />, handle: { pageTitle: "Generare perioade" } },
-          { path: "planificator-cursuri/istoric", element: <CoursePlannerHistoryRoute />, handle: { pageTitle: "Istoric generări" } },
-          { path: "planificator-cursuri/xml", element: <CoursePlannerXmlRoute />, handle: { pageTitle: "XML cursuri" } },
-          { path: "planificator-cursuri/word-matcher", element: <CoursePlannerWordMatcherRoute />, handle: { pageTitle: "Word Matcher" } },
-          { path: "planificator-cursuri/update-wordpress", element: <UpdateWordPressRoute />, handle: { pageTitle: "Update WordPress" } },
+          {
+            path: "planificator-cursuri/generator",
+            element: <CoursePlannerGeneratorRoute />,
+            handle: { pageTitle: "Generare perioade" },
+          },
+          {
+            path: "planificator-cursuri/istoric",
+            element: <CoursePlannerHistoryRoute />,
+            handle: { pageTitle: "Istoric generări" },
+          },
+          {
+            path: "planificator-cursuri/xml",
+            element: <CoursePlannerXmlRoute />,
+            handle: { pageTitle: "XML cursuri" },
+          },
+          {
+            path: "planificator-cursuri/word-matcher",
+            element: <CoursePlannerWordMatcherRoute />,
+            handle: { pageTitle: "Word Matcher" },
+          },
+          {
+            path: "planificator-cursuri/update-wordpress",
+            element: <UpdateWordPressRoute />,
+            handle: { pageTitle: "Update WordPress" },
+          },
         ],
       },
       {
@@ -386,7 +458,10 @@ export const appRoutes = [
               {
                 path: "sistem/interfata-utilizator",
                 element: <AdministrationUserInterfaceRoute />,
-                handle: { header: <AdministrationUserInterfaceHeader />, pageTitle: "Interfață utilizator" },
+                handle: {
+                  header: <AdministrationUserInterfaceHeader />,
+                  pageTitle: "Interfață utilizator",
+                },
               },
               {
                 path: "utilizatori",
@@ -406,7 +481,10 @@ export const appRoutes = [
               {
                 path: "grupuri",
                 element: <GrupuriAplicatiiRoute />,
-                handle: { header: <GrupuriAplicatiiHeader />, pageTitle: "Grupuri și acces aplicații" },
+                handle: {
+                  header: <GrupuriAplicatiiHeader />,
+                  pageTitle: "Grupuri și acces aplicații",
+                },
               },
               {
                 path: "integrari",
@@ -416,7 +494,10 @@ export const appRoutes = [
               {
                 path: "integrari/zile-libere",
                 element: <PublicHolidaysIntegrationRoute />,
-                handle: { header: <PublicHolidaysIntegrationHeader />, pageTitle: "Zile libere și sărbători" },
+                handle: {
+                  header: <PublicHolidaysIntegrationHeader />,
+                  pageTitle: "Zile libere și sărbători",
+                },
               },
             ],
           },

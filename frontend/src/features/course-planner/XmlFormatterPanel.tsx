@@ -44,13 +44,11 @@ export function XmlFormatterPanel() {
 
       <section className="grid w-full gap-6 rounded-sm border bg-background p-6 shadow-sm">
         <div>
-          <SectionTitle>
-            Generează XML pentru WordPress
-          </SectionTitle>
+          <SectionTitle>Generează XML pentru WordPress</SectionTitle>
           <p className="mt-1 text-base leading-6 text-muted-foreground">
-            Încarcă un fișier CSV sau Excel cu coloanele Title, Permalink și coloane de
-            lună (January–December sau Luna 1–Luna 12) pentru a obține un fișier XML
-            pregătit pentru import în WordPress.
+            Încarcă un fișier CSV sau Excel cu coloanele Title, Permalink și coloane de lună
+            (January–December sau Luna 1–Luna 12) pentru a obține un fișier XML pregătit pentru
+            import în WordPress.
           </p>
         </div>
 

@@ -45,9 +45,7 @@ describe("WordMatcherPanel", () => {
     });
     fireEvent.click(screen.getByRole("button", { name: "Previzualizează potrivirile" }));
 
-    expect(
-      await screen.findByText("Niciun rând disponibil pentru potrivire"),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Niciun rând disponibil pentru potrivire")).toBeInTheDocument();
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
   });
 });

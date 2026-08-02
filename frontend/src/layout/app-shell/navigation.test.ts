@@ -78,9 +78,6 @@ describe("buildNavigationTree", () => {
 
 describe("findCurrentNavigationItem", () => {
   it("returns the most specific matching navigation item", () => {
-    assert.equal(
-      findCurrentNavigationItem(items, "/companies/detail/42")?.key,
-      "company-detail",
-    );
+    assert.equal(findCurrentNavigationItem(items, "/companies/detail/42")?.key, "company-detail");
   });
 });

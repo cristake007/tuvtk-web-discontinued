@@ -35,10 +35,7 @@ export function LoginPage({ branding }: { branding: PublicBranding }) {
             className="absolute inset-0 size-full object-cover"
             src="/images/login-workspace.png"
           />
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 bg-primary/10"
-          />
+          <div aria-hidden="true" className="absolute inset-0 bg-primary/10" />
         </section>
       </div>
     </main>

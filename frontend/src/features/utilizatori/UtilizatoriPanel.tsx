@@ -35,16 +35,9 @@ import {
 import { formatRomanianDateTime } from "@/lib/dates";
 import { cn } from "@/lib/utils";
 
-import {
-  fetchGrupuri,
-  fetchUtilizatori,
-} from "./api";
+import { fetchGrupuri, fetchUtilizatori } from "./api";
 import { utilizatoriQueryKeys } from "./queryKeys";
-import type {
-  Utilizator,
-  UtilizatorRoleFilter,
-  UtilizatorStatusFilter,
-} from "./types";
+import type { Utilizator, UtilizatorRoleFilter, UtilizatorStatusFilter } from "./types";
 
 const pageSize = 20;
 
@@ -241,9 +234,7 @@ export function UtilizatoriPanel() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell className="max-w-64 truncate">
-                      {user.email || "—"}
-                    </TableCell>
+                    <TableCell className="max-w-64 truncate">{user.email || "—"}</TableCell>
                     <TableCell>
                       <AccountTypeBadge user={user} />
                     </TableCell>
@@ -266,9 +257,7 @@ export function UtilizatoriPanel() {
                       </Badge>
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground">
-                      {user.last_login
-                        ? formatRomanianDateTime(user.last_login)
-                        : "Niciodată"}
+                      {user.last_login ? formatRomanianDateTime(user.last_login) : "Niciodată"}
                     </TableCell>
                     <TableCell className="whitespace-nowrap text-muted-foreground">
                       {formatRomanianDateTime(user.date_joined)}
@@ -344,7 +333,6 @@ export function UtilizatoriPanel() {
           </PaginationContent>
         </Pagination>
       </div>
-
     </section>
   );
 }

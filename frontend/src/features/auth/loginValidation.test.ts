@@ -5,10 +5,7 @@ import { validateLoginCredentials } from "./loginValidation.js";
 
 describe("validateLoginCredentials", () => {
   it("accepts non-empty credentials", () => {
-    assert.deepEqual(
-      validateLoginCredentials({ username: "admin", password: "secret" }),
-      {},
-    );
+    assert.deepEqual(validateLoginCredentials({ username: "admin", password: "secret" }), {});
   });
 
   it("rejects an empty or whitespace-only username", () => {

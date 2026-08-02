@@ -9,10 +9,7 @@ import { WorkflowEmptyState } from "@/components/WorkflowEmptyState";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { SectionTitle } from "@/components/ui/heading";
-import {
-  NativeSelect,
-  NativeSelectOption,
-} from "@/components/ui/native-select";
+import { NativeSelect, NativeSelectOption } from "@/components/ui/native-select";
 import {
   Table,
   TableBody,
@@ -103,14 +100,11 @@ export function WordMatcherPanel() {
 
       <section className="grid w-full gap-6 rounded-sm border bg-background p-6 shadow-sm">
         <div>
-          <SectionTitle>
-            Potrivește documentul Word cu programul cursurilor
-          </SectionTitle>
+          <SectionTitle>Potrivește documentul Word cu programul cursurilor</SectionTitle>
           <p className="mt-1 text-base leading-6 text-muted-foreground">
-            Încarcă documentul Word cu programul de tipărit și un fișier cu titluri și
-            coloane de lună (January–December). Cursurile vor fi potrivite automat pe
-            baza titlului; poți corecta manual orice potrivire înainte de a genera
-            documentul final.
+            Încarcă documentul Word cu programul de tipărit și un fișier cu titluri și coloane de
+            lună (January–December). Cursurile vor fi potrivite automat pe baza titlului; poți
+            corecta manual orice potrivire înainte de a genera documentul final.
           </p>
         </div>
 
@@ -173,65 +167,68 @@ export function WordMatcherPanel() {
           {preview.rows.length ? (
             <div className="min-w-0 overflow-hidden rounded-sm border">
               <Table className="min-w-[46rem]">
-              <TableHeader className="bg-muted/70">
-                <TableRow className="hover:bg-transparent">
-                  <TableHead>Curs din documentul Word</TableHead>
-                  <TableHead>Stare</TableHead>
-                  <TableHead>Curs potrivit din program</TableHead>
-                  <TableHead className="text-right">Scor</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {preview.rows.map((row) => {
-                  const bestCandidate = row.candidates[0];
-                  const selected = selections[row.word_row_index] ?? null;
-                  return (
-                    <TableRow className="even:bg-muted/25" key={row.word_row_index}>
-                      <TableCell className="max-w-64 truncate font-medium" title={row.word_title}>
-                        {row.word_title}
-                      </TableCell>
-                      <TableCell>
-                        {row.status === "matched" ? (
-                          <Badge variant="secondary">
-                            <CheckCircle2 aria-hidden="true" className="size-3" />
-                            Potrivit
-                          </Badge>
-                        ) : (
-                          <Badge variant="outline">
-                            <HelpCircle aria-hidden="true" className="size-3" />
-                            De revizuit
-                          </Badge>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <NativeSelect
-                          aria-label={`Curs potrivit pentru „${row.word_title}”`}
-                          onChange={(event) => {
-                            const value = event.target.value;
-                            setSelections((current) => ({
-                              ...current,
-                              [row.word_row_index]: value === skipValue ? null : Number(value),
-                            }));
-                          }}
-                          value={selected === null ? skipValue : String(selected)}
-                        >
-                          <NativeSelectOption value={skipValue}>
-                            Fără potrivire (omite)
-                          </NativeSelectOption>
-                          {preview.schedule_options.map((option) => (
-                            <NativeSelectOption key={option.row_index} value={String(option.row_index)}>
-                              {option.title}
+                <TableHeader className="bg-muted/70">
+                  <TableRow className="hover:bg-transparent">
+                    <TableHead>Curs din documentul Word</TableHead>
+                    <TableHead>Stare</TableHead>
+                    <TableHead>Curs potrivit din program</TableHead>
+                    <TableHead className="text-right">Scor</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {preview.rows.map((row) => {
+                    const bestCandidate = row.candidates[0];
+                    const selected = selections[row.word_row_index] ?? null;
+                    return (
+                      <TableRow className="even:bg-muted/25" key={row.word_row_index}>
+                        <TableCell className="max-w-64 truncate font-medium" title={row.word_title}>
+                          {row.word_title}
+                        </TableCell>
+                        <TableCell>
+                          {row.status === "matched" ? (
+                            <Badge variant="secondary">
+                              <CheckCircle2 aria-hidden="true" className="size-3" />
+                              Potrivit
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline">
+                              <HelpCircle aria-hidden="true" className="size-3" />
+                              De revizuit
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <NativeSelect
+                            aria-label={`Curs potrivit pentru „${row.word_title}”`}
+                            onChange={(event) => {
+                              const value = event.target.value;
+                              setSelections((current) => ({
+                                ...current,
+                                [row.word_row_index]: value === skipValue ? null : Number(value),
+                              }));
+                            }}
+                            value={selected === null ? skipValue : String(selected)}
+                          >
+                            <NativeSelectOption value={skipValue}>
+                              Fără potrivire (omite)
                             </NativeSelectOption>
-                          ))}
-                        </NativeSelect>
-                      </TableCell>
-                      <TableCell className="text-right tabular-nums text-muted-foreground">
-                        {bestCandidate ? `${bestCandidate.score}%` : "—"}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
+                            {preview.schedule_options.map((option) => (
+                              <NativeSelectOption
+                                key={option.row_index}
+                                value={String(option.row_index)}
+                              >
+                                {option.title}
+                              </NativeSelectOption>
+                            ))}
+                          </NativeSelect>
+                        </TableCell>
+                        <TableCell className="text-right tabular-nums text-muted-foreground">
+                          {bestCandidate ? `${bestCandidate.score}%` : "—"}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                </TableBody>
               </Table>
             </div>
           ) : (

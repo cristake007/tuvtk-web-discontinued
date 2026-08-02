@@ -24,8 +24,7 @@ export const administrationGroups: AdministrationGroup[] = [
   {
     entries: [
       {
-        description:
-          "Configurează identitatea vizuală și opțiunile de prezentare ale platformei.",
+        description: "Configurează identitatea vizuală și opțiunile de prezentare ale platformei.",
         href: "/administrare/sistem/interfata-utilizator",
         name: "Interfață utilizator",
       },
@@ -53,8 +52,7 @@ export const administrationGroups: AdministrationGroup[] = [
         name: "Utilizatori",
       },
       {
-        description:
-          "Creează grupuri, atribuie utilizatori și stabilește aplicațiile disponibile.",
+        description: "Creează grupuri, atribuie utilizatori și stabilește aplicațiile disponibile.",
         href: "/administrare/grupuri",
         name: "Grupuri și acces aplicații",
       },
@@ -127,8 +125,7 @@ export const administrationGroups: AdministrationGroup[] = [
   {
     entries: [
       {
-        description:
-          "Sincronizează sărbătorile legale și gestionează zilele interne nelucrătoare.",
+        description: "Sincronizează sărbătorile legale și gestionează zilele interne nelucrătoare.",
         href: "/administrare/integrari/zile-libere",
         name: "Zile libere și sărbători",
       },
