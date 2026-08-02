@@ -33,23 +33,10 @@ import {
   downloadCoursePlanFile,
   fetchCoursePlanHistory,
 } from "./api";
+import { abbreviatedMonthNames } from "./constants";
 import type { CoursePlanFileType, CoursePlanGeneration } from "./types";
 
 const pageSize = 25;
-const monthNames = [
-  "Ian",
-  "Feb",
-  "Mar",
-  "Apr",
-  "Mai",
-  "Iun",
-  "Iul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Noi",
-  "Dec",
-] as const;
 
 const fileLabels: Record<CoursePlanFileType, string> = {
   excel: "Excel",
@@ -71,7 +58,7 @@ type DownloadRequest = {
 
 function formatMonths(months: number[]): string {
   return months
-    .map((month) => monthNames[month - 1])
+    .map((month) => abbreviatedMonthNames[month - 1])
     .filter(Boolean)
     .join(", ");
 }
