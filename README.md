@@ -87,6 +87,23 @@ Celery Beat   ──> Redis ──> scheduled task delivery
 
 `compose.override.yaml` is automatically included by `docker compose up` and adds development mode: Django `runserver`, Vite, OpenSearch, local source bind mounts, locally published database ports, and the host user's UID and GID. Start development with `./dev up` (or `docker compose up -d`). Python source changes require restarting the worker and Beat processes because Celery does not reload task code automatically.
 
+### Container resource and logging policy
+
+Compose limits the long-running services with defaults sized for an 8 GB host. Override them in `.env` when the workload or host size requires different ceilings:
+
+| Variable | Default | Service |
+| --- | ---: | --- |
+| `BACKEND_MEMORY_LIMIT` | `1g` | Django/Gunicorn |
+| `CELERY_WORKER_MEMORY_LIMIT` | `1g` | Celery worker |
+| `CELERY_BEAT_MEMORY_LIMIT` | `256m` | Celery Beat |
+| `REDIS_MEMORY_LIMIT` | `512m` | Redis |
+| `CORE_DB_MEMORY_LIMIT` | `1g` | Core PostgreSQL |
+| `REGISTRY_DB_MEMORY_LIMIT` | `1g` | Registry PostgreSQL |
+| `NGINX_MEMORY_LIMIT` | `128m` | nginx |
+| `OPENSEARCH_MEMORY_LIMIT` | `1500m` | OpenSearch in development |
+
+Every container uses Docker's `json-file` logging driver with three files of at most 10 MB each and runs with `no-new-privileges`. The OpenSearch container ceiling is separate from `OPENSEARCH_JAVA_OPTS`; its default 512 MB JVM heap leaves memory for native allocations and the filesystem cache.
+
 ## Production mode
 
 Set the production values described in [Production security](#production-security), then build and start only the base Compose file so the development override is not loaded:
