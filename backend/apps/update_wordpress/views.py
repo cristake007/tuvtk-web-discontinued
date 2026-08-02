@@ -33,7 +33,7 @@ from .services import (
 )
 from .validators import InvalidWordPressUrlError
 
-APPLICATION_KEY = "course-planner"
+APPLICATION_KEY = "planificator-cursuri"
 TAGS = ["update-wordpress"]
 
 

@@ -296,15 +296,10 @@ export const appRoutes = [
         ],
       },
       {
-        element: <ApplicationAccessRoute applicationKey="companies" />,
+        element: <ApplicationAccessRoute applicationKey="companii" />,
         children: [
           {
             path: "crm/companii",
-            element: <WorkspaceCardPage ariaLabel="Conținut companii" />,
-            handle: { pageTitle: "Companii" },
-          },
-          {
-            path: "companies",
             element: <WorkspaceCardPage ariaLabel="Conținut companii" />,
             handle: { pageTitle: "Companii" },
           },
@@ -335,7 +330,7 @@ export const appRoutes = [
         }],
       },
       {
-        element: <ApplicationAccessRoute applicationKey="training" />,
+        element: <ApplicationAccessRoute applicationKey="instruiri" />,
         children: [{
           path: "training/in-pregatire",
           element: <ModulePlaceholderPage title="Training" description="Modulele pentru Training vor fi definite ulterior." />,
@@ -359,7 +354,7 @@ export const appRoutes = [
         }],
       },
       {
-        element: <ApplicationAccessRoute applicationKey="documents" />,
+        element: <ApplicationAccessRoute applicationKey="documente" />,
         children: [{
           path: "documente",
           element: <DocumentePage />,
@@ -367,7 +362,7 @@ export const appRoutes = [
         }],
       },
       {
-        element: <ApplicationAccessRoute applicationKey="course-planner" />,
+        element: <ApplicationAccessRoute applicationKey="planificator-cursuri" />,
         children: [
           { path: "planificator-cursuri/generator", element: <CoursePlannerGeneratorRoute />, handle: { pageTitle: "Generare perioade" } },
           { path: "planificator-cursuri/istoric", element: <CoursePlannerHistoryRoute />, handle: { pageTitle: "Istoric generări" } },

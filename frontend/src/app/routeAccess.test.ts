@@ -19,11 +19,12 @@ describe("guardurile de rută", () => {
   });
 
   it("nu permite montarea unei aplicații fără cheia ACL", () => {
-    assert.equal(canAccessApplicationRoute(["documents"], "course-planner"), false);
+    assert.equal(canAccessApplicationRoute(["documente"], "planificator-cursuri"), false);
   });
 
   it("permite montarea aplicației numai pentru bootstrapul curent", () => {
-    assert.equal(canAccessApplicationRoute(["course-planner"], "course-planner"), true);
-    assert.equal(canAccessApplicationRoute([], "course-planner"), false);
+    assert.equal(canAccessApplicationRoute(["planificator-cursuri"], "planificator-cursuri"), true);
+    assert.equal(canAccessApplicationRoute([], "planificator-cursuri"), false);
   });
+
 });

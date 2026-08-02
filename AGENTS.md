@@ -137,6 +137,8 @@ See `docs/planificator-migration.md` for the staged migration scope.
 
 The public API prefix is `/api/v1/`. Each domain app owns its endpoints.
 
+Cheile de aplicație vizibile utilizatorului se scriu în română fără diacritice; cheile de infrastructură rămân în engleză (momentan doar `core`).
+
 - `serializers.py`: request and response contracts.
 - `views.py`: HTTP handling, authentication, permissions, statuses, response mapping.
 - `urls.py`: domain URL declarations.

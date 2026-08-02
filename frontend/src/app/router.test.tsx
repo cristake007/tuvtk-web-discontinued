@@ -66,7 +66,7 @@ describe("rutele protejate", () => {
   }
 
   it("nu expune o pagină pentru rădăcina planificatorului", async () => {
-    renderRoute("/planificator-cursuri", bootstrap(["course-planner"]));
+    renderRoute("/planificator-cursuri", bootstrap(["planificator-cursuri"]));
 
     await screen.findByRole("heading", { name: "Pagina nu a fost găsită" });
     expect(screen.getByText("Eroare 404")).toBeInTheDocument();

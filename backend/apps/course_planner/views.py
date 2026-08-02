@@ -66,7 +66,7 @@ class CoursePlanHistoryPagination(PageNumberPagination):
 
 
 class CoursePlannerSettingsView(APIView):
-    application_key = "course-planner"
+    application_key = "planificator-cursuri"
     permission_classes = [HasApplicationAccess]
 
     @extend_schema(
@@ -102,7 +102,7 @@ class CoursePlannerSettingsView(APIView):
 
 
 class CoursePlannerHolidaysView(APIView):
-    application_key = "course-planner"
+    application_key = "planificator-cursuri"
     permission_classes = [HasApplicationAccess]
 
     @extend_schema(
@@ -133,7 +133,7 @@ class CoursePlannerHolidaysView(APIView):
 
 class GenerateScheduleView(APIView):
     parser_classes = [MultiPartParser, FormParser]
-    application_key = "course-planner"
+    application_key = "planificator-cursuri"
     permission_classes = [HasApplicationAccess]
 
     @extend_schema(
@@ -225,7 +225,7 @@ class GenerateScheduleView(APIView):
 
 
 class CoursePlanHistoryView(APIView):
-    application_key = "course-planner"
+    application_key = "planificator-cursuri"
     permission_classes = [HasApplicationAccess]
 
     @extend_schema(
@@ -243,7 +243,7 @@ class CoursePlanHistoryView(APIView):
 
 
 class CoursePlanFileDownloadView(APIView):
-    application_key = "course-planner"
+    application_key = "planificator-cursuri"
     permission_classes = [HasApplicationAccess]
 
     file_types = {
@@ -301,7 +301,7 @@ class CoursePlanFileDownloadView(APIView):
 
 
 class ExportScheduleView(APIView):
-    application_key = "course-planner"
+    application_key = "planificator-cursuri"
     permission_classes = [HasApplicationAccess]
 
     @extend_schema(
@@ -351,7 +351,7 @@ class ExportScheduleView(APIView):
 
 class FormatXmlView(APIView):
     parser_classes = [MultiPartParser, FormParser]
-    application_key = "course-planner"
+    application_key = "planificator-cursuri"
     permission_classes = [HasApplicationAccess]
 
     @extend_schema(
@@ -399,7 +399,7 @@ class FormatXmlView(APIView):
 
 class WordMatchPreviewView(APIView):
     parser_classes = [MultiPartParser, FormParser]
-    application_key = "course-planner"
+    application_key = "planificator-cursuri"
     permission_classes = [HasApplicationAccess]
 
     @extend_schema(
@@ -439,7 +439,7 @@ class WordMatchPreviewView(APIView):
 
 
 class WordMatchGenerateView(APIView):
-    application_key = "course-planner"
+    application_key = "planificator-cursuri"
     permission_classes = [HasApplicationAccess]
 
     @extend_schema(
