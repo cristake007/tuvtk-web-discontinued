@@ -3,9 +3,10 @@ import csv
 import io
 import re
 import unicodedata
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Any, Iterable
+from typing import Any
 from xml.dom import minidom
 from xml.etree import ElementTree as ET
 from zipfile import BadZipFile
@@ -287,10 +288,10 @@ def parse_course_file(data: bytes, extension: str) -> list[CourseInput]:
     courses: list[CourseInput] = []
 
     for original_order, row in enumerate(rows[header_row_index + 1 :]):
-        def cell(index: int | None) -> Any:
-            if index is None or index >= len(row):
+        def cell(index: int | None, current_row=row) -> Any:
+            if index is None or index >= len(current_row):
                 return None
-            return row[index]
+            return current_row[index]
 
         title = _display_value(cell(title_index))
         duration_label = _display_value(cell(duration_index))
@@ -414,9 +415,8 @@ def parse_xml_events(data: bytes, extension: str) -> list[dict[str, str]]:
 
     events: list[dict[str, str]] = []
     for row in rows[header_row_index + 1 :]:
-
-        def cell(index: int) -> Any:
-            return row[index] if index < len(row) else None
+        def cell(index: int, current_row=row) -> Any:
+            return current_row[index] if index < len(current_row) else None
 
         title = _display_value(cell(title_index))
         if not title:

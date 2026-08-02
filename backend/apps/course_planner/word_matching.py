@@ -81,9 +81,8 @@ def parse_schedule_file(data: bytes, extension: str) -> list[ScheduleRow]:
 
     schedule_rows: list[ScheduleRow] = []
     for row_index, row in enumerate(rows[header_row_index + 1 :]):
-
-        def cell(index: int) -> Any:
-            return row[index] if index < len(row) else None
+        def cell(index: int, current_row=row) -> Any:
+            return current_row[index] if index < len(current_row) else None
 
         title = _display_value(cell(title_index))
         if not title:
@@ -308,7 +307,7 @@ def apply_word_matches(
         if not selected:
             skipped_count += 1
             continue
-        for target_index, date_value in zip((3, 4, 5), selected.dates):
+        for target_index, date_value in zip((3, 4, 5), selected.dates, strict=False):
             if target_index < len(word_row.row.cells):
                 word_row.row.cells[target_index].text = date_value
         matched_count += 1
