@@ -21,7 +21,7 @@ class RezumatDocumenteApiTests(TestCase):
 
     def test_utilizator_autentificat_primeste_rezumatul(self):
         application, _ = ApplicationDefinition.objects.get_or_create(
-            key="documents",
+            key="documente",
             defaults={"name": "Documente"},
         )
         group = Group.objects.create(name="Documente")
@@ -44,7 +44,7 @@ class RezumatDocumenteApiTests(TestCase):
 
     def test_utilizator_cu_acces_direct_primeste_rezumatul(self):
         application, _ = ApplicationDefinition.objects.get_or_create(
-            key="documents",
+            key="documente",
             defaults={"name": "Documente"},
         )
         application.allowed_users.add(self.utilizator)

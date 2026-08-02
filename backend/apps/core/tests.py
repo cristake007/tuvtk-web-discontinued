@@ -30,7 +30,7 @@ class CoreBootstrapApiTests(TestCase):
             is_access_controlled=False,
         )
         self.companies_application = ApplicationDefinition.objects.create(
-            key="companies",
+            key="companii",
             name="Companies",
             route_prefix="/companies",
             position=20,
@@ -117,11 +117,11 @@ class CoreBootstrapApiTests(TestCase):
         )
         self.assertEqual(
             [item["application_key"] for item in response.json()["navigation"]],
-            ["core", "companies"],
+            ["core", "companii"],
         )
         self.assertIsNone(response.json()["configuration"]["logo_url"])
         self.assertEqual(response.json()["user"]["username"], "regular-user")
-        self.assertEqual(response.json()["accessible_application_keys"], ["companies"])
+        self.assertEqual(response.json()["accessible_application_keys"], ["companii"])
 
     def test_user_without_group_sees_only_dashboard(self):
         user = self.create_user("without-group")
@@ -146,11 +146,11 @@ class CoreBootstrapApiTests(TestCase):
             [item["key"] for item in response.json()["navigation"]],
             ["dashboard", "companies"],
         )
-        self.assertEqual(response.json()["accessible_application_keys"], ["companies"])
+        self.assertEqual(response.json()["accessible_application_keys"], ["companii"])
 
     def test_group_and_direct_access_are_combined(self):
         documents_application = ApplicationDefinition.objects.create(
-            key="documents",
+            key="documente",
             name="Documente",
             route_prefix="/documente",
             position=30,
@@ -173,7 +173,7 @@ class CoreBootstrapApiTests(TestCase):
 
         self.assertEqual(
             response.json()["accessible_application_keys"],
-            ["companies", "documents"],
+            ["companii", "documente"],
         )
 
     def test_removing_direct_access_removes_application_navigation(self):
@@ -217,7 +217,7 @@ class CoreBootstrapApiTests(TestCase):
             [item["key"] for item in response.json()["navigation"]],
             ["dashboard", "companies", "administration"],
         )
-        self.assertIn("companies", response.json()["accessible_application_keys"])
+        self.assertIn("companii", response.json()["accessible_application_keys"])
 
     def test_staff_user_without_groups_sees_administration_but_not_business_apps(self):
         user = self.create_user("staff-without-groups", is_staff=True)

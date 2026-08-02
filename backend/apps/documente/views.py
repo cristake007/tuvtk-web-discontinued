@@ -9,7 +9,7 @@ from .services import obtine_rezumat_documente
 
 
 class RezumatDocumenteView(APIView):
-    application_key = "documents"
+    application_key = "documente"
     permission_classes = [HasApplicationAccess]
     @extend_schema(
         operation_id="documente_rezumat",

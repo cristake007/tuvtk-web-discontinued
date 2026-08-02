@@ -147,7 +147,7 @@ class UpdateWordPressApiTests(TestCase):
             password="test-password-123",
         )
         application, _ = ApplicationDefinition.objects.get_or_create(
-            key="course-planner",
+            key="planificator-cursuri",
             defaults={"name": "Planificator cursuri"},
         )
         application.is_enabled = True
