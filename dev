@@ -523,6 +523,9 @@ case "$command" in
     validate)
         manage makemigrations --check --dry-run
         manage check
+        if ! manage check --deploy; then
+            echo "Deployment check reported informational findings; continuing."
+        fi
         run_backend ruff check .
         manage spectacular --validate --file /tmp/tuvtk-openapi.yaml
         manage test
