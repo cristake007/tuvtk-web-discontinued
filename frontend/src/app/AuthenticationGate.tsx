@@ -1,33 +1,15 @@
-import { lazy, Suspense, useEffect, type ReactNode } from "react";
+import { Suspense, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useMatches } from "react-router";
+import { Outlet, useMatches } from "react-router";
 
 import { coreBootstrapQueryKey, fetchCoreBootstrap } from "@/api/core";
 import { ApplicationState } from "@/components/ApplicationState";
 import { AppShell } from "@/layout/AppShell";
 
 import { AuthenticatedBootstrapProvider } from "./AuthenticatedBootstrapContext";
+import { lazyRoute } from "./lazyRoute";
 
-const LoginPage = lazy(async () => {
-  const module = await import("@/pages/LoginPage");
-  return { default: module.LoginPage };
-});
-
-function DeferredView({
-  children,
-  description,
-  title,
-}: {
-  children: ReactNode;
-  description: string;
-  title: string;
-}) {
-  return (
-    <Suspense fallback={<ApplicationState description={description} loading title={title} />}>
-      {children}
-    </Suspense>
-  );
-}
+const LoginPage = lazyRoute(() => import("@/pages/LoginPage"), "LoginPage");
 
 export function AuthenticationGate() {
   const matches = useMatches();
@@ -84,13 +66,10 @@ export function AuthenticationGate() {
     );
   }
 
-  if (!bootstrapQuery.data.authenticated || !bootstrapQuery.data.user) {
-    const { configuration } = bootstrapQuery.data;
-    return (
-      <DeferredView
-        description="Se încarcă pagina securizată de autentificare."
-        title="Se pregătește autentificarea"
-      >
+  const { configuration } = bootstrapQuery.data;
+  const deferredContent = (
+    <Suspense fallback={<ApplicationState description="" loading title="" />}>
+      {!bootstrapQuery.data.authenticated || !bootstrapQuery.data.user ? (
         <LoginPage
           branding={{
             logo_url: configuration.logo_url,
@@ -103,13 +82,19 @@ export function AuthenticationGate() {
             font_scale: configuration.font_scale,
           }}
         />
-      </DeferredView>
-    );
+      ) : (
+        <Outlet />
+      )}
+    </Suspense>
+  );
+
+  if (!bootstrapQuery.data.authenticated || !bootstrapQuery.data.user) {
+    return deferredContent;
   }
 
   return (
     <AuthenticatedBootstrapProvider value={bootstrapQuery.data}>
-      <AppShell bootstrap={bootstrapQuery.data} />
+      <AppShell bootstrap={bootstrapQuery.data}>{deferredContent}</AppShell>
     </AuthenticatedBootstrapProvider>
   );
 }

@@ -1,7 +1,7 @@
-import { useEffect, useMemo, type CSSProperties } from "react";
+import { useEffect, useMemo, type CSSProperties, type ReactNode } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
-import { Outlet, useNavigate } from "react-router";
+import { useNavigate } from "react-router";
 
 import { coreBootstrapQueryKey } from "@/api/core";
 import { ApiError } from "@/api/http";
@@ -19,7 +19,13 @@ type AppShellStyle = CSSProperties & {
   "--app-header-height": string;
 };
 
-export function AppShell({ bootstrap }: { bootstrap: CoreBootstrap }) {
+export function AppShell({
+  bootstrap,
+  children,
+}: {
+  bootstrap: CoreBootstrap;
+  children?: ReactNode;
+}) {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const headerHeight = "4rem";
@@ -117,7 +123,7 @@ export function AppShell({ bootstrap }: { bootstrap: CoreBootstrap }) {
                 </Alert>
               ) : null}
 
-              <Outlet />
+              {children}
             </div>
           </SidebarInset>
         </div>
