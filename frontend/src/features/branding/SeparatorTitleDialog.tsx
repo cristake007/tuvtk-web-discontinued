@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -28,11 +28,13 @@ export function SeparatorTitleDialog({
   onSave,
   open,
 }: SeparatorTitleDialogProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState(initialTitle);
 
   useEffect(() => {
     if (open) {
       setTitle(initialTitle);
+      inputRef.current?.focus();
     }
   }, [initialTitle, open]);
 
@@ -61,11 +63,11 @@ export function SeparatorTitleDialog({
           <div className="py-4">
             <Label htmlFor="titlu-separator">Titlu separator</Label>
             <Input
-              autoFocus
               className="mt-2"
               id="titlu-separator"
               maxLength={60}
               onChange={(event) => setTitle(event.target.value)}
+              ref={inputRef}
               value={title}
             />
           </div>

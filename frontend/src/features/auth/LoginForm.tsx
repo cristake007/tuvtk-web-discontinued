@@ -1,4 +1,4 @@
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Eye, EyeOff, LockKeyhole } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -50,6 +50,10 @@ export function LoginForm() {
   });
   const [fieldErrors, setFieldErrors] = useState<LoginFieldErrors>({});
   const [passwordVisible, setPasswordVisible] = useState(false);
+
+  useEffect(() => {
+    usernameRef.current?.focus();
+  }, []);
 
   const loginMutation = useMutation({
     mutationFn: login,
@@ -143,7 +147,6 @@ export function LoginForm() {
               aria-invalid={Boolean(fieldErrors.username)}
               autoCapitalize="none"
               autoComplete="username"
-              autoFocus
               className="h-9 rounded-lg border-transparent bg-muted/70 px-3 text-sm shadow-none transition-colors focus-visible:bg-card"
               disabled={loginMutation.isPending}
               id="username"
