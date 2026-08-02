@@ -17,6 +17,7 @@ import { AdministrationLayout } from "./AdministrationLayout";
 import { AuthenticationGate } from "./AuthenticationGate";
 import { ApplicationAccessRoute } from "./ApplicationAccessRoute";
 import { lazyRoute } from "./lazyRoute";
+import { placeholderRoutes } from "./placeholderRoutes";
 import { RouteErrorBoundary } from "./RouteErrorBoundary";
 import { StaffRoute } from "./StaffRoute";
 
@@ -78,21 +79,16 @@ export const appRoutes = [
         element: <TablouDeBordPage />,
         handle: { pageTitle: "Dashboard" },
       },
-      {
-        element: <ApplicationAccessRoute applicationKey="crm" />,
+      ...placeholderRoutes.map(({ applicationKey, description, pageTitle, path, title }) => ({
+        element: <ApplicationAccessRoute applicationKey={applicationKey} />,
         children: [
           {
-            path: "crm",
-            element: (
-              <ModulePlaceholderPage
-                title="CRM"
-                description="Alege un modul CRM din meniul lateral pentru a continua."
-              />
-            ),
-            handle: { pageTitle: "CRM" },
+            path,
+            element: <ModulePlaceholderPage description={description} title={title} />,
+            handle: { pageTitle },
           },
         ],
-      },
+      })),
       {
         element: <ApplicationAccessRoute applicationKey="companii" />,
         children: [
@@ -100,96 +96,6 @@ export const appRoutes = [
             path: "crm/companii",
             element: <WorkspaceCardPage ariaLabel="Conținut companii" />,
             handle: { pageTitle: "Companii" },
-          },
-        ],
-      },
-      {
-        element: <ApplicationAccessRoute applicationKey="contacte" />,
-        children: [
-          {
-            path: "crm/contacte",
-            element: (
-              <ModulePlaceholderPage
-                title="Contacte"
-                description="Modulul pentru gestionarea contactelor va fi disponibil aici."
-              />
-            ),
-            handle: { pageTitle: "Contacte" },
-          },
-        ],
-      },
-      {
-        element: <ApplicationAccessRoute applicationKey="oportunitati" />,
-        children: [
-          {
-            path: "crm/oportunitati",
-            element: (
-              <ModulePlaceholderPage
-                title="Oportunități"
-                description="Modulul pentru gestionarea oportunităților va fi disponibil aici."
-              />
-            ),
-            handle: { pageTitle: "Oportunități" },
-          },
-        ],
-      },
-      {
-        element: <ApplicationAccessRoute applicationKey="activitati" />,
-        children: [
-          {
-            path: "crm/activitati",
-            element: (
-              <ModulePlaceholderPage
-                title="Activități"
-                description="Modulul pentru gestionarea activităților va fi disponibil aici."
-              />
-            ),
-            handle: { pageTitle: "Activități" },
-          },
-        ],
-      },
-      {
-        element: <ApplicationAccessRoute applicationKey="instruiri" />,
-        children: [
-          {
-            path: "training/in-pregatire",
-            element: (
-              <ModulePlaceholderPage
-                title="Training"
-                description="Modulele pentru Training vor fi definite ulterior."
-              />
-            ),
-            handle: { pageTitle: "Training" },
-          },
-        ],
-      },
-      {
-        element: <ApplicationAccessRoute applicationKey="certificari" />,
-        children: [
-          {
-            path: "certificari/in-pregatire",
-            element: (
-              <ModulePlaceholderPage
-                title="Certificări"
-                description="Modulele pentru Certificări vor fi definite ulterior."
-              />
-            ),
-            handle: { pageTitle: "Certificări" },
-          },
-        ],
-      },
-      {
-        element: <ApplicationAccessRoute applicationKey="industrial" />,
-        children: [
-          {
-            path: "industrial/in-pregatire",
-            element: (
-              <ModulePlaceholderPage
-                title="Industrial"
-                description="Modulele pentru Industrial vor fi definite ulterior."
-              />
-            ),
-            handle: { pageTitle: "Industrial" },
           },
         ],
       },

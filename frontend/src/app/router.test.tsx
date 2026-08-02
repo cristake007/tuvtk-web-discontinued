@@ -172,4 +172,19 @@ describe("rutele protejate", () => {
     await screen.findByRole("heading", { name: "Oportunități" });
     expect(document.title).toBe("Oportunități | Portal cursuri");
   });
+
+  it("permite accesul la două rute placeholder generate", async () => {
+    const { router } = renderRoute("/crm", bootstrap(["crm", "industrial"]));
+
+    await screen.findByRole("heading", { name: "CRM" });
+    expect(
+      screen.getByText("Alege un modul CRM din meniul lateral pentru a continua."),
+    ).toBeInTheDocument();
+
+    await act(() => router.navigate("/industrial/in-pregatire"));
+    await screen.findByRole("heading", { name: "Industrial" });
+    expect(
+      screen.getByText("Modulele pentru Industrial vor fi definite ulterior."),
+    ).toBeInTheDocument();
+  });
 });
