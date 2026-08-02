@@ -13,6 +13,8 @@ export const monthNames = [
   "Decembrie",
 ] as const;
 
+export const abbreviatedMonthNames = monthNames.map((monthName) => monthName.slice(0, 3));
+
 export function formatSelectedMonths(months: number[]): string {
   if (months.length === 0) {
     return "Nicio lună selectată";
