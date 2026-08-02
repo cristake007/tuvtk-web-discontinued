@@ -16,7 +16,6 @@ export function GlobalLoadingOverlay() {
   return (
     <div
       aria-live="polite"
-      aria-modal="true"
       className="fixed inset-0 z-[100] grid place-items-center bg-background/35 backdrop-blur-sm"
       role="status"
     >

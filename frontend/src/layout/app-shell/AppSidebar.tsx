@@ -63,6 +63,12 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
       ? isNavigationPathActive(location.pathname, item.path)
       : location.pathname === item.path;
 
+  useEffect(() => {
+    if (copilActiv) {
+      setDeschis(true);
+    }
+  }, [copilActiv]);
+
   if (item.is_separator) {
     return (
       <SidebarMenuItem className="px-4 py-2.5 group-data-[collapsible=icon]:px-2">
@@ -79,12 +85,6 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
       </SidebarMenuItem>
     );
   }
-
-  useEffect(() => {
-    if (copilActiv) {
-      setDeschis(true);
-    }
-  }, [copilActiv]);
 
   if (item.children.length > 0) {
     if (!isMobile && state === "collapsed") {
