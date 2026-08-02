@@ -1,7 +1,9 @@
 import os
+import sys
 from pathlib import Path
 
 from celery.schedules import crontab
+from django.core.exceptions import ImproperlyConfigured
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,8 +23,19 @@ def env_list(name: str) -> list[str]:
     ]
 
 
+def validate_production_secret_key(secret_key: str, *, debug: bool) -> None:
+    placeholder = "-".join(("change", "this", "secret", "key"))
+    if not debug and secret_key == placeholder:
+        raise ImproperlyConfigured(
+            "DJANGO_SECRET_KEY must be changed before starting in production."
+        )
+
+
 SECRET_KEY = os.environ["DJANGO_SECRET_KEY"]
 DEBUG = env_bool("DJANGO_DEBUG")
+if "test" not in sys.argv:
+    validate_production_secret_key(SECRET_KEY, debug=DEBUG)
+
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS")
 CSRF_TRUSTED_ORIGINS = env_list("DJANGO_CSRF_TRUSTED_ORIGINS")
 
