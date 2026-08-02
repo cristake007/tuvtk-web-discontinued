@@ -7,7 +7,12 @@ from .services import sync_public_holidays_if_due
 logger = logging.getLogger(__name__)
 
 
-@shared_task(name="public_holidays.sync_if_due")
+@shared_task(
+    name="public_holidays.sync_if_due",
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    max_retries=3,
+)
 def sync_public_holidays_task() -> dict[str, object]:
     result = sync_public_holidays_if_due()
     if result.status == "failed":

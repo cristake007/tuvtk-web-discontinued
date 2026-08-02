@@ -3,6 +3,7 @@ from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 
+from .admin import NavigationItemAdmin
 from .models import ApplicationConfiguration, ApplicationDefinition, NavigationItem
 from .svg import MAX_SVG_LOGO_BYTES
 
@@ -14,6 +15,14 @@ VALID_LOGO = b"""<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 40">
 USER_INTERFACE_LOGO_PATH = (
     "/api/v1/core/administration/user-interface/company-logo"
 )
+
+
+class NavigationItemAdminTests(TestCase):
+    def test_list_view_selects_related_foreign_keys(self):
+        self.assertEqual(
+            NavigationItemAdmin.list_select_related,
+            ("application", "parent"),
+        )
 
 
 class CoreBootstrapApiTests(TestCase):

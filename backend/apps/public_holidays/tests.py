@@ -17,6 +17,14 @@ from .services import (
     synchronize_public_holidays_now,
     update_integration_settings,
 )
+from .tasks import sync_public_holidays_task
+
+
+class PublicHolidayTaskTests(SimpleTestCase):
+    def test_scheduled_sync_retries_transient_failures_with_backoff(self):
+        self.assertEqual(sync_public_holidays_task.autoretry_for, (Exception,))
+        self.assertTrue(sync_public_holidays_task.retry_backoff)
+        self.assertEqual(sync_public_holidays_task.max_retries, 3)
 
 
 class NagerDateClientTests(SimpleTestCase):
@@ -86,17 +94,16 @@ class PublicHolidaySynchronizationTests(TestCase):
         )
 
     def test_first_automatic_sync_is_due_after_settings_are_saved(self):
-        before_save = timezone.now()
+        frozen_now = timezone.now()
 
-        settings = update_integration_settings(
-            enabled=True,
-            automatic_sync=True,
-            frequency=PublicHolidaySettings.Frequency.SIX_MONTHS,
-        )
+        with patch("apps.public_holidays.services.timezone.now", return_value=frozen_now):
+            settings = update_integration_settings(
+                enabled=True,
+                automatic_sync=True,
+                frequency=PublicHolidaySettings.Frequency.SIX_MONTHS,
+            )
 
-        self.assertIsNotNone(settings.next_sync_at)
-        self.assertGreaterEqual(settings.next_sync_at, before_save)
-        self.assertLess(settings.next_sync_at, before_save + timedelta(minutes=1))
+        self.assertEqual(settings.next_sync_at, frozen_now)
 
     @patch("apps.public_holidays.services.fetch_romanian_holidays")
     def test_manual_sync_preserves_internal_holidays(self, fetch_mock):
