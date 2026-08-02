@@ -1,11 +1,8 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { History } from "lucide-react";
 import { toast } from "sonner";
-import { Link } from "react-router";
 
 import { QueryApplicationState } from "@/components/QueryApplicationState";
-import { Button } from "@/components/ui/button";
 import { formatApiError } from "@/lib/api-errors";
 import { saveBlob } from "@/lib/download";
 
@@ -19,6 +16,7 @@ import {
 } from "./api";
 import { CourseScheduleTable } from "./components/CourseScheduleTable";
 import { PlannerConfigurationCard } from "./components/PlannerConfigurationCard";
+import { PlannerHeader } from "./components/PlannerHeader";
 import { PlannerSummaryCard } from "./components/PlannerSummaryCard";
 import type { CoursePlannerSettings, GenerateScheduleResponse } from "./types";
 
@@ -164,16 +162,7 @@ export function CoursePlannerPanel() {
 
   return (
     <div className="flex w-full min-w-0 flex-1 flex-col gap-6">
-      <div className="flex justify-end">
-        <Button
-          nativeButton={false}
-          render={<Link to="/planificator-cursuri/istoric" />}
-          variant="outline"
-        >
-          <History aria-hidden="true" />
-          Istoric generări
-        </Button>
-      </div>
+      <PlannerHeader />
 
       <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <PlannerConfigurationCard
@@ -222,8 +211,11 @@ export function CoursePlannerPanel() {
 
         <PlannerSummaryCard
           downloadPending={downloadMutation.isPending}
+          file={inputFile}
           onDownload={handleDownload}
           result={result}
+          selectedMonths={settings.months}
+          year={settings.year}
         />
       </div>
 
