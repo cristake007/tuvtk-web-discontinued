@@ -18,8 +18,9 @@ export function CompaniiPage() {
 
 export function CompanieDetailPage() {
   const id = Number(useParams().companyId);
-  const query = useCompany(id);
-  if (!Number.isInteger(id)) return <Navigate replace to="/crm/companii" />;
+  const isValidId = Number.isInteger(id) && id > 0;
+  const query = useCompany(id, isValidId);
+  if (!isValidId) return <Navigate replace to="/crm/companii" />;
   if (query.isPending || query.isError)
     return (
       <QueryApplicationState
@@ -37,19 +38,23 @@ export function CompanieDetailPage() {
 
 export function CompanieFormPage() {
   const rawId = useParams().companyId;
-  const id = rawId ? Number(rawId) : null;
-  const detail = useCompany(id ?? 0, id !== null);
+  const isEditing = rawId !== undefined;
+  const id = isEditing ? Number(rawId) : null;
+  const isValidId = id !== null && Number.isInteger(id) && id > 0;
+  const detail = useCompany(id ?? 0, isEditing && isValidId);
   const navigate = useNavigate();
   const client = useQueryClient();
   const mutation = useMutation({
-    mutationFn: (values: CompanyWrite) => (id ? updateCompany(id, values) : createCompany(values)),
+    mutationFn: (values: CompanyWrite) =>
+      isEditing && isValidId ? updateCompany(id, values) : createCompany(values),
     onSuccess: (company) => {
       void client.invalidateQueries({ queryKey: companyQueryKeys.all });
-      toast.success(id ? "Compania a fost actualizată." : "Compania a fost creată.");
+      toast.success(isEditing ? "Compania a fost actualizată." : "Compania a fost creată.");
       navigate(`/crm/companii/${company.id}`);
     },
   });
-  if (id && (detail.isPending || detail.isError))
+  if (isEditing && !isValidId) return <Navigate replace to="/crm/companii" />;
+  if (isEditing && (detail.isPending || detail.isError))
     return (
       <QueryApplicationState
         error={detail.error}
@@ -63,9 +68,9 @@ export function CompanieFormPage() {
     );
   return (
     <section className="flex flex-col gap-4">
-      <ButtonBack onClick={() => navigate(id ? `/crm/companii/${id}` : "/crm/companii")} />
+      <ButtonBack onClick={() => navigate(isEditing ? `/crm/companii/${id}` : "/crm/companii")} />
       <CompanyForm
-        company={id ? detail.data : undefined}
+        company={isEditing ? detail.data : undefined}
         pending={mutation.isPending}
         onSubmit={(values) => mutation.mutate(values)}
       />

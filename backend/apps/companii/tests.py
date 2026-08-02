@@ -1,6 +1,9 @@
+import json
+
 from django.contrib.auth import get_user_model
-from django.db import IntegrityError
-from django.test import TestCase
+from django.db import IntegrityError, connection
+from django.test import Client, TestCase
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from rest_framework.test import APIClient
 
@@ -103,6 +106,26 @@ class CompanieApiTests(TestCase):
             self.client.post(url, self.payload(cui="RO12A"), format="json").status_code, 400
         )
 
+    def test_normalized_cui_collision_is_rejected(self):
+        self.authenticate()
+        url = reverse("api-v1:companii:companie-list")
+        self.assertEqual(
+            self.client.post(url, self.payload(cui="RO 123"), format="json").status_code, 201
+        )
+        response = self.client.post(url, self.payload(name="A doua", cui="123"), format="json")
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("cui", response.json()["fields"])
+
+    def test_name_and_vat_status_are_required(self):
+        self.authenticate()
+        url = reverse("api-v1:companii:companie-list")
+        without_name = self.payload()
+        without_name.pop("name")
+        without_vat = self.payload()
+        without_vat.pop("vat_status")
+        self.assertEqual(self.client.post(url, without_name, format="json").status_code, 400)
+        self.assertEqual(self.client.post(url, without_vat, format="json").status_code, 400)
+
     def test_filter_sort_and_pagination(self):
         self.authenticate()
         Companie.objects.create(
@@ -116,6 +139,43 @@ class CompanieApiTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["count"], 1)
         self.assertEqual(response.data["results"][0]["name"], "Zulu")
+
+    def test_search_vat_and_archived_filters(self):
+        self.authenticate()
+        Companie.objects.create(
+            name="Alpha Consulting", vat_status="TVA_PLATITOR", is_archived=True
+        )
+        Companie.objects.create(name="Beta", vat_status="TVA_NEPLATITOR")
+        response = self.client.get(
+            reverse("api-v1:companii:companie-list"),
+            {"search": "consult", "vat_status": "TVA_PLATITOR", "archived": "true"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["count"], 1)
+        self.assertEqual(response.data["results"][0]["name"], "Alpha Consulting")
+
+    def test_list_owner_serialization_has_bounded_queries(self):
+        self.authenticate()
+        for index in range(8):
+            Companie.objects.create(
+                name=f"Compania {index}", vat_status="TVA_NEPLATITOR", owner=self.other
+            )
+        with CaptureQueriesContext(connection) as queries:
+            response = self.client.get(reverse("api-v1:companii:companie-list"))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(queries), 5)
+
+    def test_browser_session_create_requires_csrf(self):
+        browser = Client(enforce_csrf_checks=True)
+        browser.force_login(self.user)
+        response = browser.post(
+            reverse("api-v1:companii:companie-list"),
+            data=json.dumps(self.payload()),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.json()["code"], "csrf_failed")
+        self.assertFalse(Companie.objects.exists())
 
     def test_archive_and_restore_actions(self):
         self.authenticate()

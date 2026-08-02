@@ -37,6 +37,13 @@ export function CompanyDetail({ company }: { company: Company }) {
         updated.is_archived ? "Compania a fost arhivată." : "Compania a fost restaurată.",
       );
     },
+    onError: () => {
+      toast.error(
+        company.is_archived
+          ? "Compania nu a putut fi restaurată. Încearcă din nou."
+          : "Compania nu a putut fi arhivată. Încearcă din nou.",
+      );
+    },
   });
   const rows = [
     ["Denumire juridică", company.legal_name],
