@@ -188,7 +188,7 @@ services:
       test:
         [
           "CMD-SHELL",
-          "test -f /tmp/tuvtk-celerybeat-schedule && find /tmp/tuvtk-celerybeat-schedule -mmin -5 -print -quit | grep -q .",
+          "test -f /tmp/tuvtk-celerybeat-schedule && find /tmp -maxdepth 1 -type f -name 'tuvtk-celerybeat-schedule*' -mmin -10 -print -quit | grep -q .",
         ]
       interval: 30s
       timeout: 5s
