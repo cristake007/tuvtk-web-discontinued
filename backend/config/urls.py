@@ -7,10 +7,13 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
+from .media_views import AuthenticatedMediaView
+
 handler404 = "config.error_views.api_not_found"
 handler500 = "config.error_views.api_server_error"
 
 urlpatterns = [
+    path("media/<path:file_path>", AuthenticatedMediaView.as_view(), name="media"),
     path("admin/", admin.site.urls),
     path("api/schema", SpectacularAPIView.as_view(), name="api-schema"),
     path(
