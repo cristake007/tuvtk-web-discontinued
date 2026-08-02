@@ -87,6 +87,17 @@ Celery Beat   ──> Redis ──> scheduled task delivery
 
 `compose.override.yaml` is automatically included by `docker compose up` and adds development mode: Django `runserver`, Vite, OpenSearch, local source bind mounts, locally published database ports, and the host user's UID and GID. Start development with `./dev up` (or `docker compose up -d`). Python source changes require restarting the worker and Beat processes because Celery does not reload task code automatically.
 
+## Production mode
+
+Set the production values described in [Production security](#production-security), then build and start only the base Compose file so the development override is not loaded:
+
+```bash
+docker compose -f compose.yaml build
+docker compose -f compose.yaml up -d
+```
+
+The nginx service publishes HTTP on port 80, serves the compiled React application and the shared static/media volumes, and proxies API and administration requests to Django. Put it behind an external TLS-terminating proxy that forwards `Host`, `X-Forwarded-For`, and `X-Forwarded-Proto`. Django runs `collectstatic` before Gunicorn starts. Stop production with `docker compose -f compose.yaml down`.
+
 The optional `onrc-data/` directory is mounted read-only at `/data/onrc` in development for local ONRC data snapshots. It is ignored by Git and must be created manually before importing snapshots.
 
 ## Initial setup

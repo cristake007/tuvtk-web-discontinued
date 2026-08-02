@@ -24,12 +24,37 @@ services:
       - /bin/sh
       - -c
       - |
+        python manage.py collectstatic --noinput
         exec gunicorn config.wsgi:application \
           --bind "${BACKEND_BIND:-0.0.0.0:8000}" \
           --workers "${GUNICORN_WORKERS:-2}" \
           --threads "${GUNICORN_THREADS:-2}" \
           --timeout "${GUNICORN_TIMEOUT:-60}" \
           --log-level "${GUNICORN_LOG_LEVEL:-info}"
+
+    volumes:
+      - staticfiles:/app/staticfiles
+      - media:/app/media
+
+    restart: unless-stopped
+
+  nginx:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+
+    container_name: ${NGINX_CONTAINER_NAME:-tuvtk_nginx}
+
+    ports:
+      - "${NGINX_PORT:-80}:80"
+
+    depends_on:
+      backend:
+        condition: service_started
+
+    volumes:
+      - staticfiles:/srv/static:ro
+      - media:/srv/media:ro
 
     restart: unless-stopped
 
@@ -178,3 +203,7 @@ volumes:
     name: ${REGISTRY_DB_VOLUME_NAME:-tuvtk_registry_postgres_data}
   redis_data:
     name: ${REDIS_VOLUME_NAME:-tuvtk_redis_data}
+  staticfiles:
+    name: ${STATICFILES_VOLUME_NAME:-tuvtk_staticfiles}
+  media:
+    name: ${MEDIA_VOLUME_NAME:-tuvtk_media}

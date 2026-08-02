@@ -1,4 +1,8 @@
 services:
+  nginx:
+    profiles:
+      - production-disabled
+
   backend:
     build:
       target: development
@@ -23,6 +27,12 @@ services:
       - type: bind
         source: ./backend
         target: /app
+      - type: bind
+        source: ./backend/staticfiles
+        target: /app/staticfiles
+      - type: bind
+        source: ./backend/media
+        target: /app/media
       - type: bind
         source: ./onrc-data
         target: /data/onrc
