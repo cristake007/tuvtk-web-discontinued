@@ -8,9 +8,13 @@ from .serializers import RezumatDocumenteSerializer
 from .services import obtine_rezumat_documente
 
 
-class RezumatDocumenteView(APIView):
+class DocumenteAPIView(APIView):
     application_key = "documente"
     permission_classes = [HasApplicationAccess]
+
+
+class RezumatDocumenteView(DocumenteAPIView):
+
     @extend_schema(
         operation_id="documente_rezumat",
         responses=RezumatDocumenteSerializer,

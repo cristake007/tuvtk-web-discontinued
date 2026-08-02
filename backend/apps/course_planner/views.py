@@ -64,10 +64,12 @@ class CoursePlanHistoryPagination(PageNumberPagination):
     max_page_size = 100
 
 
-class CoursePlannerSettingsView(APIView):
+class CoursePlannerAPIView(APIView):
     application_key = "planificator-cursuri"
     permission_classes = [HasApplicationAccess]
 
+
+class CoursePlannerSettingsView(CoursePlannerAPIView):
     @extend_schema(
         operation_id="course_planner_settings_read",
         responses=CoursePlannerSettingsSerializer,
@@ -96,10 +98,7 @@ class CoursePlannerSettingsView(APIView):
         return Response(CoursePlannerSettingsSerializer(serialize_settings(settings)).data)
 
 
-class CoursePlannerHolidaysView(APIView):
-    application_key = "planificator-cursuri"
-    permission_classes = [HasApplicationAccess]
-
+class CoursePlannerHolidaysView(CoursePlannerAPIView):
     @extend_schema(
         operation_id="course_planner_holidays_list",
         parameters=[CoursePlannerHolidayQuerySerializer],
@@ -122,10 +121,8 @@ class CoursePlannerHolidaysView(APIView):
         return Response(CoursePlannerHolidaySerializer(holidays, many=True).data)
 
 
-class GenerateScheduleView(APIView):
+class GenerateScheduleView(CoursePlannerAPIView):
     parser_classes = [MultiPartParser, FormParser]
-    application_key = "planificator-cursuri"
-    permission_classes = [HasApplicationAccess]
 
     @extend_schema(
         operation_id="course_planner_generate",
@@ -211,10 +208,7 @@ class GenerateScheduleView(APIView):
         return Response(GenerateScheduleResponseSerializer(payload).data)
 
 
-class CoursePlanHistoryView(APIView):
-    application_key = "planificator-cursuri"
-    permission_classes = [HasApplicationAccess]
-
+class CoursePlanHistoryView(CoursePlannerAPIView):
     @extend_schema(
         operation_id="course_planner_history_list",
         responses=CoursePlanHistoryResponseSerializer,
@@ -229,10 +223,7 @@ class CoursePlanHistoryView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
-class CoursePlanFileDownloadView(APIView):
-    application_key = "planificator-cursuri"
-    permission_classes = [HasApplicationAccess]
-
+class CoursePlanFileDownloadView(CoursePlannerAPIView):
     file_types = {
         "excel": (
             "excel_file",
@@ -287,10 +278,7 @@ class CoursePlanFileDownloadView(APIView):
         )
 
 
-class ExportScheduleView(APIView):
-    application_key = "planificator-cursuri"
-    permission_classes = [HasApplicationAccess]
-
+class ExportScheduleView(CoursePlannerAPIView):
     @extend_schema(
         operation_id="course_planner_export",
         request=ExportScheduleSerializer,
@@ -332,10 +320,8 @@ class ExportScheduleView(APIView):
         return response
 
 
-class FormatXmlView(APIView):
+class FormatXmlView(CoursePlannerAPIView):
     parser_classes = [MultiPartParser, FormParser]
-    application_key = "planificator-cursuri"
-    permission_classes = [HasApplicationAccess]
 
     @extend_schema(
         operation_id="course_planner_format_xml",
@@ -376,10 +362,8 @@ class FormatXmlView(APIView):
         return response
 
 
-class WordMatchPreviewView(APIView):
+class WordMatchPreviewView(CoursePlannerAPIView):
     parser_classes = [MultiPartParser, FormParser]
-    application_key = "planificator-cursuri"
-    permission_classes = [HasApplicationAccess]
 
     @extend_schema(
         operation_id="course_planner_word_match_preview",
@@ -413,10 +397,7 @@ class WordMatchPreviewView(APIView):
         return Response(WordMatchPreviewResponseSerializer(preview).data)
 
 
-class WordMatchGenerateView(APIView):
-    application_key = "planificator-cursuri"
-    permission_classes = [HasApplicationAccess]
-
+class WordMatchGenerateView(CoursePlannerAPIView):
     @extend_schema(
         operation_id="course_planner_word_match_generate",
         request=WordMatchGenerateRequestSerializer,

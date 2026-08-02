@@ -36,10 +36,12 @@ APPLICATION_KEY = "planificator-cursuri"
 TAGS = ["update-wordpress"]
 
 
-class SafeCourseDateUpdaterSettingsView(APIView):
+class UpdateWordPressAPIView(APIView):
     application_key = APPLICATION_KEY
     permission_classes = [HasApplicationAccess]
 
+
+class SafeCourseDateUpdaterSettingsView(UpdateWordPressAPIView):
     @extend_schema(
         operation_id="update_wordpress_settings_read",
         responses=ConnectionSettingsSerializer,
@@ -52,10 +54,7 @@ class SafeCourseDateUpdaterSettingsView(APIView):
         return Response(ConnectionSettingsSerializer(payload).data)
 
 
-class ConnectView(APIView):
-    application_key = APPLICATION_KEY
-    permission_classes = [HasApplicationAccess]
-
+class ConnectView(UpdateWordPressAPIView):
     @extend_schema(
         operation_id="update_wordpress_connect",
         request=ConnectRequestSerializer,
@@ -96,10 +95,8 @@ class ConnectView(APIView):
         return Response(ConnectResponseSerializer(payload).data)
 
 
-class PreviewView(APIView):
+class PreviewView(UpdateWordPressAPIView):
     parser_classes = [MultiPartParser, FormParser]
-    application_key = APPLICATION_KEY
-    permission_classes = [HasApplicationAccess]
 
     @extend_schema(
         operation_id="update_wordpress_preview",
@@ -126,10 +123,7 @@ class PreviewView(APIView):
         return Response(PreviewResponseSerializer({"rows": rows}).data)
 
 
-class UpdateRowView(APIView):
-    application_key = APPLICATION_KEY
-    permission_classes = [HasApplicationAccess]
-
+class UpdateRowView(UpdateWordPressAPIView):
     @extend_schema(
         operation_id="update_wordpress_update_row",
         request=UpdateRowRequestSerializer,
@@ -175,10 +169,7 @@ class UpdateRowView(APIView):
         return Response(UpdateRowResponseSerializer(result).data)
 
 
-class FetchCurrentDatesView(APIView):
-    application_key = APPLICATION_KEY
-    permission_classes = [HasApplicationAccess]
-
+class FetchCurrentDatesView(UpdateWordPressAPIView):
     @extend_schema(
         operation_id="update_wordpress_fetch_current_dates",
         request=FetchCurrentDatesRequestSerializer,
@@ -224,10 +215,7 @@ class FetchCurrentDatesView(APIView):
         return Response(FetchCurrentDatesResponseSerializer(result).data)
 
 
-class ResolvePostIdView(APIView):
-    application_key = APPLICATION_KEY
-    permission_classes = [HasApplicationAccess]
-
+class ResolvePostIdView(UpdateWordPressAPIView):
     @extend_schema(
         operation_id="update_wordpress_resolve_post_id",
         request=ResolvePostIdRequestSerializer,

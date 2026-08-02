@@ -49,7 +49,11 @@ def _parse_months(value: str | None) -> list[int] | None:
     return months
 
 
-class PublicHolidayListView(APIView):
+class PublicHolidaysAPIView(APIView):
+    permission_classes = [IsAdminUser]
+
+
+class PublicHolidayListView(PublicHolidaysAPIView):
     permission_classes = [IsAuthenticated]
 
     @extend_schema(
@@ -83,9 +87,7 @@ class PublicHolidayListView(APIView):
         return Response(PublicHolidaySerializer(holidays, many=True).data)
 
 
-class PublicHolidaySettingsView(APIView):
-    permission_classes = [IsAdminUser]
-
+class PublicHolidaySettingsView(PublicHolidaysAPIView):
     @extend_schema(
         operation_id="public_holidays_settings_read",
         responses=PublicHolidaySettingsSerializer,
@@ -113,9 +115,7 @@ class PublicHolidaySettingsView(APIView):
         return Response(PublicHolidaySettingsSerializer(settings).data)
 
 
-class PublicHolidaySyncView(APIView):
-    permission_classes = [IsAdminUser]
-
+class PublicHolidaySyncView(PublicHolidaysAPIView):
     @extend_schema(
         operation_id="public_holidays_sync_now",
         request=None,
@@ -136,9 +136,7 @@ class PublicHolidaySyncView(APIView):
         return Response(SynchronizationResultSerializer(result.to_dict()).data)
 
 
-class InternalHolidayCreateView(APIView):
-    permission_classes = [IsAdminUser]
-
+class InternalHolidayCreateView(PublicHolidaysAPIView):
     @extend_schema(
         operation_id="internal_holiday_create",
         request=InternalHolidayWriteSerializer,
@@ -174,9 +172,7 @@ class InternalHolidayCreateView(APIView):
         )
 
 
-class InternalHolidayDetailView(APIView):
-    permission_classes = [IsAdminUser]
-
+class InternalHolidayDetailView(PublicHolidaysAPIView):
     def _get_holiday(self, holiday_id):
         return get_object_or_404(
             PublicHoliday,
