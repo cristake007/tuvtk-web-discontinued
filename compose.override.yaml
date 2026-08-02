@@ -86,6 +86,17 @@ services:
 
     container_name: ${OPENSEARCH_CONTAINER_NAME:-tuvtk_opensearch}
 
+    mem_limit: ${OPENSEARCH_MEMORY_LIMIT:-1500m}
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    security_opt:
+      - no-new-privileges:true
+
     environment:
       cluster.name: tuvtk-search
       node.name: opensearch
@@ -130,6 +141,15 @@ services:
     image: node:24.18.1-bookworm-slim
 
     container_name: ${FRONTEND_CONTAINER_NAME:-tuvtk_frontend}
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    security_opt:
+      - no-new-privileges:true
 
     working_dir: /app
 
