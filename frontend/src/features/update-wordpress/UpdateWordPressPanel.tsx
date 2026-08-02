@@ -3,6 +3,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { CheckCircle2, FileSearch, RefreshCcw, Upload, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
+import { textVariants } from "@/components/ui/text";
 import { AntetAplicatie } from "@/components/AntetAplicatie";
 import { FileUploadField } from "@/components/FileUploadField";
 import { QueryApplicationState } from "@/components/QueryApplicationState";
@@ -212,7 +213,12 @@ export function UpdateWordPressPanel() {
       <section className="grid w-full gap-6 rounded-sm border bg-background p-6 shadow-sm">
         <div>
           <SectionTitle>Conexiune WordPress</SectionTitle>
-          <p className="mt-1 text-base leading-6 text-muted-foreground">
+          <p
+            className={textVariants({
+              variant: "corp",
+              className: "mt-1 leading-6 text-muted-foreground",
+            })}
+          >
             Conectează-te folosind o parolă de aplicație WordPress. Parola nu este salvată pe
             server, doar adresa și utilizatorul.
           </p>
@@ -284,7 +290,12 @@ export function UpdateWordPressPanel() {
       <section className="grid w-full gap-6 rounded-sm border bg-background p-6 shadow-sm">
         <div>
           <SectionTitle>Previzualizează datele cursurilor</SectionTitle>
-          <p className="mt-1 text-base leading-6 text-muted-foreground">
+          <p
+            className={textVariants({
+              variant: "corp",
+              className: "mt-1 leading-6 text-muted-foreground",
+            })}
+          >
             Încarcă un fișier cu coloanele Title, Permalink și coloane de lună (January–December)
             pentru a vedea perioadele propuse înainte de actualizare.
           </p>
@@ -316,7 +327,12 @@ export function UpdateWordPressPanel() {
         <section className="grid min-w-0 gap-4 rounded-sm border bg-background p-6 shadow-sm">
           <div>
             <SectionTitle>Rezultatul previzualizării</SectionTitle>
-            <p className="mt-1 text-base leading-6 text-muted-foreground">
+            <p
+              className={textVariants({
+                variant: "corp",
+                className: "mt-1 leading-6 text-muted-foreground",
+              })}
+            >
               {rows.length === 0
                 ? "Fișierul a fost procesat, dar nu conține cursuri care pot fi actualizate."
                 : hasCredentials
@@ -346,10 +362,20 @@ export function UpdateWordPressPanel() {
                         <TableCell className="max-w-56 truncate font-medium" title={row.title}>
                           {row.title}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell
+                          className={textVariants({
+                            variant: "interfata",
+                            className: "text-muted-foreground",
+                          })}
+                        >
                           {row.excel_dates.length ? row.excel_dates.join(", ") : "—"}
                         </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
+                        <TableCell
+                          className={textVariants({
+                            variant: "interfata",
+                            className: "text-muted-foreground",
+                          })}
+                        >
                           {(state?.finalDates ?? row.final_dates).length
                             ? (state?.finalDates ?? row.final_dates).join(", ")
                             : "—"}

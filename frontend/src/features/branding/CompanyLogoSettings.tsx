@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { ImageUp, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { textVariants } from "@/components/ui/text";
 import { QueryApplicationState } from "@/components/QueryApplicationState";
 import { FileUploadField } from "@/components/FileUploadField";
 import { Button } from "@/components/ui/button";
@@ -73,8 +74,10 @@ export function CompanyLogoSettings() {
 
   return (
     <div>
-      <h3 className="text-sm font-medium">Sigla companiei</h3>
-      <p className="mt-1 text-sm text-muted-foreground">
+      <h3 className={textVariants({ variant: "eticheta" })}>Sigla companiei</h3>
+      <p
+        className={textVariants({ variant: "interfata", className: "mt-1 text-muted-foreground" })}
+      >
         Sigla este afișată în antetul meniului lateral pentru utilizatorii autentificați.
       </p>
 
@@ -93,7 +96,7 @@ export function CompanyLogoSettings() {
         />
 
         <div className="grid content-start gap-2">
-          <p className="text-sm font-medium">Previzualizare</p>
+          <p className={textVariants({ variant: "eticheta" })}>Previzualizare</p>
           <div className="flex min-h-44 items-center justify-center rounded-xl border bg-muted/20 p-5">
             {displayedLogoUrl ? (
               <img
@@ -102,12 +105,22 @@ export function CompanyLogoSettings() {
                 src={displayedLogoUrl}
               />
             ) : (
-              <div className="text-center text-sm text-muted-foreground">
+              <div
+                className={textVariants({
+                  variant: "interfata",
+                  className: "text-center text-muted-foreground",
+                })}
+              >
                 Nu este configurată nicio siglă.
               </div>
             )}
           </div>
-          <p className="text-xs leading-5 text-muted-foreground">
+          <p
+            className={textVariants({
+              variant: "detaliu",
+              className: "leading-5 text-muted-foreground",
+            })}
+          >
             Scripturile, resursele externe și stilurile nesigure sunt respinse la încărcare.
           </p>
         </div>

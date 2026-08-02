@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react"
 import { ArrowRight, Search } from "lucide-react";
 import { useNavigate } from "react-router";
 
+import { textVariants } from "@/components/ui/text";
 import { InputGroup, InputGroupAddon, InputGroupInput } from "@/components/ui/input-group";
 import type { NavigationItem } from "@/features/core/types";
 
@@ -77,7 +78,10 @@ export function HeaderSearch({ navigation }: { navigation: NavigationItem[] }) {
         <InputGroupInput
           aria-label="Caută în paginile aplicației"
           autoComplete="off"
-          className="h-10 text-sm placeholder:text-muted-foreground/80"
+          className={textVariants({
+            variant: "interfata",
+            className: "h-10 placeholder:text-muted-foreground/80",
+          })}
           onChange={(event) => {
             setQuery(event.target.value);
             setOpen(true);
@@ -102,7 +106,11 @@ export function HeaderSearch({ navigation }: { navigation: NavigationItem[] }) {
             <div className="flex flex-col">
               {results.map((item) => (
                 <button
-                  className="flex cursor-pointer items-center gap-2 rounded-sm px-2.5 py-1.5 text-left text-sm transition-colors hover:bg-primary/5 hover:text-primary focus-visible:bg-primary/5 focus-visible:text-primary focus-visible:outline-none"
+                  className={textVariants({
+                    variant: "interfata",
+                    className:
+                      "flex cursor-pointer items-center gap-2 rounded-sm px-2.5 py-1.5 text-left transition-colors hover:bg-primary/5 hover:text-primary focus-visible:bg-primary/5 focus-visible:text-primary focus-visible:outline-none",
+                  })}
                   key={item.key}
                   onClick={() => selectResult(item.path)}
                   type="button"
@@ -118,7 +126,12 @@ export function HeaderSearch({ navigation }: { navigation: NavigationItem[] }) {
               ))}
             </div>
           ) : (
-            <p className="px-3 py-3 text-center text-sm text-muted-foreground">
+            <p
+              className={textVariants({
+                variant: "interfata",
+                className: "px-3 py-3 text-center text-muted-foreground",
+              })}
+            >
               Nu există pagini corespunzătoare.
             </p>
           )}

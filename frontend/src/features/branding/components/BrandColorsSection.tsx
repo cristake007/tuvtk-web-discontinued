@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Save } from "lucide-react";
 
+import { textVariants } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -78,7 +79,7 @@ function CampCuloare({
         />
         <Input
           aria-invalid={!esteValid}
-          className="font-mono text-sm"
+          className={textVariants({ variant: "interfata", className: "font-mono" })}
           disabled={disabled}
           id={idCamp}
           maxLength={7}
@@ -98,9 +99,16 @@ function CampCuloare({
           value={textIntrodus}
         />
       </div>
-      <p className="text-xs leading-5 text-muted-foreground">{descriere}</p>
+      <p
+        className={textVariants({
+          variant: "detaliu",
+          className: "leading-5 text-muted-foreground",
+        })}
+      >
+        {descriere}
+      </p>
       {!esteValid ? (
-        <p className="text-xs text-destructive">
+        <p className={textVariants({ variant: "detaliu", className: "text-destructive" })}>
           Introdu un cod hexazecimal valid, de exemplu <code>#164194</code>.
         </p>
       ) : null}
@@ -125,8 +133,13 @@ export function BrandColorsSection({
     <form onSubmit={onSubmit}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className="text-sm font-medium">Culori de bază</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <h3 className={textVariants({ variant: "eticheta" })}>Culori de bază</h3>
+          <p
+            className={textVariants({
+              variant: "interfata",
+              className: "mt-1 text-muted-foreground",
+            })}
+          >
             Alege culorile folosite pentru elementele principale ale interfeței.
           </p>
         </div>

@@ -1,6 +1,7 @@
 import { type CSSProperties, useMemo } from "react";
 import { AlertTriangle, Bell, Sparkles, UserRound } from "lucide-react";
 
+import { textVariants } from "@/components/ui/text";
 import { SectionTitle } from "@/components/ui/heading";
 import type { NavigationItem } from "@/features/core/types";
 import { getNavigationIcon } from "@/lib/navigation-icons";
@@ -132,7 +133,7 @@ export function LiveShellPreview({
       <div className="flex items-center gap-2">
         <Sparkles aria-hidden="true" className="size-4 text-primary" />
         <SectionTitle>Previzualizare live</SectionTitle>
-        <p className="text-xs text-muted-foreground">
+        <p className={textVariants({ variant: "detaliu", className: "text-muted-foreground" })}>
           Reflectă modificările nesalvate din formularele de mai jos.
         </p>
       </div>
@@ -146,7 +147,12 @@ export function LiveShellPreview({
               src={logoUrl}
             />
           ) : (
-            <span className="truncate text-xs font-bold tracking-wide text-primary">
+            <span
+              className={textVariants({
+                variant: "detaliu",
+                className: "truncate font-bold tracking-wide text-primary",
+              })}
+            >
               {numeAplicatie.trim() || "Aplicație fără nume"}
             </span>
           )}
@@ -176,7 +182,14 @@ export function LiveShellPreview({
           </nav>
 
           <div className="flex-1 space-y-3 bg-background p-4">
-            <p className="text-sm font-semibold leading-snug text-heading">Titlu de pagină</p>
+            <p
+              className={textVariants({
+                variant: "interfata",
+                className: "font-semibold leading-snug text-heading",
+              })}
+            >
+              Titlu de pagină
+            </p>
             <div className="h-2 w-1/2 rounded-full bg-foreground/10" />
             <div className="flex items-center gap-2 pt-1">
               <span className="rounded-md bg-primary px-2.5 py-1 text-[calc(11px*var(--app-font-scale))] font-medium text-primary-foreground">
@@ -191,7 +204,12 @@ export function LiveShellPreview({
       </div>
 
       {contrastRedus ? (
-        <p className="flex items-center gap-1.5 text-xs text-warning">
+        <p
+          className={textVariants({
+            variant: "detaliu",
+            className: "flex items-center gap-1.5 text-warning",
+          })}
+        >
           <AlertTriangle aria-hidden="true" className="size-3.5 shrink-0" />
           Fundalul ales este închis, iar textul din aplicație are o culoare fixă — verifică
           lizibilitatea înainte de a salva.

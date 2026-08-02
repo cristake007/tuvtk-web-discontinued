@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { FileCode2 } from "lucide-react";
 import { toast } from "sonner";
 
+import { textVariants } from "@/components/ui/text";
 import { AntetAplicatie } from "@/components/AntetAplicatie";
 import { FileUploadField } from "@/components/FileUploadField";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,12 @@ export function XmlFormatterPanel() {
       <section className="grid w-full gap-6 rounded-sm border bg-background p-6 shadow-sm">
         <div>
           <SectionTitle>Generează XML pentru WordPress</SectionTitle>
-          <p className="mt-1 text-base leading-6 text-muted-foreground">
+          <p
+            className={textVariants({
+              variant: "corp",
+              className: "mt-1 leading-6 text-muted-foreground",
+            })}
+          >
             Încarcă un fișier CSV sau Excel cu coloanele Title, Permalink și coloane de lună
             (January–December sau Luna 1–Luna 12) pentru a obține un fișier XML pregătit pentru
             import în WordPress.

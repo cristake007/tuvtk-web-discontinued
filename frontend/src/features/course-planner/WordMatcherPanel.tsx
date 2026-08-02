@@ -3,6 +3,7 @@ import { useMutation } from "@tanstack/react-query";
 import { CheckCircle2, FileSearch, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 
+import { textVariants } from "@/components/ui/text";
 import { AntetAplicatie } from "@/components/AntetAplicatie";
 import { FileUploadField } from "@/components/FileUploadField";
 import { WorkflowEmptyState } from "@/components/WorkflowEmptyState";
@@ -101,7 +102,12 @@ export function WordMatcherPanel() {
       <section className="grid w-full gap-6 rounded-sm border bg-background p-6 shadow-sm">
         <div>
           <SectionTitle>Potrivește documentul Word cu programul cursurilor</SectionTitle>
-          <p className="mt-1 text-base leading-6 text-muted-foreground">
+          <p
+            className={textVariants({
+              variant: "corp",
+              className: "mt-1 leading-6 text-muted-foreground",
+            })}
+          >
             Încarcă documentul Word cu programul de tipărit și un fișier cu titluri și coloane de
             lună (January–December). Cursurile vor fi potrivite automat pe baza titlului; poți
             corecta manual orice potrivire înainte de a genera documentul final.
@@ -147,7 +153,12 @@ export function WordMatcherPanel() {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <SectionTitle>Rezultatul potrivirii</SectionTitle>
-              <p className="mt-1 text-base leading-6 text-muted-foreground">
+              <p
+                className={textVariants({
+                  variant: "corp",
+                  className: "mt-1 leading-6 text-muted-foreground",
+                })}
+              >
                 {preview.rows.length
                   ? `${assignedCount} din ${preview.rows.length} rânduri au o potrivire selectată. Corectează selecțiile de mai jos, apoi generează documentul final.`
                   : "Fișierele au fost procesate, dar nu conțin rânduri care pot fi potrivite."}

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 
+import { textVariants } from "@/components/ui/text";
 import { Card } from "@/components/ui/card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
@@ -29,7 +30,13 @@ function AdminRailGroup({ group, pathname }: { group: AdministrationGroup; pathn
 
   return (
     <Collapsible onOpenChange={setDeschis} open={deschis}>
-      <CollapsibleTrigger className="flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/60">
+      <CollapsibleTrigger
+        className={textVariants({
+          variant: "eticheta",
+          className:
+            "flex w-full cursor-pointer items-center gap-2 rounded-md px-2.5 py-2 text-foreground transition-colors hover:bg-muted/60",
+        })}
+      >
         <Icon aria-hidden="true" className="size-4 shrink-0 text-primary" />
         <span className="flex-1 text-left">{group.name}</span>
         <ChevronDown
@@ -48,7 +55,11 @@ function AdminRailGroup({ group, pathname }: { group: AdministrationGroup; pathn
                 <NavLink
                   className={({ isActive }) =>
                     cn(
-                      "block rounded-md px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-primary/5 hover:text-brand-red",
+                      textVariants({
+                        variant: "interfata",
+                        className:
+                          "block rounded-md px-2.5 py-1.5 text-muted-foreground transition-colors hover:bg-primary/5 hover:text-brand-red",
+                      }),
                       isActive && "bg-primary/5 font-medium text-brand-red",
                     )
                   }
@@ -60,7 +71,13 @@ function AdminRailGroup({ group, pathname }: { group: AdministrationGroup; pathn
               </li>
             ) : (
               <li key={entry.name}>
-                <span className="flex items-center justify-between gap-2 px-2.5 py-1.5 text-sm text-muted-foreground/60">
+                <span
+                  className={textVariants({
+                    variant: "interfata",
+                    className:
+                      "flex items-center justify-between gap-2 px-2.5 py-1.5 text-muted-foreground/60",
+                  })}
+                >
                   {entry.name}
                   <span className="rounded-full bg-muted px-1.5 py-0.5 text-[calc(10px*var(--app-font-scale))] font-medium tracking-wide text-muted-foreground uppercase">
                     Curând

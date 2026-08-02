@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Pencil, Plus, Search, Users } from "lucide-react";
 import { useNavigate } from "react-router";
 
+import { textVariants } from "@/components/ui/text";
 import { useAuthenticatedBootstrap } from "@/app/AuthenticatedBootstrapContext";
 import { ContentEmptyState } from "@/components/ContentEmptyState";
 import { QueryApplicationState } from "@/components/QueryApplicationState";
@@ -196,7 +197,12 @@ export function UtilizatoriPanel() {
             </SelectContent>
           </Select>
 
-          <div className="flex min-h-9 items-center justify-end gap-2 text-xs text-muted-foreground">
+          <div
+            className={textVariants({
+              variant: "detaliu",
+              className: "flex min-h-9 items-center justify-end gap-2 text-muted-foreground",
+            })}
+          >
             <span>{count} conturi</span>
           </div>
         </CardContent>
@@ -222,12 +228,23 @@ export function UtilizatoriPanel() {
                   <TableRow className="even:bg-muted/25" key={user.id}>
                     <TableCell>
                       <div className="flex min-w-0 items-center gap-3">
-                        <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                        <span
+                          className={textVariants({
+                            variant: "detaliu",
+                            className:
+                              "grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 font-semibold text-primary",
+                          })}
+                        >
                           {initials(user)}
                         </span>
                         <div className="min-w-0">
                           <p className="truncate font-medium">{user.full_name}</p>
-                          <p className="truncate text-xs text-muted-foreground">
+                          <p
+                            className={textVariants({
+                              variant: "detaliu",
+                              className: "truncate text-muted-foreground",
+                            })}
+                          >
                             <code>@{user.username}</code>
                             {currentUser?.id === user.id ? " · contul tău" : ""}
                           </p>
@@ -297,7 +314,7 @@ export function UtilizatoriPanel() {
       </Card>
 
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-xs text-muted-foreground">
+        <p className={textVariants({ variant: "detaliu", className: "text-muted-foreground" })}>
           Pagina {page} din {pageCount}
         </p>
         <Pagination className="mx-0 w-auto justify-end">

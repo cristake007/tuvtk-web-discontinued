@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { NavLink } from "react-router";
 
+import { textVariants } from "@/components/ui/text";
 import type { ShellConfiguration } from "@/api/types";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import type { ShellUser } from "@/features/auth/types";
@@ -53,7 +54,12 @@ function HeaderBrand({
           src={configuration.logo_url ?? undefined}
         />
       ) : (
-        <span className="text-sm font-bold tracking-wide text-primary">
+        <span
+          className={textVariants({
+            variant: "interfata",
+            className: "font-bold tracking-wide text-primary",
+          })}
+        >
           {configuration.site_name}
         </span>
       )}

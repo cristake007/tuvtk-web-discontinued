@@ -1,5 +1,6 @@
 import { CalendarDays, Pencil, Trash2 } from "lucide-react";
 
+import { textVariants } from "@/components/ui/text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -62,7 +63,12 @@ export function PublicHolidayTable({
       <CardContent className="px-0">
         {loading ? null : holidays.length ? (
           <div className="overflow-x-auto">
-            <table className="w-full min-w-[48rem] border-collapse text-sm">
+            <table
+              className={textVariants({
+                variant: "interfata",
+                className: "w-full min-w-[48rem] border-collapse",
+              })}
+            >
               <thead className="bg-muted/60 text-left">
                 <tr>
                   <th className="border-b px-4 py-3 font-medium">Data</th>
@@ -81,7 +87,12 @@ export function PublicHolidayTable({
                     <td className="border-b px-4 py-3">
                       <span className="font-medium">{holiday.local_name}</span>
                       {holiday.english_name ? (
-                        <span className="mt-0.5 block text-xs text-muted-foreground">
+                        <span
+                          className={textVariants({
+                            variant: "detaliu",
+                            className: "mt-0.5 block text-muted-foreground",
+                          })}
+                        >
                           {holiday.english_name}
                         </span>
                       ) : null}
@@ -137,7 +148,12 @@ export function PublicHolidayTable({
           <div className="flex min-h-56 flex-col items-center justify-center px-6 text-center">
             <CalendarDays aria-hidden="true" className="size-8 text-muted-foreground" />
             <SectionTitle className="mt-3">Nu există zile salvate pentru {year}</SectionTitle>
-            <p className="mt-1 max-w-md text-base leading-6 text-muted-foreground">
+            <p
+              className={textVariants({
+                variant: "corp",
+                className: "mt-1 max-w-md leading-6 text-muted-foreground",
+              })}
+            >
               Rulează sincronizarea Nager.Date sau adaugă o zi internă.
             </p>
           </div>

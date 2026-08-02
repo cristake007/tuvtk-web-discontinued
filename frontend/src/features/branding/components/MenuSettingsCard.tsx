@@ -1,5 +1,6 @@
 import { Menu, Plus, Save } from "lucide-react";
 
+import { textVariants } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -64,12 +65,19 @@ export function MenuSettingsCard({
 
       <CardContent>
         {eroareIncarcare ? (
-          <p className="text-sm text-destructive">Meniul nu a putut fi încărcat.</p>
+          <p className={textVariants({ variant: "interfata", className: "text-destructive" })}>
+            Meniul nu a putut fi încărcat.
+          </p>
         ) : esteGol ? (
           <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-10 text-center">
             <Menu aria-hidden="true" className="size-5 text-muted-foreground" />
             <p className="font-medium">Meniul este gol</p>
-            <p className="max-w-xs text-sm text-muted-foreground">
+            <p
+              className={textVariants({
+                variant: "interfata",
+                className: "max-w-xs text-muted-foreground",
+              })}
+            >
               Elementele de meniu apar automat pe măsură ce activezi module ale platformei.
             </p>
           </div>

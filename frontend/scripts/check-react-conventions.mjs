@@ -9,6 +9,7 @@ const sourceRoot = path.join(root, "src");
 const failures = [];
 const effectHooks = new Set(["useEffect", "useLayoutEffect"]);
 const manualHeadingTextSizes = new Set(["text-2xl", "text-3xl", "text-lg", "text-xl"]);
+const manualTextRoleSizes = new Set(["text-xs", "text-sm", "text-base"]);
 
 async function collectSourceFiles(directory) {
   const entries = await readdir(directory, { withFileTypes: true });
@@ -87,6 +88,9 @@ function inspectFile(fileName, sourceText) {
 
   const relativePath = path.relative(sourceRoot, fileName).replaceAll(path.sep, "/");
   const isUiPrimitive = relativePath.startsWith("components/ui/");
+  const requiresTextRoles = ["features/", "pages/", "layout/"].some((directory) =>
+    relativePath.startsWith(directory),
+  );
   const permitsManualHeadingClasses =
     relativePath === "components/ui/heading.tsx" ||
     relativePath === "features/administration/AdminPageHeader.tsx";
@@ -144,6 +148,22 @@ function inspectFile(fileName, sourceText) {
           "Folosește `PageTitle`/`SectionTitle` din `@/components/ui/heading`, nu clase scrise manual.",
         );
       }
+    }
+
+    if (
+      requiresTextRoles &&
+      (ts.isStringLiteral(node) ||
+        ts.isNoSubstitutionTemplateLiteral(node) ||
+        ts.isTemplateHead(node) ||
+        ts.isTemplateMiddle(node) ||
+        ts.isTemplateTail(node)) &&
+      node.text.split(/\s+/).some((classToken) => manualTextRoleSizes.has(classToken))
+    ) {
+      report(
+        sourceFile,
+        node,
+        "Folosește rolurile din `@/components/ui/text`, nu clasele de text scrise manual.",
+      );
     }
 
     if (
