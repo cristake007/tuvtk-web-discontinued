@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { ArrowRight, LayoutGrid, Search } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionTitle } from "@/components/ui/heading";

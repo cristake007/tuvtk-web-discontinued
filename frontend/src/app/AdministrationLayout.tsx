@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { Outlet, useMatches } from "react-router-dom";
+import { Outlet, useMatches } from "react-router";
 
 import { AdminRail } from "@/features/administration/AdminRail";
 

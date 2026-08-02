@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Eye, EyeOff, LockKeyhole } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 import { coreBootstrapQueryKey } from "@/api/core";
 import { ApiError } from "@/api/http";

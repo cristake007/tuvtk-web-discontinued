@@ -127,7 +127,7 @@ services:
     restart: unless-stopped
 
   frontend:
-    image: node:24-bookworm-slim
+    image: node:24.18.1-bookworm-slim
 
     container_name: ${FRONTEND_CONTAINER_NAME:-tuvtk_frontend}
 

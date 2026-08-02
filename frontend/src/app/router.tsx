@@ -1,5 +1,5 @@
 import { lazy, Suspense } from "react";
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter, Navigate } from "react-router";
 
 import { ApplicationState } from "@/components/ApplicationState";
 import { AdministrationHeader } from "@/features/administration/AdministrationHeader";

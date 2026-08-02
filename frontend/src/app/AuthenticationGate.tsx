@@ -1,6 +1,6 @@
 import { lazy, Suspense, useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useMatches } from "react-router-dom";
+import { useMatches } from "react-router";
 
 import { coreBootstrapQueryKey, fetchCoreBootstrap } from "@/api/core";
 import { ApplicationState } from "@/components/ApplicationState";

@@ -1,5 +1,5 @@
 import { History } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 
 import { AntetAplicatie } from "@/components/AntetAplicatie";
 import { Button } from "@/components/ui/button";

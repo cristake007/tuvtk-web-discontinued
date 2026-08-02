@@ -1,7 +1,7 @@
 import { useEffect, useMemo, type CSSProperties } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { AlertTriangle } from "lucide-react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate } from "react-router";
 
 import { coreBootstrapQueryKey } from "@/api/core";
 import { ApiError } from "@/api/http";

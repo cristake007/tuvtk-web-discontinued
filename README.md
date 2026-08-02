@@ -26,7 +26,7 @@ The API stack is **Django REST Framework only**. Django Ninja is not used. API s
 
 ### Frontend
 
-- Node.js 24
+- Node.js 24.18.1 LTS
 - React 19
 - TypeScript 6 in strict mode
 - Vite 8

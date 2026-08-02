@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Pencil, Plus, Search, Users } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 
 import { useAuthenticatedBootstrap } from "@/app/AuthenticatedBootstrapContext";
 import { ContentEmptyState } from "@/components/ContentEmptyState";
