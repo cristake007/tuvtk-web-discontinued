@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_DB: tuvtk_core
+          POSTGRES_USER: tuvtk_core
+          POSTGRES_PASSWORD: ci-core-password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tuvtk_core -d tuvtk_core"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DJANGO_SECRET_KEY: ci-secret-key
+      DJANGO_DEBUG: "true"
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      CORE_DB_NAME: tuvtk_core
+      CORE_DB_USER: tuvtk_core
+      CORE_DB_PASSWORD: ci-core-password
+      CORE_DB_HOST: 127.0.0.1
+      CORE_DB_PORT: "5432"
+      REGISTRY_DB_ENABLED: "true"
+      REGISTRY_DB_NAME: tuvtk_registry
+      REGISTRY_DB_USER: tuvtk_core
+      REGISTRY_DB_PASSWORD: ci-core-password
+      REGISTRY_DB_HOST: 127.0.0.1
+      REGISTRY_DB_PORT: "5432"
+      DJANGO_CACHE_URL: redis://127.0.0.1:6379/2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+          cache: pip
+          cache-dependency-path: backend/requirements-dev.txt
+      - name: Instalează dependențele backend
+        run: python -m pip install -r backend/requirements-dev.txt
+      - name: Creează baza de date registry
+        run: >-
+          python -c "import psycopg; connection = psycopg.connect(host='127.0.0.1', port=5432, user='tuvtk_core', password='ci-core-password', dbname='postgres'); connection.autocommit = True; connection.execute('CREATE DATABASE tuvtk_registry'); connection.close()"
+      - name: Verifică migrațiile
+        working-directory: backend
+        run: python manage.py makemigrations --check --dry-run
+      - name: Verifică Django
+        working-directory: backend
+        run: python manage.py check
+      - name: Verifică stilul backend
+        working-directory: backend
+        run: ruff check .
+      - name: Validează schema OpenAPI
+        working-directory: backend
+        run: python manage.py spectacular --validate --file /tmp/tuvtk-openapi.yaml
+      - name: Rulează testele backend
+        working-directory: backend
+        run: python manage.py test
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Instalează dependențele frontend
+        working-directory: frontend
+        run: npm ci
+      - name: Verifică stilul frontend
+        working-directory: frontend
+        run: npm run lint
+      - name: Verifică tipurile frontend
+        working-directory: frontend
+        run: npm run typecheck
+      - name: Rulează testele frontend
+        working-directory: frontend
+        run: npm run test
+      - name: Construiește frontendul
+        working-directory: frontend
+        run: npm run build
