@@ -30,6 +30,7 @@ class ApplicationConfigurationAdmin(admin.ModelAdmin):
 
 @admin.register(NavigationItem)
 class NavigationItemAdmin(admin.ModelAdmin):
+    list_select_related = ("application", "parent")
     list_display = (
         "label",
         "key",
