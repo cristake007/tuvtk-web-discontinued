@@ -8,19 +8,10 @@ services:
 
     working_dir: /app
 
-    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+    user: "999:999"
 
     env_file:
       - .env
-
-    volumes:
-      - type: bind
-        source: ./backend
-        target: /app
-      - type: bind
-        source: ./onrc-data
-        target: /data/onrc
-        read_only: true
 
     expose:
       - "8000"
@@ -51,20 +42,10 @@ services:
 
     working_dir: /app
 
-    user: "65534:65534"
+    user: "999:999"
 
     env_file:
       - .env
-
-    volumes:
-      - type: bind
-        source: ./backend
-        target: /app
-        read_only: true
-      - type: bind
-        source: ./onrc-data
-        target: /data/onrc
-        read_only: true
 
     depends_on:
       db_core:
@@ -92,16 +73,10 @@ services:
 
     working_dir: /app
 
-    user: "65534:65534"
+    user: "999:999"
 
     env_file:
       - .env
-
-    volumes:
-      - type: bind
-        source: ./backend
-        target: /app
-        read_only: true
 
     tmpfs:
       - /tmp
@@ -159,9 +134,6 @@ services:
     volumes:
       - core_postgres_data:/var/lib/postgresql
 
-    ports:
-      - "127.0.0.1:${CORE_DB_EXPOSED_PORT:-5432}:5432"
-
     healthcheck:
       test:
         [
@@ -186,9 +158,6 @@ services:
 
     volumes:
       - registry_postgres_data:/var/lib/postgresql
-
-    ports:
-      - "127.0.0.1:${REGISTRY_DB_EXPOSED_PORT:-5433}:5432"
 
     healthcheck:
       test:

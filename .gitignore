@@ -36,6 +36,9 @@ htmlcov/
 # Local databases
 *.sqlite3
 
+# Local ONRC data snapshots
+/onrc-data/
+
 # Editors and operating systems
 .vscode/
 .idea/
