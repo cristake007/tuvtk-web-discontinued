@@ -8,10 +8,12 @@ from redis.exceptions import RedisError
 
 def _client_ip(request) -> str:
     forwarded_for = request.META.get("HTTP_X_FORWARDED_FOR", "")
-    candidates = [
-        forwarded_for.split(",", maxsplit=1)[0].strip(),
-        request.META.get("REMOTE_ADDR", "").strip(),
-    ]
+    forwarded_ips = [value.strip() for value in forwarded_for.split(",")]
+    proxy_depth = settings.LOGIN_THROTTLE_TRUSTED_PROXY_DEPTH
+    candidates = []
+    if len(forwarded_ips) >= proxy_depth:
+        candidates.append(forwarded_ips[-proxy_depth])
+    candidates.append(request.META.get("REMOTE_ADDR", "").strip())
     for candidate in candidates:
         try:
             return str(ipaddress.ip_address(candidate))

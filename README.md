@@ -520,6 +520,8 @@ DJANGO_TRUST_X_FORWARDED_PROTO=true
 DJANGO_SECURE_HSTS_SECONDS=31536000
 DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS=true
 DJANGO_SECURE_HSTS_PRELOAD=true
+# Increase to 2 when an external TLS-terminating proxy sits before bundled nginx.
+LOGIN_THROTTLE_TRUSTED_PROXY_DEPTH=1
 ```
 
 Production must run:

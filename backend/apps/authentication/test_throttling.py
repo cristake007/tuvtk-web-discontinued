@@ -67,3 +67,60 @@ class LoginThrottlingTests(TestCase):
                 "fields": {},
             },
         )
+
+    def test_spoofed_forwarded_prefix_does_not_change_client_ip(self):
+        first = self.invalid_login()
+        second = self.client.post(
+            "/api/v1/auth/login",
+            data=json.dumps(
+                {
+                    "username": "another-user",
+                    "password": "incorrect-password",
+                }
+            ),
+            content_type="application/json",
+            HTTP_X_CSRFTOKEN=self.client.cookies["csrftoken"].value,
+            HTTP_X_FORWARDED_FOR="198.51.100.99, 192.0.2.10",
+            REMOTE_ADDR="172.18.0.2",
+        )
+        blocked = self.client.post(
+            "/api/v1/auth/login",
+            data=json.dumps(
+                {
+                    "username": "third-user",
+                    "password": "incorrect-password",
+                }
+            ),
+            content_type="application/json",
+            HTTP_X_CSRFTOKEN=self.client.cookies["csrftoken"].value,
+            HTTP_X_FORWARDED_FOR="203.0.113.77, 192.0.2.10",
+            REMOTE_ADDR="172.18.0.2",
+        )
+
+        self.assertEqual(first.status_code, 401)
+        self.assertEqual(second.status_code, 401)
+        self.assertEqual(blocked.status_code, 429)
+
+    @override_settings(LOGIN_THROTTLE_TRUSTED_PROXY_DEPTH=2)
+    def test_external_proxy_uses_second_address_from_right(self):
+        from apps.authentication.throttling import _client_ip
+
+        request = self.client.get(
+            "/api/v1/auth/csrf",
+            HTTP_X_FORWARDED_FOR="192.0.2.10, 198.51.100.5",
+            REMOTE_ADDR="172.18.0.2",
+        ).wsgi_request
+
+        self.assertEqual(_client_ip(request), "192.0.2.10")
+
+    @override_settings(LOGIN_THROTTLE_TRUSTED_PROXY_DEPTH=2)
+    def test_missing_expected_proxy_hops_falls_back_to_remote_address(self):
+        from apps.authentication.throttling import _client_ip
+
+        request = self.client.get(
+            "/api/v1/auth/csrf",
+            HTTP_X_FORWARDED_FOR="192.0.2.10",
+            REMOTE_ADDR="172.18.0.2",
+        ).wsgi_request
+
+        self.assertEqual(_client_ip(request), "172.18.0.2")
