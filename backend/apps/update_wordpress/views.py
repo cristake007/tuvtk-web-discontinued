@@ -5,7 +5,6 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.core.permissions import HasApplicationAccess
-from config.error_serializers import first_serializer_error
 
 from .client import WordPressRequestError
 from .files import UpdateWordPressFileError
@@ -70,11 +69,7 @@ class ConnectView(APIView):
     )
     def post(self, request):
         serializer = ConnectRequestSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {"detail": first_serializer_error(serializer.errors)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer.is_valid(raise_exception=True)
 
         values = serializer.validated_data
         client = build_wp_client(
@@ -118,11 +113,7 @@ class PreviewView(APIView):
     )
     def post(self, request):
         serializer = PreviewUploadSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {"detail": first_serializer_error(serializer.errors)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer.is_valid(raise_exception=True)
 
         upload = serializer.validated_data["input_file"]
         extension = upload.name[upload.name.rfind(".") :].casefold() if "." in upload.name else ""
@@ -153,11 +144,7 @@ class UpdateRowView(APIView):
     )
     def post(self, request):
         serializer = UpdateRowRequestSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {"detail": first_serializer_error(serializer.errors)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer.is_valid(raise_exception=True)
 
         values = serializer.validated_data
         client = build_wp_client(
@@ -206,11 +193,7 @@ class FetchCurrentDatesView(APIView):
     )
     def post(self, request):
         serializer = FetchCurrentDatesRequestSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {"detail": first_serializer_error(serializer.errors)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer.is_valid(raise_exception=True)
 
         values = serializer.validated_data
         client = build_wp_client(
@@ -259,11 +242,7 @@ class ResolvePostIdView(APIView):
     )
     def post(self, request):
         serializer = ResolvePostIdRequestSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {"detail": first_serializer_error(serializer.errors)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer.is_valid(raise_exception=True)
 
         values = serializer.validated_data
         client = build_wp_client(

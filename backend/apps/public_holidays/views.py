@@ -8,8 +8,6 @@ from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from config.error_serializers import first_serializer_error
-
 from .models import PublicHoliday
 from .serializers import (
     InternalHolidayWriteSerializer,
@@ -110,11 +108,7 @@ class PublicHolidaySettingsView(APIView):
     )
     def put(self, request):
         serializer = PublicHolidaySettingsUpdateSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {"detail": first_serializer_error(serializer.errors)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer.is_valid(raise_exception=True)
         settings = update_integration_settings(**serializer.validated_data)
         return Response(PublicHolidaySettingsSerializer(settings).data)
 
@@ -157,11 +151,7 @@ class InternalHolidayCreateView(APIView):
     )
     def post(self, request):
         serializer = InternalHolidayWriteSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {"detail": first_serializer_error(serializer.errors)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer.is_valid(raise_exception=True)
         try:
             holiday = serializer.save(
                 source=PublicHoliday.Source.INTERNAL,
@@ -213,11 +203,7 @@ class InternalHolidayDetailView(APIView):
             data=request.data,
             partial=True,
         )
-        if not serializer.is_valid():
-            return Response(
-                {"detail": first_serializer_error(serializer.errors)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer.is_valid(raise_exception=True)
         try:
             updated = serializer.save(
                 source_year=serializer.validated_data.get("date", holiday.date).year

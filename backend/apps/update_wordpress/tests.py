@@ -239,6 +239,9 @@ class UpdateWordPressApiTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+        payload = response.json()
+        self.assertIn("wp_base_url", payload["fields"])
+        self.assertEqual(payload["detail"], payload["fields"]["wp_base_url"][0])
 
     def test_preview_returns_rows_from_uploaded_file(self):
         upload = SimpleUploadedFile(
@@ -328,6 +331,9 @@ class UpdateWordPressApiTests(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
+        payload = response.json()
+        self.assertIn("final_dates", payload["fields"])
+        self.assertEqual(payload["detail"], payload["fields"]["final_dates"][0])
 
     @patch("apps.update_wordpress.views.build_wp_client")
     def test_resolve_post_id_returns_post_id(self, build_wp_client):

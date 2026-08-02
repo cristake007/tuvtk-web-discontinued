@@ -181,3 +181,19 @@ class PublicHolidayApiTests(TestCase):
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.data["date"], "01.12.2027")
         self.assertTrue(response.data["is_internal"])
+
+    def test_internal_holiday_validation_exposes_field_errors(self):
+        response = self.client.post(
+            reverse("api-v1:public-holidays:internal-create"),
+            {
+                "date": "data-invalida",
+                "local_name": "Zi internă test",
+                "description": "Test",
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        payload = response.json()
+        self.assertIn("date", payload["fields"])
+        self.assertEqual(payload["detail"], payload["fields"]["date"][0])

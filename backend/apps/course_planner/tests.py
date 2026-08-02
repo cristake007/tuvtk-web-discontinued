@@ -164,6 +164,16 @@ class CoursePlannerApiTests(TestCase):
             ],
         )
 
+    def test_holiday_query_validation_exposes_field_errors(self):
+        response = self.client.get(
+            "/api/v1/course-planner/holidays?year=2027&months=13"
+        )
+
+        self.assertEqual(response.status_code, 400)
+        payload = response.json()
+        self.assertIn("months", payload["fields"])
+        self.assertEqual(payload["detail"], payload["fields"]["months"][0])
+
     @patch(
         "apps.course_planner.views.get_holiday_dates",
         return_value=[date(2027, 1, 1)],
