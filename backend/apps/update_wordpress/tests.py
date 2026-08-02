@@ -8,7 +8,7 @@ from django.test import TestCase
 
 from apps.core.models import ApplicationDefinition
 
-from .client import WordPressRequestError, WPCourseClient
+from .client import MAX_REDIRECTS, WordPressRequestError, WPCourseClient
 from .domain import (
     build_final_program,
     extract_slug_from_permalink,
@@ -138,6 +138,121 @@ class WPCourseClientTests(TestCase):
         with patch.object(client, "_request_with_retries", return_value=(200, {}, b"null")):
             with self.assertRaises(WordPressRequestError):
                 client.update_course_program(1, [{"data": "11.01.2027"}])
+
+
+class WPCourseClientTransportTests(TestCase):
+    """Exercises _request_with_redirects / _request_with_retries directly.
+
+    The tests above (WPCourseClientTests) mock at _request_with_retries,
+    which never exercises the redirect-following, per-hop SSRF
+    revalidation, retry/backoff, or DNS-pinning logic in client.py. These
+    tests mock one layer lower to cover that behaviour.
+    """
+
+    def setUp(self):
+        self.client = WPCourseClient("https://example.com", "user", "pass")
+
+    def test_request_with_redirects_follows_redirect_chain(self):
+        responses = [
+            (302, {"Location": "https://example.com/next"}, b"", "https://example.com/"),
+            (200, {}, b"ok", "https://example.com/next"),
+        ]
+        with patch.object(self.client, "_request_once", side_effect=responses) as mocked:
+            status, headers, body = self.client._request_with_redirects(
+                "GET", "https://example.com/", use_auth=True
+            )
+
+        self.assertEqual(status, 200)
+        self.assertEqual(body, b"ok")
+        self.assertEqual(mocked.call_count, 2)
+
+    def test_request_with_redirects_rejects_redirect_to_prohibited_target(self):
+        responses = [
+            (302, {"Location": "http://127.0.0.1/internal"}, b"", "https://example.com/"),
+        ]
+        with patch.object(self.client, "_request_once", side_effect=responses):
+            with self.assertRaises(InvalidWordPressUrlError):
+                self.client._request_with_redirects(
+                    "GET", "https://example.com/", use_auth=True
+                )
+
+    def test_request_with_redirects_gives_up_after_max_redirects(self):
+        def always_redirect(*_args, **_kwargs):
+            return (302, {"Location": "https://example.com/loop"}, b"", "https://example.com/loop")
+
+        with patch.object(self.client, "_request_once", side_effect=always_redirect) as mocked:
+            with self.assertRaises(WordPressRequestError):
+                self.client._request_with_redirects(
+                    "GET", "https://example.com/", use_auth=True
+                )
+
+        self.assertEqual(mocked.call_count, MAX_REDIRECTS + 1)
+
+    def test_request_with_retries_backs_off_on_retryable_status(self):
+        responses = [
+            (503, {}, b""),
+            (200, {}, b"ok"),
+        ]
+        with patch.object(
+            self.client, "_request_with_redirects", side_effect=responses
+        ) as mocked, patch("time.sleep") as mocked_sleep:
+            status, headers, body = self.client._request_with_retries(
+                "GET", "/status", use_auth=True
+            )
+
+        self.assertEqual(status, 200)
+        self.assertEqual(mocked.call_count, 2)
+        mocked_sleep.assert_called_once()
+
+    def test_request_with_retries_retries_after_401_fallback_returns_retryable_status(self):
+        """Regression test for a stale-status retry bug.
+
+        Previously, after a 401-triggered unauthenticated fallback, the
+        retry-eligibility check still tested the original 401 status
+        instead of the fallback's own status, so a retryable status
+        returned by the fallback (e.g. 503) was never retried.
+        """
+        responses = [
+            (401, {}, b""),
+            (503, {}, b""),
+            (200, {}, b"ok"),
+        ]
+        with patch.object(
+            self.client, "_request_with_redirects", side_effect=responses
+        ) as mocked, patch("time.sleep"):
+            status, headers, body = self.client._request_with_retries(
+                "GET", "/status", use_auth=True, retry_on_401_without_auth=True
+            )
+
+        self.assertEqual(status, 200)
+        self.assertEqual(mocked.call_count, 3)
+
+    def test_request_once_connects_to_dns_pinned_ip_not_hostname(self):
+        """Regression test for the SSRF DNS-rebinding TOCTOU fix.
+
+        The connection must be made to the IP address that was actually
+        validated, not re-resolved from the hostname at connect time.
+        """
+        fake_response = MagicMock()
+        fake_response.status = 200
+        fake_response.getheaders.return_value = []
+        fake_response.read.return_value = b"ok"
+
+        with patch(
+            "apps.update_wordpress.client.resolve_validated_target",
+            return_value=("https://example.com/", "203.0.113.5"),
+        ) as mocked_resolve, patch(
+            "apps.update_wordpress.client._PinnedHTTPSConnection"
+        ) as mocked_connection_cls:
+            mocked_connection_cls.return_value.getresponse.return_value = fake_response
+            self.client._request_once("GET", "https://example.com/", use_auth=False)
+
+        mocked_resolve.assert_called_once_with("https://example.com/")
+        mocked_connection_cls.assert_called_once()
+        host, pinned_ip, port = mocked_connection_cls.call_args[0]
+        self.assertEqual(host, "example.com")
+        self.assertEqual(pinned_ip, "203.0.113.5")
+        self.assertEqual(port, 443)
 
 
 class UpdateWordPressApiTests(TestCase):

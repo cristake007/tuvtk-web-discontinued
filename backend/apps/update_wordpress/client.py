@@ -3,13 +3,18 @@ from __future__ import annotations
 import base64
 import json
 import random
+import socket
 import time
 from http.client import HTTPConnection, HTTPException, HTTPSConnection
 from typing import Any
 from urllib.parse import quote, urljoin, urlsplit
 
 from .domain import extract_slug_from_permalink
-from .validators import validate_http_url_syntax, validate_public_http_url
+from .validators import (
+    resolve_validated_target,
+    validate_http_url_syntax,
+    validate_public_http_url,
+)
 
 MAX_RESPONSE_BYTES = 5 * 1024 * 1024
 MAX_REDIRECTS = 3
@@ -23,6 +28,41 @@ REDIRECT_STATUS_CODES = {301, 302, 303, 307, 308}
 
 class WordPressRequestError(RuntimeError):
     """A client-safe WordPress integration failure."""
+
+
+class _PinnedHTTPConnection(HTTPConnection):
+    """HTTPConnection that connects to a pre-validated IP, not the hostname.
+
+    Standard HTTPConnection re-resolves ``host`` via getaddrinfo() inside
+    connect(), which would undo DNS-pinning done by the SSRF validator.
+    """
+
+    def __init__(self, host: str, pinned_ip: str, port: int, *, timeout: float):
+        super().__init__(host, port, timeout=timeout)
+        self._pinned_ip = pinned_ip
+
+    def connect(self) -> None:
+        self.sock = socket.create_connection(
+            (self._pinned_ip, self.port), self.timeout, self.source_address
+        )
+
+
+class _PinnedHTTPSConnection(HTTPSConnection):
+    """HTTPSConnection that connects to a pre-validated IP, not the hostname.
+
+    TLS server_hostname stays the original hostname so certificate
+    verification and SNI are unaffected by the IP pinning.
+    """
+
+    def __init__(self, host: str, pinned_ip: str, port: int, *, timeout: float):
+        super().__init__(host, port, timeout=timeout)
+        self._pinned_ip = pinned_ip
+
+    def connect(self) -> None:
+        sock = socket.create_connection(
+            (self._pinned_ip, self.port), self.timeout, self.source_address
+        )
+        self.sock = self._context.wrap_socket(sock, server_hostname=self.host)
 
 
 class WPCourseClient:
@@ -49,12 +89,17 @@ class WPCourseClient:
         use_auth: bool,
         json_body: Any = None,
     ) -> tuple[int, dict[str, str], bytes, str]:
-        validated_url = validate_public_http_url(url)
+        validated_url, pinned_ip = resolve_validated_target(url)
         parsed = urlsplit(validated_url)
-        connection_cls = HTTPSConnection if parsed.scheme == "https" else HTTPConnection
+        connection_cls = (
+            _PinnedHTTPSConnection if parsed.scheme == "https" else _PinnedHTTPConnection
+        )
+        port = parsed.port or (443 if parsed.scheme == "https" else 80)
 
         self._sleep_for_spacing()
-        connection = connection_cls(parsed.hostname, parsed.port, timeout=REQUEST_TIMEOUT_SECONDS)
+        connection = connection_cls(
+            parsed.hostname, pinned_ip, port, timeout=REQUEST_TIMEOUT_SECONDS
+        )
         try:
             headers = {
                 "User-Agent": "TUVTK-Update-WordPress/1.0",
@@ -199,6 +244,7 @@ class WPCourseClient:
                 if 200 <= fallback[0] < 300:
                     return fallback
                 last_result = fallback
+                status, headers = fallback[0], fallback[1]
 
             if status in RETRYABLE_STATUS_CODES and attempt < MAX_RETRIES:
                 time.sleep(self._compute_backoff(attempt, headers))
