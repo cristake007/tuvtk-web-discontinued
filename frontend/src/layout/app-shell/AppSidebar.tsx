@@ -1,19 +1,16 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { NavLink, useLocation } from "react-router";
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar";
 
@@ -87,57 +84,18 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
   }
 
   if (item.children.length > 0) {
-    if (!isMobile && state === "collapsed") {
-      return (
-        <MeniuFlyoutNavigatie
-          activ={activ}
-          caleCurenta={location.pathname}
-          clasaDeclansator={navigationLinkClassName}
-          item={item}
-        />
-      );
-    }
-
     return (
-      <SidebarMenuItem className="w-full">
-        <Collapsible onOpenChange={setDeschis} open={deschis}>
-          <CollapsibleTrigger
-            render={
-              <SidebarMenuButton
-                className={navigationLinkClassName}
-                isActive={activ}
-                tooltip={{
-                  children: item.label,
-                  ...sidebarTooltip,
-                }}
-              />
-            }
-          >
-            <Icon aria-hidden="true" />
-            <span className="whitespace-nowrap">{item.label}</span>
-            <ChevronRight
-              aria-hidden="true"
-              className={`ml-auto size-4 shrink-0 transition-transform ${deschis ? "rotate-90" : ""}`}
-            />
-          </CollapsibleTrigger>
-
-          <CollapsibleContent>
-            <SidebarMenuSub className="m-0 gap-0 border-0 p-0">
-              {item.children.map((copil) => (
-                <SidebarMenuSubItem key={copil.key}>
-                  <SidebarMenuSubButton
-                    className={navigationSubLinkClassName}
-                    isActive={isNavigationPathActive(location.pathname, copil.path)}
-                    render={<NavLink onClick={() => setOpenMobile(false)} to={copil.path} />}
-                  >
-                    <span>{copil.label}</span>
-                  </SidebarMenuSubButton>
-                </SidebarMenuSubItem>
-              ))}
-            </SidebarMenuSub>
-          </CollapsibleContent>
-        </Collapsible>
-      </SidebarMenuItem>
+      <MeniuFlyoutNavigatie
+        activ={activ}
+        caleCurenta={location.pathname}
+        clasaDeclansator={navigationLinkClassName}
+        clasaSubmeniu={navigationSubLinkClassName}
+        deschis={deschis}
+        esteRestrans={!isMobile && state === "collapsed"}
+        item={item}
+        onDeschisChange={setDeschis}
+        onNavigare={() => setOpenMobile(false)}
+      />
     );
   }
 
@@ -185,6 +143,34 @@ function BrandSidebarRail() {
   );
 }
 
+function SidebarCollapseControl() {
+  const { state, toggleSidebar } = useSidebar();
+  const esteRestrans = state === "collapsed";
+  const ControlIcon = esteRestrans ? PanelLeftOpen : PanelLeftClose;
+  const label = esteRestrans ? "Restaurează" : "Restrânge";
+
+  return (
+    <SidebarFooter className="hidden border-t border-sidebar-border bg-white p-0 md:flex">
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            aria-label={label}
+            className={navigationLinkClassName}
+            onClick={toggleSidebar}
+            tooltip={{
+              children: label,
+              ...sidebarTooltip,
+            }}
+          >
+            <ControlIcon aria-hidden="true" />
+            <span className="whitespace-nowrap">{label}</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    </SidebarFooter>
+  );
+}
+
 export function AppSidebar({ navigation }: AppSidebarProps) {
   return (
     <Sidebar
@@ -207,6 +193,7 @@ export function AppSidebar({ navigation }: AppSidebarProps) {
         </SidebarGroup>
       </SidebarContent>
 
+      <SidebarCollapseControl />
       <BrandSidebarRail />
     </Sidebar>
   );
