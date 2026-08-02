@@ -10,6 +10,7 @@ import { CompanyDetail } from "@/features/companii/components/CompanyDetail";
 import { CompanyForm } from "@/features/companii/components/CompanyForm";
 import { useCompany } from "@/features/companii/hooks/useCompany";
 import { companyQueryKeys } from "@/features/companii/queryKeys";
+import { parseCompanyRouteId } from "@/features/companii/routeId";
 import type { CompanyWrite } from "@/features/companii/types";
 
 export function CompaniiPage() {
@@ -17,10 +18,9 @@ export function CompaniiPage() {
 }
 
 export function CompanieDetailPage() {
-  const id = Number(useParams().companyId);
-  const isValidId = Number.isInteger(id) && id > 0;
-  const query = useCompany(id, isValidId);
-  if (!isValidId) return <Navigate replace to="/crm/companii" />;
+  const id = parseCompanyRouteId(useParams().companyId);
+  const query = useCompany(id ?? 0, id !== null);
+  if (id === null) return <Navigate replace to="/crm/companii" />;
   if (query.isPending || query.isError)
     return (
       <QueryApplicationState
@@ -39,21 +39,20 @@ export function CompanieDetailPage() {
 export function CompanieFormPage() {
   const rawId = useParams().companyId;
   const isEditing = rawId !== undefined;
-  const id = isEditing ? Number(rawId) : null;
-  const isValidId = id !== null && Number.isInteger(id) && id > 0;
-  const detail = useCompany(id ?? 0, isEditing && isValidId);
+  const id = parseCompanyRouteId(rawId);
+  const detail = useCompany(id ?? 0, isEditing && id !== null);
   const navigate = useNavigate();
   const client = useQueryClient();
   const mutation = useMutation({
     mutationFn: (values: CompanyWrite) =>
-      isEditing && isValidId ? updateCompany(id, values) : createCompany(values),
+      isEditing && id !== null ? updateCompany(id, values) : createCompany(values),
     onSuccess: (company) => {
       void client.invalidateQueries({ queryKey: companyQueryKeys.all });
       toast.success(isEditing ? "Compania a fost actualizată." : "Compania a fost creată.");
       navigate(`/crm/companii/${company.id}`);
     },
   });
-  if (isEditing && !isValidId) return <Navigate replace to="/crm/companii" />;
+  if (isEditing && id === null) return <Navigate replace to="/crm/companii" />;
   if (isEditing && (detail.isPending || detail.isError))
     return (
       <QueryApplicationState
