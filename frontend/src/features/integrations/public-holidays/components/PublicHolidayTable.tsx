@@ -63,7 +63,10 @@ export function PublicHolidayTable({
 
       <CardContent className="px-0">
         {loading ? (
-          <div className="flex min-h-56 items-center justify-center" aria-label="Se încarcă zilele nelucrătoare">
+          <div
+            className="flex min-h-56 items-center justify-center"
+            aria-label="Se încarcă zilele nelucrătoare"
+          >
             <Spinner className="size-6 text-primary" />
           </div>
         ) : holidays.length ? (

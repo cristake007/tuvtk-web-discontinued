@@ -11,9 +11,7 @@ describe("formatApiError", () => {
       400,
     );
 
-    expect(formatApiError(error, "Operațiunea a eșuat.")).toBe(
-      "Datele introduse nu sunt valide.",
-    );
+    expect(formatApiError(error, "Operațiunea a eșuat.")).toBe("Datele introduse nu sunt valide.");
   });
 
   it("nu afișează mesajele tehnice ale erorilor neașteptate", () => {
