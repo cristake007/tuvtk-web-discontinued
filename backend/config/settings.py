@@ -204,6 +204,13 @@ LOGIN_THROTTLE_LIMIT = int(os.environ.get("LOGIN_THROTTLE_LIMIT", "5"))
 LOGIN_THROTTLE_WINDOW_SECONDS = int(
     os.environ.get("LOGIN_THROTTLE_WINDOW_SECONDS", "300")
 )
+LOGIN_THROTTLE_TRUSTED_PROXY_DEPTH = int(
+    os.environ.get("LOGIN_THROTTLE_TRUSTED_PROXY_DEPTH", "1")
+)
+if LOGIN_THROTTLE_TRUSTED_PROXY_DEPTH < 1:
+    raise ImproperlyConfigured(
+        "LOGIN_THROTTLE_TRUSTED_PROXY_DEPTH must be at least 1."
+    )
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
@@ -218,7 +225,40 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": [
         "django_filters.rest_framework.DjangoFilterBackend",
     ],
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 100,
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+}
+
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {name} {message}",
+            "style": "{",
+        },
+    },
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+            "formatter": "verbose",
+            "level": "WARNING",
+            "stream": "ext://sys.stderr",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+        "apps": {
+            "handlers": ["console"],
+            "level": "WARNING",
+            "propagate": False,
+        },
+    },
 }
 
 SPECTACULAR_SETTINGS = {
