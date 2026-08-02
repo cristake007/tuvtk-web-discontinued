@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 
+import { textVariants } from "@/components/ui/text";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -206,8 +207,13 @@ export function UtilizatorForm({
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex items-center justify-between gap-4 rounded-md border p-3">
             <div>
-              <p className="text-sm font-medium">Cont activ</p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className={textVariants({ variant: "eticheta" })}>Cont activ</p>
+              <p
+                className={textVariants({
+                  variant: "detaliu",
+                  className: "mt-1 text-muted-foreground",
+                })}
+              >
                 Conturile inactive nu se pot autentifica.
               </p>
             </div>
@@ -221,8 +227,13 @@ export function UtilizatorForm({
 
           <div className="flex items-center justify-between gap-4 rounded-md border p-3">
             <div>
-              <p className="text-sm font-medium">Administrator</p>
-              <p className="mt-1 text-xs text-muted-foreground">
+              <p className={textVariants({ variant: "eticheta" })}>Administrator</p>
+              <p
+                className={textVariants({
+                  variant: "detaliu",
+                  className: "mt-1 text-muted-foreground",
+                })}
+              >
                 Oferă acces la secțiunile administrative.
               </p>
             </div>
@@ -243,7 +254,12 @@ export function UtilizatorForm({
                 Acces complet — superutilizatorii au acces la toate aplicațiile.
               </AlertDescription>
             </Alert>
-            <ul className="flex min-h-10 flex-wrap gap-2 rounded-md border p-3 text-sm">
+            <ul
+              className={textVariants({
+                variant: "interfata",
+                className: "flex min-h-10 flex-wrap gap-2 rounded-md border p-3",
+              })}
+            >
               {user?.effective_applications.map((application) => (
                 <li className="rounded-md bg-muted px-2 py-1" key={application.id}>
                   {application.name}
@@ -263,7 +279,12 @@ export function UtilizatorForm({
                   const checked = values.group_ids.includes(group.id);
                   return (
                     <li key={group.id}>
-                      <label className="flex cursor-pointer items-center gap-2 text-sm">
+                      <label
+                        className={textVariants({
+                          variant: "interfata",
+                          className: "flex cursor-pointer items-center gap-2",
+                        })}
+                      >
                         <Checkbox
                           checked={checked}
                           disabled={pending}
@@ -282,7 +303,14 @@ export function UtilizatorForm({
                   );
                 })}
                 {groups.length === 0 ? (
-                  <li className="text-sm text-muted-foreground">Nu există grupuri create.</li>
+                  <li
+                    className={textVariants({
+                      variant: "interfata",
+                      className: "text-muted-foreground",
+                    })}
+                  >
+                    Nu există grupuri create.
+                  </li>
                 ) : null}
               </ul>
             </Field>
@@ -293,7 +321,12 @@ export function UtilizatorForm({
                 Aplicațiile de mai jos sunt acordate de grupurile selectate și nu pot fi retrase din
                 acest formular.
               </FieldDescription>
-              <ul className="flex min-h-10 flex-wrap gap-2 rounded-md border p-3 text-sm">
+              <ul
+                className={textVariants({
+                  variant: "interfata",
+                  className: "flex min-h-10 flex-wrap gap-2 rounded-md border p-3",
+                })}
+              >
                 {inheritedApplications.length ? (
                   inheritedApplications.map((application) => (
                     <li className="rounded-md bg-muted px-2 py-1" key={application.id}>
@@ -314,7 +347,12 @@ export function UtilizatorForm({
                   const checked = values.direct_application_ids.includes(application.id);
                   return (
                     <li key={application.id}>
-                      <label className="flex cursor-pointer items-center gap-2 text-sm">
+                      <label
+                        className={textVariants({
+                          variant: "interfata",
+                          className: "flex cursor-pointer items-center gap-2",
+                        })}
+                      >
                         <Checkbox
                           checked={checked}
                           disabled={pending}

@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import { Save, Type } from "lucide-react";
 
+import { textVariants } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -54,7 +55,9 @@ export function TypographySettingsCard({
       <form onSubmit={onSubmit}>
         <CardContent>
           <fieldset className="grid gap-3">
-            <legend className="mb-1 text-sm font-medium">Dimensiunea textului</legend>
+            <legend className={textVariants({ variant: "eticheta", className: "mb-1" })}>
+              Dimensiunea textului
+            </legend>
             <RadioGroup
               aria-label="Dimensiunea globală a textului"
               disabled={saving}

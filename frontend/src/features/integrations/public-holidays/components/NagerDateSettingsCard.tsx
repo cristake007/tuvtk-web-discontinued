@@ -1,5 +1,6 @@
 import { CalendarSync, RefreshCw, Save } from "lucide-react";
 
+import { textVariants } from "@/components/ui/text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -84,7 +85,12 @@ export function NagerDateSettingsCard({
           <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
             <div>
               <Label htmlFor="public-holidays-enabled">Integrare activă</Label>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p
+                className={textVariants({
+                  variant: "interfata",
+                  className: "mt-1 text-muted-foreground",
+                })}
+              >
                 Permite sincronizarea manuală și automată cu Nager.Date.
               </p>
             </div>
@@ -99,7 +105,12 @@ export function NagerDateSettingsCard({
           <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
             <div>
               <Label htmlFor="public-holidays-automatic">Sincronizare automată</Label>
-              <p className="mt-1 text-sm text-muted-foreground">
+              <p
+                className={textVariants({
+                  variant: "interfata",
+                  className: "mt-1 text-muted-foreground",
+                })}
+              >
                 Celery Beat verifică zilnic dacă sincronizarea este scadentă.
               </p>
             </div>
@@ -140,7 +151,12 @@ export function NagerDateSettingsCard({
           </div>
         </div>
 
-        <dl className="grid content-start gap-3 rounded-lg bg-muted/40 p-4 text-xs text-muted-foreground">
+        <dl
+          className={textVariants({
+            variant: "detaliu",
+            className: "grid content-start gap-3 rounded-lg bg-muted/40 p-4 text-muted-foreground",
+          })}
+        >
           <div className="flex justify-between gap-4">
             <dt className="text-muted-foreground">Ultima încercare</dt>
             <dd className="text-right font-medium">
@@ -161,7 +177,12 @@ export function NagerDateSettingsCard({
           </div>
           <div className="border-t pt-3">
             <dt className="text-muted-foreground">Ultimul rezultat</dt>
-            <dd className="mt-2 grid grid-cols-2 gap-2 text-xs">
+            <dd
+              className={textVariants({
+                variant: "detaliu",
+                className: "mt-2 grid grid-cols-2 gap-2",
+              })}
+            >
               <span>Acceptate: {settings.last_accepted_count}</span>
               <span>Create: {settings.last_created_count}</span>
               <span>Actualizate: {settings.last_updated_count}</span>
@@ -169,7 +190,12 @@ export function NagerDateSettingsCard({
             </dd>
           </div>
           {settings.last_error ? (
-            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+            <div
+              className={textVariants({
+                variant: "interfata",
+                className: "rounded-md bg-destructive/10 p-3 text-destructive",
+              })}
+            >
               {settings.last_error}
             </div>
           ) : null}

@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { ArrowRight, LayoutGrid, Search } from "lucide-react";
 import { Link } from "react-router";
 
+import { textVariants } from "@/components/ui/text";
 import { Card, CardContent } from "@/components/ui/card";
 import { SectionTitle } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
@@ -29,7 +30,13 @@ function AdministrationEntryRow({ entry }: { entry: AdministrationEntry }) {
       >
         {entry.name}
       </p>
-      <p className="col-start-1 row-start-2 text-sm leading-5 text-muted-foreground sm:col-start-2 sm:row-start-1">
+      <p
+        className={textVariants({
+          variant: "interfata",
+          className:
+            "col-start-1 row-start-2 leading-5 text-muted-foreground sm:col-start-2 sm:row-start-1",
+        })}
+      >
         {entry.description}
       </p>
       {entry.href ? (
@@ -110,7 +117,7 @@ export function AdministrationPage() {
       {!hasQuery ? (
         <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed py-16 text-center">
           <LayoutGrid aria-hidden="true" className="size-6 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">
+          <p className={textVariants({ variant: "interfata", className: "text-muted-foreground" })}>
             Alege o secțiune din meniu sau caută o setare.
           </p>
         </div>
@@ -144,7 +151,11 @@ export function AdministrationPage() {
           <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
             <Search aria-hidden="true" className="size-5 text-muted-foreground" />
             <p className="font-medium">Nu am găsit rezultate</p>
-            <p className="text-sm text-muted-foreground">Încearcă un alt termen de căutare.</p>
+            <p
+              className={textVariants({ variant: "interfata", className: "text-muted-foreground" })}
+            >
+              Încearcă un alt termen de căutare.
+            </p>
           </CardContent>
         </Card>
       )}

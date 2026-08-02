@@ -1,6 +1,7 @@
 import type { FormEvent } from "react";
 import { Save, Settings2 } from "lucide-react";
 
+import { textVariants } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -64,7 +65,13 @@ export function GeneralSettingsCard({
                 onChange={(event) => onChangeNume(event.target.value)}
                 value={numeAplicatie}
               />
-              <p aria-live="polite" className="text-right text-xs text-muted-foreground">
+              <p
+                aria-live="polite"
+                className={textVariants({
+                  variant: "detaliu",
+                  className: "text-right text-muted-foreground",
+                })}
+              >
                 {numeAplicatie.length}/{NUME_APLICATIE_MAX_LENGTH}
               </p>
             </div>

@@ -9,6 +9,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { textVariants } from "@/components/ui/text";
 import { PageTitle } from "@/components/ui/heading";
 
 export type AdminBreadcrumbCrumb = {
@@ -58,7 +59,14 @@ export function AdminPageHeader({
           </div>
           {action ? <div className="flex shrink-0 flex-wrap gap-2">{action}</div> : null}
         </div>
-        <p className="mt-2 max-w-3xl text-base leading-6 text-muted-foreground">{description}</p>
+        <p
+          className={textVariants({
+            variant: "corp",
+            className: "mt-2 max-w-3xl leading-6 text-muted-foreground",
+          })}
+        >
+          {description}
+        </p>
       </div>
     </header>
   );

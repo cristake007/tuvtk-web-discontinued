@@ -9,6 +9,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { textVariants } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
 import { SectionTitle } from "@/components/ui/heading";
 
@@ -49,7 +50,7 @@ function ArtifactStatus({
       </span>
       <div className="min-w-0 flex-1">
         <p className="font-medium">{label}</p>
-        <p className="text-xs text-muted-foreground">
+        <p className={textVariants({ variant: "detaliu", className: "text-muted-foreground" })}>
           {available ? "Disponibil pentru descărcare" : "Va fi integrat în etapa următoare"}
         </p>
       </div>
@@ -73,7 +74,12 @@ export function PlannerSummaryCard({
           <ListChecks aria-hidden="true" className="size-4 text-primary" />
           Rezumat
         </SectionTitle>
-        <p className="mt-1 text-base leading-6 text-muted-foreground">
+        <p
+          className={textVariants({
+            variant: "corp",
+            className: "mt-1 leading-6 text-muted-foreground",
+          })}
+        >
           Verifică selecția înainte de generare și descarcă rezultatul curent.
         </p>
       </div>
@@ -91,7 +97,12 @@ export function PlannerSummaryCard({
         </div>
 
         <div className="grid gap-2">
-          <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+          <p
+            className={textVariants({
+              variant: "detaliu",
+              className: "font-semibold uppercase tracking-wide text-muted-foreground",
+            })}
+          >
             Fișiere generate
           </p>
           <ArtifactStatus
@@ -106,8 +117,15 @@ export function PlannerSummaryCard({
         {!result ? (
           <div className="py-2 text-center">
             <CalendarDays aria-hidden="true" className="mx-auto size-6 text-muted-foreground" />
-            <p className="mt-2 text-sm font-medium">Nicio planificare generată</p>
-            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            <p className={textVariants({ variant: "eticheta", className: "mt-2" })}>
+              Nicio planificare generată
+            </p>
+            <p
+              className={textVariants({
+                variant: "detaliu",
+                className: "mt-1 leading-5 text-muted-foreground",
+              })}
+            >
               Rezultatul și opțiunea de descărcare vor apărea aici după generare.
             </p>
           </div>

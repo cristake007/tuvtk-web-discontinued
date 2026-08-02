@@ -1,6 +1,7 @@
 import { LogOut, Settings, ShieldCheck, UserRound } from "lucide-react";
 import { NavLink } from "react-router";
 
+import { textVariants } from "@/components/ui/text";
 import { Avatar, AvatarBadge, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -74,7 +75,12 @@ export function UserMenu({ user, logoutPending, onLogout }: UserMenuProps) {
             <span className="flex items-center gap-2.5">
               <UserAvatar user={user} />
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold text-foreground">
+                <span
+                  className={textVariants({
+                    variant: "interfata",
+                    className: "block truncate font-semibold text-foreground",
+                  })}
+                >
                   {user.display_name}
                 </span>
                 <span className="mt-0.5 block truncate font-normal text-muted-foreground">

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 
+import { textVariants } from "@/components/ui/text";
 import { AntetAplicatie } from "@/components/AntetAplicatie";
 import { QueryApplicationState } from "@/components/QueryApplicationState";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -42,7 +43,12 @@ export function DocumentePanou() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-base leading-6 text-muted-foreground">
+          <p
+            className={textVariants({
+              variant: "corp",
+              className: "leading-6 text-muted-foreground",
+            })}
+          >
             Momentan nu există documente disponibile.
           </p>
         </CardContent>

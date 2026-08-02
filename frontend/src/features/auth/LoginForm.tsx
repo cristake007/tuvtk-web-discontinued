@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Eye, EyeOff, LockKeyhole } from "lucide-react";
 import { useNavigate } from "react-router";
 
+import { textVariants } from "@/components/ui/text";
 import { coreBootstrapQueryKey } from "@/api/core";
 import { ApiError } from "@/api/http";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -131,7 +132,12 @@ export function LoginForm() {
     <div className="w-full bg-transparent">
       <div>
         <PageTitle className="text-xl tracking-tight sm:text-2xl">Autentificare</PageTitle>
-        <p className="mt-2 text-sm leading-6 text-muted-foreground">
+        <p
+          className={textVariants({
+            variant: "interfata",
+            className: "mt-2 leading-6 text-muted-foreground",
+          })}
+        >
           Introdu datele contului tău pentru a continua.
         </p>
       </div>
@@ -139,7 +145,10 @@ export function LoginForm() {
       <form aria-busy={loginMutation.isPending} className="mt-7" noValidate onSubmit={handleSubmit}>
         <FieldGroup className="gap-4">
           <Field data-invalid={Boolean(fieldErrors.username)}>
-            <FieldLabel className="text-xs font-medium" htmlFor="username">
+            <FieldLabel
+              className={textVariants({ variant: "detaliu", className: "font-medium" })}
+              htmlFor="username"
+            >
               Nume de utilizator
             </FieldLabel>
             <Input
@@ -147,7 +156,11 @@ export function LoginForm() {
               aria-invalid={Boolean(fieldErrors.username)}
               autoCapitalize="none"
               autoComplete="username"
-              className="h-9 rounded-lg border-transparent bg-muted/70 px-3 text-sm shadow-none transition-colors focus-visible:bg-card"
+              className={textVariants({
+                variant: "interfata",
+                className:
+                  "h-9 rounded-lg border-transparent bg-muted/70 px-3 shadow-none transition-colors focus-visible:bg-card",
+              })}
               disabled={loginMutation.isPending}
               id="username"
               maxLength={150}
@@ -159,13 +172,16 @@ export function LoginForm() {
               type="text"
               value={credentials.username}
             />
-            <FieldError className="text-xs" id="username-error">
+            <FieldError className={textVariants({ variant: "detaliu" })} id="username-error">
               {fieldErrors.username}
             </FieldError>
           </Field>
 
           <Field data-invalid={Boolean(fieldErrors.password)}>
-            <FieldLabel className="text-xs font-medium" htmlFor="password">
+            <FieldLabel
+              className={textVariants({ variant: "detaliu", className: "font-medium" })}
+              htmlFor="password"
+            >
               Parolă
             </FieldLabel>
             <div className="relative">
@@ -173,7 +189,11 @@ export function LoginForm() {
                 aria-describedby={fieldErrors.password ? "password-error" : undefined}
                 aria-invalid={Boolean(fieldErrors.password)}
                 autoComplete="current-password"
-                className="h-9 rounded-lg border-transparent bg-muted/70 px-3 pr-9 text-sm shadow-none transition-colors focus-visible:bg-card"
+                className={textVariants({
+                  variant: "interfata",
+                  className:
+                    "h-9 rounded-lg border-transparent bg-muted/70 px-3 pr-9 shadow-none transition-colors focus-visible:bg-card",
+                })}
                 disabled={loginMutation.isPending}
                 id="password"
                 name="password"
@@ -198,19 +218,27 @@ export function LoginForm() {
                 )}
               </button>
             </div>
-            <FieldError className="text-xs" id="password-error">
+            <FieldError className={textVariants({ variant: "detaliu" })} id="password-error">
               {fieldErrors.password}
             </FieldError>
           </Field>
 
           {serverError ? (
             <Alert aria-live="polite" className="py-2.5" variant="destructive">
-              <AlertDescription className="text-xs leading-5">{serverError}</AlertDescription>
+              <AlertDescription
+                className={textVariants({ variant: "detaliu", className: "leading-5" })}
+              >
+                {serverError}
+              </AlertDescription>
             </Alert>
           ) : null}
 
           <Button
-            className="mt-1 h-10 w-full cursor-pointer rounded-lg border-primary bg-card text-sm font-semibold text-primary shadow-sm shadow-primary/15 transition-all hover:bg-primary hover:text-primary-foreground active:translate-y-px"
+            className={textVariants({
+              variant: "interfata",
+              className:
+                "mt-1 h-10 w-full cursor-pointer rounded-lg border-primary bg-card font-semibold text-primary shadow-sm shadow-primary/15 transition-all hover:bg-primary hover:text-primary-foreground active:translate-y-px",
+            })}
             disabled={loginMutation.isPending}
             type="submit"
           >

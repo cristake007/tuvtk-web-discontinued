@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Pencil, Plus, Search, Trash2, UsersRound } from "lucide-react";
 import { toast } from "sonner";
 
+import { textVariants } from "@/components/ui/text";
 import { QueryApplicationState } from "@/components/QueryApplicationState";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -165,7 +166,12 @@ function GrupDialog({
             <ul className="grid gap-2 rounded-md border p-3 sm:grid-cols-2">
               {applications.map((application) => (
                 <li key={application.id}>
-                  <label className="flex cursor-pointer items-center gap-2 text-sm">
+                  <label
+                    className={textVariants({
+                      variant: "interfata",
+                      className: "flex cursor-pointer items-center gap-2",
+                    })}
+                  >
                     <Checkbox
                       checked={values.application_ids.includes(application.id)}
                       disabled={pending}
@@ -195,11 +201,23 @@ function GrupDialog({
             />
             <ul className="grid max-h-52 gap-2 overflow-y-auto rounded-md border p-3 sm:grid-cols-2">
               {selectionQuery.isPending ? (
-                <li className="text-sm text-muted-foreground">Se caută utilizatori…</li>
+                <li
+                  className={textVariants({
+                    variant: "interfata",
+                    className: "text-muted-foreground",
+                  })}
+                >
+                  Se caută utilizatori…
+                </li>
               ) : null}
               {visibleUsers.map((user) => (
                 <li key={user.id}>
-                  <label className="flex cursor-pointer items-center gap-2 text-sm">
+                  <label
+                    className={textVariants({
+                      variant: "interfata",
+                      className: "flex cursor-pointer items-center gap-2",
+                    })}
+                  >
                     <Checkbox
                       checked={values.user_ids.includes(user.id)}
                       disabled={pending}
@@ -219,7 +237,12 @@ function GrupDialog({
                 </li>
               ))}
             </ul>
-            <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <div
+              className={textVariants({
+                variant: "detaliu",
+                className: "flex items-center justify-between text-muted-foreground",
+              })}
+            >
               <span>{selectionQuery.data?.count ?? 0} utilizatori</span>
               <div className="flex gap-2">
                 <Button
@@ -357,7 +380,12 @@ export function GrupuriAplicatiiPanel() {
                 <UsersRound aria-hidden="true" className="size-5 shrink-0 text-primary" />
                 <div className="min-w-0 flex-1">
                   <p className="font-medium">{group.name}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p
+                    className={textVariants({
+                      variant: "interfata",
+                      className: "mt-1 text-muted-foreground",
+                    })}
+                  >
                     {group.applications.length
                       ? group.applications.map((application) => application.name).join(", ")
                       : "Fără aplicații selectate"}{" "}

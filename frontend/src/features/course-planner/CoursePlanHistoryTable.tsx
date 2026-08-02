@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { FileCode, FileSpreadsheet, FileText } from "lucide-react";
 
+import { textVariants } from "@/components/ui/text";
 import { AntetAplicatie } from "@/components/AntetAplicatie";
 import { ContentEmptyState } from "@/components/ContentEmptyState";
 import { QueryApplicationState } from "@/components/QueryApplicationState";
@@ -226,7 +227,7 @@ export function CoursePlanHistoryTable() {
       </section>
 
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <p className="text-xs text-muted-foreground">
+        <p className={textVariants({ variant: "detaliu", className: "text-muted-foreground" })}>
           {historyQuery.data?.count ?? 0} generări · pagina {page} din {pageCount}
         </p>
         <Pagination className="mx-0 w-auto justify-end">

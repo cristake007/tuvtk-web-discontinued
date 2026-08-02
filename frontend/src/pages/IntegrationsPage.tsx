@@ -1,6 +1,7 @@
 import { ArrowRight, CalendarDays } from "lucide-react";
 import { Link } from "react-router";
 
+import { textVariants } from "@/components/ui/text";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StaticCatalogPage } from "@/components/StaticCatalogPage";
@@ -51,7 +52,12 @@ export function IntegrationsPage() {
                   </CardAction>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-sm leading-6 text-muted-foreground">
+                  <p
+                    className={textVariants({
+                      variant: "interfata",
+                      className: "leading-6 text-muted-foreground",
+                    })}
+                  >
                     {integration.description}
                   </p>
                 </CardContent>

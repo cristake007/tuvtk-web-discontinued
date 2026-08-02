@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { FileSpreadsheet } from "lucide-react";
 
+import { textVariants } from "@/components/ui/text";
 import { SectionTitle } from "@/components/ui/heading";
 import {
   Pagination,
@@ -74,11 +75,16 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
             <FileSpreadsheet aria-hidden="true" className="size-4 text-primary" />
             Planificare generată
           </SectionTitle>
-          <p className="mt-1 text-base leading-6 text-muted-foreground">
+          <p
+            className={textVariants({
+              variant: "corp",
+              className: "mt-1 leading-6 text-muted-foreground",
+            })}
+          >
             {rows.length} cursuri distincte distribuite în lunile selectate.
           </p>
         </div>
-        <p className="text-xs text-muted-foreground">
+        <p className={textVariants({ variant: "detaliu", className: "text-muted-foreground" })}>
           {rows.length === 0 ? "Niciun curs" : `${pageStart + 1}–${pageStart + visibleRows.length}`}{" "}
           din {rows.length}
         </p>
@@ -125,7 +131,7 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
 
       {pageCount > 1 ? (
         <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
-          <p className="text-xs text-muted-foreground">
+          <p className={textVariants({ variant: "detaliu", className: "text-muted-foreground" })}>
             Pagina {currentPage} din {pageCount}
           </p>
           <Pagination className="mx-0 w-auto justify-end">

@@ -2,6 +2,7 @@ import type { FormEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarCheck2, FileSpreadsheet, Save, Sparkles } from "lucide-react";
 
+import { textVariants } from "@/components/ui/text";
 import { FileUploadField } from "@/components/FileUploadField";
 import { Button } from "@/components/ui/button";
 import { SectionTitle } from "@/components/ui/heading";
@@ -77,7 +78,12 @@ export function PlannerConfigurationCard({
             <Sparkles aria-hidden="true" className="size-4 text-primary" />
             Configurare planificare
           </SectionTitle>
-          <p className="mt-1 text-base leading-6 text-muted-foreground">
+          <p
+            className={textVariants({
+              variant: "corp",
+              className: "mt-1 leading-6 text-muted-foreground",
+            })}
+          >
             Fișierul, lunile și regulile de distribuție folosite pentru această generare.
           </p>
         </div>
@@ -97,7 +103,12 @@ export function PlannerConfigurationCard({
           />
 
           <div className="grid gap-5 border-y py-6 sm:grid-cols-2">
-            <div className="grid content-start gap-2 text-sm font-medium">
+            <div
+              className={textVariants({
+                variant: "eticheta",
+                className: "grid content-start gap-2",
+              })}
+            >
               <label htmlFor="planner-year">Anul planificării</label>
               <Select
                 disabled={busy}
@@ -115,12 +126,22 @@ export function PlannerConfigurationCard({
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs font-normal leading-5 text-muted-foreground">
+              <p
+                className={textVariants({
+                  variant: "detaliu",
+                  className: "font-normal leading-5 text-muted-foreground",
+                })}
+              >
                 Anul folosit pentru toate perioadele generate.
               </p>
             </div>
 
-            <div className="grid content-start gap-2 text-sm font-medium">
+            <div
+              className={textVariants({
+                variant: "eticheta",
+                className: "grid content-start gap-2",
+              })}
+            >
               <label htmlFor="randomness">Nivel de distribuție</label>
               <div className="flex items-center gap-3 py-2">
                 <Slider
@@ -136,16 +157,32 @@ export function PlannerConfigurationCard({
                   step={1}
                   value={[settings.randomness]}
                 />
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">
+                <span
+                  className={textVariants({
+                    variant: "interfata",
+                    className:
+                      "grid size-8 shrink-0 place-items-center rounded-lg bg-primary font-semibold text-primary-foreground",
+                  })}
+                >
                   {settings.randomness}
                 </span>
               </div>
-              <p className="text-xs font-normal leading-5 text-muted-foreground">
+              <p
+                className={textVariants({
+                  variant: "detaliu",
+                  className: "font-normal leading-5 text-muted-foreground",
+                })}
+              >
                 1 păstrează mai mult spațiu între cursuri, iar 10 distribuie mai liber.
               </p>
             </div>
 
-            <div className="grid content-start gap-2 text-sm font-medium sm:col-span-2">
+            <div
+              className={textVariants({
+                variant: "eticheta",
+                className: "grid content-start gap-2 sm:col-span-2",
+              })}
+            >
               <label htmlFor="xml-start-post-id">ID inițial pentru XML WordPress</label>
               <Input
                 disabled={busy}
@@ -162,14 +199,19 @@ export function PlannerConfigurationCard({
                 type="number"
                 value={settings.xml_start_post_id}
               />
-              <p className="text-xs font-normal leading-5 text-muted-foreground">
+              <p
+                className={textVariants({
+                  variant: "detaliu",
+                  className: "font-normal leading-5 text-muted-foreground",
+                })}
+              >
                 Primul ID de postare folosit la generarea fișierului XML pentru cursuri noi.
               </p>
             </div>
           </div>
 
           <fieldset className="grid gap-3 border-b pb-7" disabled={busy}>
-            <legend className="text-sm font-medium">Lunile incluse</legend>
+            <legend className={textVariants({ variant: "eticheta" })}>Lunile incluse</legend>
             <div className="flex justify-end gap-2">
               <Button onClick={onSelectAllMonths} size="xs" type="button" variant="outline">
                 Toate
@@ -208,18 +250,35 @@ export function PlannerConfigurationCard({
           <section className="flex gap-3 border-l-2 border-primary pl-4">
             <CalendarCheck2 aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-primary" />
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-medium">Zile libere administrate automat</p>
-              <p className="text-xs leading-5 text-muted-foreground">
+              <p className={textVariants({ variant: "eticheta" })}>
+                Zile libere administrate automat
+              </p>
+              <p
+                className={textVariants({
+                  variant: "detaliu",
+                  className: "leading-5 text-muted-foreground",
+                })}
+              >
                 Acestea sunt zilele legale și interne pe care generatorul le va exclude pentru anul
                 și lunile selectate.
               </p>
               {settings.months.length === 0 ? (
-                <p className="mt-2 text-xs text-muted-foreground">
+                <p
+                  className={textVariants({
+                    variant: "detaliu",
+                    className: "mt-2 text-muted-foreground",
+                  })}
+                >
                   Selectează cel puțin o lună pentru a verifica zilele libere.
                 </p>
               ) : null}
               {holidaysQuery.isError ? (
-                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                <div
+                  className={textVariants({
+                    variant: "detaliu",
+                    className: "mt-3 flex flex-wrap items-center gap-2 text-muted-foreground",
+                  })}
+                >
                   Zilele libere nu au putut fi încărcate.
                   <Button
                     onClick={() => void holidaysQuery.refetch()}
@@ -233,13 +292,23 @@ export function PlannerConfigurationCard({
               ) : null}
               {holidaysQuery.isSuccess ? (
                 <div className="mt-3 grid gap-2">
-                  <p className="text-xs font-medium text-foreground">
+                  <p
+                    className={textVariants({
+                      variant: "detaliu",
+                      className: "font-medium text-foreground",
+                    })}
+                  >
                     {holidaysQuery.data.length === 1
                       ? "1 zi liberă preluată"
                       : `${holidaysQuery.data.length} zile libere preluate`}
                   </p>
                   {holidaysQuery.data.length > 0 ? (
-                    <ul className="grid max-h-40 divide-y overflow-y-auto border-y text-xs">
+                    <ul
+                      className={textVariants({
+                        variant: "detaliu",
+                        className: "grid max-h-40 divide-y overflow-y-auto border-y",
+                      })}
+                    >
                       {holidaysQuery.data.map((holiday) => (
                         <li
                           className="flex items-center justify-between gap-3 px-3 py-2"
@@ -255,7 +324,12 @@ export function PlannerConfigurationCard({
                       ))}
                     </ul>
                   ) : (
-                    <p className="text-xs text-muted-foreground">
+                    <p
+                      className={textVariants({
+                        variant: "detaliu",
+                        className: "text-muted-foreground",
+                      })}
+                    >
                       Nu există zile libere salvate pentru această selecție.
                     </p>
                   )}
