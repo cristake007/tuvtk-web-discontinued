@@ -8,7 +8,15 @@ const root = process.cwd();
 const sourceRoot = path.join(root, "src");
 const failures = [];
 const effectHooks = new Set(["useEffect", "useLayoutEffect"]);
-const manualHeadingTextSizes = new Set(["text-2xl", "text-3xl", "text-lg", "text-xl"]);
+const manualHeadingTextSizes = new Set([
+  "text-xs",
+  "text-sm",
+  "text-base",
+  "text-lg",
+  "text-xl",
+  "text-2xl",
+  "text-3xl",
+]);
 const manualTextRoleSizes = new Set(["text-xs", "text-sm", "text-base"]);
 
 async function collectSourceFiles(directory) {
@@ -93,7 +101,8 @@ function inspectFile(fileName, sourceText) {
   );
   const permitsManualHeadingClasses =
     relativePath === "components/ui/heading.tsx" ||
-    relativePath === "features/administration/AdminPageHeader.tsx";
+    relativePath === "features/administration/AdminPageHeader.tsx" ||
+    relativePath === "components/ApplicationState.tsx";
   const expectedPageExport =
     relativePath.startsWith("pages/") && relativePath.endsWith("Page.tsx")
       ? path.basename(fileName, ".tsx")
@@ -134,7 +143,7 @@ function inspectFile(fileName, sourceText) {
       !permitsManualHeadingClasses &&
       (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node)) &&
       ts.isIdentifier(node.tagName) &&
-      ["h1", "h2"].includes(node.tagName.text)
+      ["h1", "h2", "h3"].includes(node.tagName.text)
     ) {
       const className = getStaticJsxAttributeText(node.attributes, "className");
       const hasManualHeadingTextSize = className

@@ -39,7 +39,7 @@ export function TypographySettingsCard({
             <Type aria-hidden="true" className="size-5" />
           </span>
           <div>
-            <CardTitle>Tipografie</CardTitle>
+            <CardTitle as="h2">Tipografie</CardTitle>
             <CardDescription className="mt-1">
               Dimensiunea textului se aplică global tuturor utilizatorilor și paginilor.
             </CardDescription>

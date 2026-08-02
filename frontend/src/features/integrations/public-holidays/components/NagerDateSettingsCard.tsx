@@ -69,7 +69,7 @@ export function NagerDateSettingsCard({
             <CalendarSync aria-hidden="true" className="size-5" />
           </span>
           <div>
-            <CardTitle>Nager.Date România</CardTitle>
+            <CardTitle as="h2">Nager.Date România</CardTitle>
             <CardDescription className="mt-1">
               Preia denumirile locale ale sărbătorilor legale și le păstrează în baza de date.
             </CardDescription>

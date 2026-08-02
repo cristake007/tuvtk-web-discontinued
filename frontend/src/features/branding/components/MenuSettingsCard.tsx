@@ -49,7 +49,7 @@ export function MenuSettingsCard({
             <Menu aria-hidden="true" className="size-5" />
           </span>
           <div>
-            <CardTitle>Ordinea meniului</CardTitle>
+            <CardTitle as="h2">Ordinea meniului</CardTitle>
             <CardDescription className="mt-1">
               Trage elementele principale în poziția dorită sau adaugă separatoare pentru a grupa
               vizual secțiunile meniului.

@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Save } from "lucide-react";
 
 import { textVariants } from "@/components/ui/text";
+import { SectionTitle } from "@/components/ui/heading";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -133,7 +134,15 @@ export function BrandColorsSection({
     <form onSubmit={onSubmit}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h3 className={textVariants({ variant: "eticheta" })}>Culori de bază</h3>
+          <SectionTitle
+            as="h3"
+            className={textVariants({
+              variant: "eticheta",
+              className: "tracking-normal text-card-foreground sm:text-sm",
+            })}
+          >
+            Culori de bază
+          </SectionTitle>
           <p
             className={textVariants({
               variant: "interfata",

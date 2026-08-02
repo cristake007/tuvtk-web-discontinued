@@ -14,9 +14,13 @@ function PageTitle({ className, ...props }: React.ComponentProps<"h1">) {
   )
 }
 
-function SectionTitle({ className, ...props }: React.ComponentProps<"h2">) {
+function SectionTitle({
+  as: Component = "h2",
+  className,
+  ...props
+}: React.ComponentProps<"h2"> & { as?: "h2" | "h3" }) {
   return (
-    <h2
+    <Component
       className={cn(
         "text-lg font-semibold tracking-tight text-heading sm:text-xl",
         className

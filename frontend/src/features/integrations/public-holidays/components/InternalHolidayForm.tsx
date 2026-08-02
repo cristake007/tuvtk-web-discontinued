@@ -40,7 +40,9 @@ export function InternalHolidayForm({
               <CalendarPlus aria-hidden="true" className="size-5" />
             </span>
             <div>
-              <CardTitle>{editing ? "Modifică ziua internă" : "Adaugă zi internă"}</CardTitle>
+              <CardTitle as="h2">
+                {editing ? "Modifică ziua internă" : "Adaugă zi internă"}
+              </CardTitle>
               <CardDescription className="mt-1">
                 Zilele interne sunt păstrate separat și nu sunt suprascrise de Nager.Date.
               </CardDescription>

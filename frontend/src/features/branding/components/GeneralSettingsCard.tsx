@@ -40,7 +40,7 @@ export function GeneralSettingsCard({
             <Settings2 aria-hidden="true" className="size-5" />
           </span>
           <div>
-            <CardTitle>Identitatea aplicației</CardTitle>
+            <CardTitle as="h2">Identitatea aplicației</CardTitle>
             <CardDescription className="mt-1">
               Numele afișat în antet, în titlul filei de browser și pe paginile publice.
             </CardDescription>

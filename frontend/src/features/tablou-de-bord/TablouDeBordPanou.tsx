@@ -36,7 +36,7 @@ export function TablouDeBordPanou() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Modulele tale vor apărea aici</CardTitle>
+          <CardTitle as="h2">Modulele tale vor apărea aici</CardTitle>
           <CardDescription>
             Pe măsură ce modulele sunt activate, acest tablou de bord le va centraliza accesul și
             informațiile utile.

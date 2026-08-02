@@ -3,6 +3,7 @@ import { ImageUp, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { textVariants } from "@/components/ui/text";
+import { SectionTitle } from "@/components/ui/heading";
 import { QueryApplicationState } from "@/components/QueryApplicationState";
 import { FileUploadField } from "@/components/FileUploadField";
 import { Button } from "@/components/ui/button";
@@ -74,7 +75,15 @@ export function CompanyLogoSettings() {
 
   return (
     <div>
-      <h3 className={textVariants({ variant: "eticheta" })}>Sigla companiei</h3>
+      <SectionTitle
+        as="h3"
+        className={textVariants({
+          variant: "eticheta",
+          className: "tracking-normal text-card-foreground sm:text-sm",
+        })}
+      >
+        Sigla companiei
+      </SectionTitle>
       <p
         className={textVariants({ variant: "interfata", className: "mt-1 text-muted-foreground" })}
       >

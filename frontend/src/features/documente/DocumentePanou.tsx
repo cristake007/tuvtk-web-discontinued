@@ -36,7 +36,7 @@ export function DocumentePanou() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Documentele vor apărea aici</CardTitle>
+          <CardTitle as="h2">Documentele vor apărea aici</CardTitle>
           <CardDescription>
             Modulul este pregătit pentru fluxurile viitoare de încărcare, organizare și consultare a
             documentelor.
