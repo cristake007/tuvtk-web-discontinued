@@ -163,72 +163,69 @@ export function CoursePlannerPanel() {
   }
 
   return (
-    <div className="flex w-full min-w-0 flex-1 flex-col gap-6">
+    <div className="flex w-full min-w-0 flex-1 flex-col gap-10">
       <div className="flex justify-end">
         <Button
           nativeButton={false}
           render={<Link to="/planificator-cursuri/istoric" />}
-          variant="outline"
+          variant="ghost"
         >
           <History aria-hidden="true" />
           Istoric generări
         </Button>
       </div>
 
-      <div className="grid min-w-0 gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
-        <PlannerConfigurationCard
-          file={inputFile}
-          generatePending={generateMutation.isPending}
-          onClearMonths={() => {
-            setSettings((current) => ({ ...current, months: [] }));
-            clearResult();
-          }}
-          onFileChange={(file) => {
-            setInputFile(file ?? null);
-            clearResult();
-          }}
-          onGenerate={handleGenerate}
-          onRandomnessChange={(randomness) => {
-            setSettings((current) => ({ ...current, randomness }));
-            clearResult();
-          }}
-          onSave={() => saveMutation.mutate(settings)}
-          onSelectAllMonths={() => {
-            setSettings((current) => ({
-              ...current,
-              months: Array.from({ length: 12 }, (_, index) => index + 1),
-            }));
-            clearResult();
-          }}
-          onToggleMonth={(month) => {
-            setSettings((current) => ({
-              ...current,
-              months: current.months.includes(month)
-                ? current.months.filter((value) => value !== month)
-                : [...current.months, month].sort((left, right) => left - right),
-            }));
-            clearResult();
-          }}
-          onXmlStartPostIdChange={(xml_start_post_id) => {
-            setSettings((current) => ({ ...current, xml_start_post_id }));
-          }}
-          onYearChange={(year) => {
-            setSettings((current) => ({ ...current, year }));
-            clearResult();
-          }}
-          savePending={saveMutation.isPending}
-          settings={settings}
-        />
-
-        <PlannerSummaryCard
-          downloadPending={downloadMutation.isPending}
-          onDownload={handleDownload}
-          result={result}
-        />
-      </div>
+      <PlannerConfigurationCard
+        file={inputFile}
+        generatePending={generateMutation.isPending}
+        onClearMonths={() => {
+          setSettings((current) => ({ ...current, months: [] }));
+          clearResult();
+        }}
+        onFileChange={(file) => {
+          setInputFile(file ?? null);
+          clearResult();
+        }}
+        onGenerate={handleGenerate}
+        onRandomnessChange={(randomness) => {
+          setSettings((current) => ({ ...current, randomness }));
+          clearResult();
+        }}
+        onSave={() => saveMutation.mutate(settings)}
+        onSelectAllMonths={() => {
+          setSettings((current) => ({
+            ...current,
+            months: Array.from({ length: 12 }, (_, index) => index + 1),
+          }));
+          clearResult();
+        }}
+        onToggleMonth={(month) => {
+          setSettings((current) => ({
+            ...current,
+            months: current.months.includes(month)
+              ? current.months.filter((value) => value !== month)
+              : [...current.months, month].sort((left, right) => left - right),
+          }));
+          clearResult();
+        }}
+        onXmlStartPostIdChange={(xml_start_post_id) => {
+          setSettings((current) => ({ ...current, xml_start_post_id }));
+        }}
+        onYearChange={(year) => {
+          setSettings((current) => ({ ...current, year }));
+          clearResult();
+        }}
+        savePending={saveMutation.isPending}
+        settings={settings}
+      />
 
       {result ? (
-        <div ref={scheduleSectionRef} className="scroll-mt-20">
+        <div className="grid gap-10 scroll-mt-20" ref={scheduleSectionRef}>
+          <PlannerSummaryCard
+            downloadPending={downloadMutation.isPending}
+            onDownload={handleDownload}
+            result={result}
+          />
           <CourseScheduleTable schedule={result.schedule} />
         </div>
       ) : null}
