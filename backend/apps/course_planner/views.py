@@ -14,7 +14,6 @@ from rest_framework.views import APIView
 
 from apps.core.permissions import HasApplicationAccess
 from apps.public_holidays.calendar import get_holiday_dates
-from config.error_serializers import first_serializer_error
 from config.formats import ROMANIAN_DATE_FORMAT
 
 from .files import (
@@ -91,11 +90,7 @@ class CoursePlannerSettingsView(APIView):
     )
     def put(self, request):
         serializer = CoursePlannerSettingsSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {"detail": first_serializer_error(serializer.errors)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer.is_valid(raise_exception=True)
 
         settings = update_course_planner_settings(**serializer.validated_data)
         return Response(CoursePlannerSettingsSerializer(serialize_settings(settings)).data)
@@ -117,11 +112,7 @@ class CoursePlannerHolidaysView(APIView):
     )
     def get(self, request):
         serializer = CoursePlannerHolidayQuerySerializer(data=request.query_params)
-        if not serializer.is_valid():
-            return Response(
-                {"detail": first_serializer_error(serializer.errors)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer.is_valid(raise_exception=True)
 
         values = serializer.validated_data
         holidays = get_course_planner_holidays(
@@ -149,11 +140,7 @@ class GenerateScheduleView(APIView):
     )
     def post(self, request):
         serializer = GenerateScheduleSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {"detail": first_serializer_error(serializer.errors)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer.is_valid(raise_exception=True)
 
         values = serializer.validated_data
         upload = values["input_file"]
@@ -320,11 +307,7 @@ class ExportScheduleView(APIView):
     )
     def post(self, request):
         serializer = ExportScheduleSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {"detail": first_serializer_error(serializer.errors)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer.is_valid(raise_exception=True)
 
         generation = get_object_or_404(
             CoursePlanGeneration,
@@ -366,11 +349,7 @@ class FormatXmlView(APIView):
     )
     def post(self, request):
         serializer = FormatXmlRequestSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {"detail": first_serializer_error(serializer.errors)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer.is_valid(raise_exception=True)
 
         upload = serializer.validated_data["input_file"]
         extension = Path(upload.name).suffix.casefold()
@@ -414,11 +393,7 @@ class WordMatchPreviewView(APIView):
     )
     def post(self, request):
         serializer = WordMatchPreviewRequestSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {"detail": first_serializer_error(serializer.errors)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer.is_valid(raise_exception=True)
 
         word_upload = serializer.validated_data["word_file"]
         schedule_upload = serializer.validated_data["schedule_file"]
@@ -457,11 +432,7 @@ class WordMatchGenerateView(APIView):
     )
     def post(self, request):
         serializer = WordMatchGenerateRequestSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(
-                {"detail": first_serializer_error(serializer.errors)},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        serializer.is_valid(raise_exception=True)
 
         values = serializer.validated_data
         schedule_rows = [
