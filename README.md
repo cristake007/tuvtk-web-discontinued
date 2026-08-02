@@ -83,7 +83,11 @@ Celery worker ──> Redis ──> background tasks
 Celery Beat   ──> Redis ──> scheduled task delivery
 ```
 
-`compose.override.yaml` starts Django `runserver`, Vite, the Celery worker, and Celery Beat for development. Backend and frontend source directories are bind-mounted. Python source changes require restarting the worker and Beat processes because Celery does not reload task code automatically.
+`compose.yaml` is the neutral production base: it runs the built backend image and keeps PostgreSQL private inside the Compose network. Start it with `docker compose -f compose.yaml up -d`.
+
+`compose.override.yaml` is automatically included by `docker compose up` and adds development mode: Django `runserver`, Vite, OpenSearch, local source bind mounts, locally published database ports, and the host user's UID and GID. Start development with `./dev up` (or `docker compose up -d`). Python source changes require restarting the worker and Beat processes because Celery does not reload task code automatically.
+
+The optional `onrc-data/` directory is mounted read-only at `/data/onrc` in development for local ONRC data snapshots. It is ignored by Git and must be created manually before importing snapshots.
 
 ## Initial setup
 

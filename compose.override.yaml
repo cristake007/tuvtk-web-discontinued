@@ -3,6 +3,8 @@ services:
     build:
       target: development
 
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+
     command:
       - python
       - manage.py
@@ -17,9 +19,20 @@ services:
       OPENSEARCH_USERNAME: ""
       OPENSEARCH_VERIFY_CERTS: "false"
 
+    volumes:
+      - type: bind
+        source: ./backend
+        target: /app
+      - type: bind
+        source: ./onrc-data
+        target: /data/onrc
+        read_only: true
+
   celery_worker:
     build:
       target: development
+
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
 
     environment:
       OPENSEARCH_CA_CERTS: ""
@@ -28,9 +41,35 @@ services:
       OPENSEARCH_USERNAME: ""
       OPENSEARCH_VERIFY_CERTS: "false"
 
+    volumes:
+      - type: bind
+        source: ./backend
+        target: /app
+        read_only: true
+      - type: bind
+        source: ./onrc-data
+        target: /data/onrc
+        read_only: true
+
   celery_beat:
     build:
       target: development
+
+    user: "${LOCAL_UID:-1000}:${LOCAL_GID:-1000}"
+
+    volumes:
+      - type: bind
+        source: ./backend
+        target: /app
+        read_only: true
+
+  db_core:
+    ports:
+      - "127.0.0.1:${CORE_DB_EXPOSED_PORT:-5432}:5432"
+
+  db_registry:
+    ports:
+      - "127.0.0.1:${REGISTRY_DB_EXPOSED_PORT:-5433}:5432"
 
   opensearch:
     image: opensearchproject/opensearch:3.7.0
@@ -109,15 +148,6 @@ services:
 
     init: true
     restart: "no"
-
-  architecture-viewer:
-    image: nginx:alpine
-    volumes:
-      - ./docs/page-structure/viewer:/usr/share/nginx/html:ro
-    ports:
-      - ":8090:80"
-    restart: unless-stopped
-
 
 volumes:
   opensearch_data:
