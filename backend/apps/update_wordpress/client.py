@@ -32,7 +32,7 @@ class WPCourseClient:
 
         clean_username = (username or "").strip()
         clean_password = (app_password or "").strip().replace(" ", "")
-        credentials = f"{clean_username}:{clean_password}".encode("utf-8")
+        credentials = f"{clean_username}:{clean_password}".encode()
         self._auth_header = "Basic " + base64.b64encode(credentials).decode("ascii")
         self._last_request_ts = 0.0
 

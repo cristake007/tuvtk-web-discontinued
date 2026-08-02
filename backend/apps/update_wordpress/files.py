@@ -115,11 +115,10 @@ def parse_course_date_rows(data: bytes, extension: str) -> list[dict[str, Any]]:
 
     parsed_rows: list[dict[str, Any]] = []
     for row_index, row in enumerate(rows[1:]):
-
-        def cell(index: int | None) -> Any:
-            if index is None or index >= len(row):
+        def cell(index: int | None, current_row=row) -> Any:
+            if index is None or index >= len(current_row):
                 return None
-            return row[index]
+            return current_row[index]
 
         title = _display_value(cell(title_index))
         permalink = _display_value(cell(permalink_index))

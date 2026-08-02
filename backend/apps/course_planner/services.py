@@ -1,7 +1,8 @@
 import random
+from collections.abc import Sequence
 from datetime import date, datetime
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from django.core.files.base import ContentFile
 from django.db import transaction

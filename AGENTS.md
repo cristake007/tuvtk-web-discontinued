@@ -150,6 +150,8 @@ Cheile de aplicație vizibile utilizatorului se scriu în română fără diacri
 
 Use Django REST Framework and drf-spectacular. Do not reintroduce Django Ninja or create a second API framework.
 
+Ruff verifică regulile `E4`, `E7`, `E9`, `F`, `I`, `B`, `DJ`, `UP`, `N` și `S`; excepțiile documentate se păstrează în `backend/pyproject.toml`.
+
 Use `extend_schema` where automatic schema generation is incomplete. Keep `/api/schema`, `/api/docs`, and `/api/redoc` working and validate them with:
 
 ```bash
