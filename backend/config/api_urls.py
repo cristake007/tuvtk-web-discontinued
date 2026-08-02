@@ -24,6 +24,7 @@ urlpatterns = [
     path("course-planner/", include("apps.course_planner.urls")),
     path("update-wordpress/", include("apps.update_wordpress.urls")),
     path("utilizatori/", include("apps.utilizatori.urls")),
+    path("companii/", include("apps.companii.urls")),
     path(
         "integrations/public-holidays/",
         include("apps.public_holidays.urls"),

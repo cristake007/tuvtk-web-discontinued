@@ -11,7 +11,6 @@ import { DocumentePage } from "@/pages/DocumentePage";
 import { ModulePlaceholderPage } from "@/pages/ModulePlaceholderPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
 import { TablouDeBordPage } from "@/pages/TablouDeBordPage";
-import { WorkspaceCardPage } from "@/pages/WorkspaceCardPage";
 
 import { AdministrationLayout } from "./AdministrationLayout";
 import { AuthenticationGate } from "./AuthenticationGate";
@@ -63,6 +62,9 @@ const PublicHolidaysIntegrationPage = lazyRoute(
   () => import("@/pages/PublicHolidaysIntegrationPage"),
   "PublicHolidaysIntegrationPage",
 );
+const CompaniiPage = lazyRoute(() => import("@/pages/CompaniiPage"), "CompaniiPage");
+const CompanieDetailPage = lazyRoute(() => import("@/pages/CompaniiPage"), "CompanieDetailPage");
+const CompanieFormPage = lazyRoute(() => import("@/pages/CompaniiPage"), "CompanieFormPage");
 
 export const appRoutes = [
   {
@@ -94,8 +96,23 @@ export const appRoutes = [
         children: [
           {
             path: "crm/companii",
-            element: <WorkspaceCardPage ariaLabel="Conținut companii" />,
+            element: <CompaniiPage />,
             handle: { pageTitle: "Companii" },
+          },
+          {
+            path: "crm/companii/adaugare",
+            element: <CompanieFormPage />,
+            handle: { pageTitle: "Adaugă companie" },
+          },
+          {
+            path: "crm/companii/:companyId",
+            element: <CompanieDetailPage />,
+            handle: { pageTitle: "Detalii companie" },
+          },
+          {
+            path: "crm/companii/:companyId/editare",
+            element: <CompanieFormPage />,
+            handle: { pageTitle: "Editează companie" },
           },
         ],
       },
