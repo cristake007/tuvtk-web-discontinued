@@ -67,6 +67,19 @@ def validate_http_url_syntax(value: str, *, label: str = "Adresa WordPress") -> 
 
 
 def validate_public_http_url(value: str) -> str:
+    normalized, _pinned_ip = resolve_validated_target(value)
+    return normalized
+
+
+def resolve_validated_target(value: str) -> tuple[str, str]:
+    """Validate a URL's hostname and DNS-pin it to one already-checked IP.
+
+    The caller MUST connect to the returned IP directly instead of letting
+    the HTTP client re-resolve the hostname. Re-resolving after validation
+    opens a DNS-rebinding time-of-check/time-of-use gap: a hostname that
+    resolves to a public IP during validation can resolve to an internal
+    address (169.254.169.254, 127.0.0.1, ...) moments later at connect time.
+    """
     normalized = validate_http_url_syntax(value)
     parsed = urlsplit(normalized)
     host = parsed.hostname or ""
@@ -79,8 +92,9 @@ def validate_public_http_url(value: str) -> str:
     if not addresses:
         raise InvalidWordPressUrlError("Gazda WordPress nu a putut fi rezolvată.")
 
+    pinned_ip = addresses[0][4][0]
     try:
-        prohibited = any(_is_prohibited_ip(item[4][0]) for item in addresses)
+        prohibited = _is_prohibited_ip(pinned_ip)
     except ValueError as exc:
         raise InvalidWordPressUrlError(
             "Gazda WordPress s-a rezolvat la o adresă invalidă."
@@ -88,4 +102,4 @@ def validate_public_http_url(value: str) -> str:
     if prohibited:
         raise InvalidWordPressUrlError("Adresa WordPress indică o destinație interzisă.")
 
-    return normalized
+    return normalized, pinned_ip
