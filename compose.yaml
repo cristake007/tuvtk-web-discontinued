@@ -19,6 +19,19 @@ services:
     depends_on:
       db_core:
         condition: service_healthy
+      db_registry:
+        condition: service_healthy
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "curl --fail --silent http://localhost:8000/api/v1/health >/dev/null",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
 
     command:
       - /bin/sh
@@ -87,6 +100,13 @@ services:
           --concurrency="${CELERY_WORKER_CONCURRENCY:-2}" \
           --hostname="worker@%h"
 
+    healthcheck:
+      test: ["CMD-SHELL", "celery -A config inspect ping >/dev/null"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
     restart: unless-stopped
 
   celery_beat:
@@ -119,6 +139,17 @@ services:
         exec celery -A config beat \
           --loglevel="${CELERY_LOG_LEVEL:-info}" \
           --schedule=/tmp/tuvtk-celerybeat-schedule
+
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "test -f /tmp/tuvtk-celerybeat-schedule && find /tmp/tuvtk-celerybeat-schedule -mmin -5 -print -quit | grep -q .",
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
     restart: unless-stopped
 
