@@ -413,6 +413,12 @@ Files under `frontend/src/components/ui/` are generated primitives. Compose them
 
 `./dev validate` runs migration-drift checking, Django checks, Ruff, OpenAPI validation, Django tests, frontend dependency synchronization, OpenAPI-to-TypeScript drift checking, React convention checks, TypeScript validation, frontend tests, theme-token validation, and the Vite build.
 
+## Continuous integration
+
+GitHub Actions runs on pushes and pull requests targeting `dev` and `main`. The backend job checks migration drift, Django, Ruff, the OpenAPI schema, and Django tests against PostgreSQL and Redis. The frontend job installs locked dependencies and runs linting, type checking, tests, and the production build.
+
+The generated `frontend/src/api/generated.ts` OpenAPI synchronization check remains local through `bash dev validate`, because it requires a running backend service.
+
 ## Administrare și acces
 
 `Administrare` este punctul de configurare pentru utilizatori, grupuri și integrări, inclusiv `/administrare/integrari`. Accesul este simplu, la nivel de aplicație, construit peste utilizatorii și grupurile Django: grupurile și atribuirea directă pot acorda acces unei aplicații, iar superutilizatorii au acces complet. Nu este descris și nu funcționează ca un sistem CRUD bazat pe `auth.Permission`.
