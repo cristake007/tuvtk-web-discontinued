@@ -11,28 +11,22 @@ import {
 
 import { textVariants } from "@/components/ui/text";
 import { Button } from "@/components/ui/button";
-import { SectionTitle } from "@/components/ui/heading";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 
-import { formatSelectedMonths } from "../constants";
 import type { GenerateScheduleResponse } from "../types";
 
 type PlannerSummaryCardProps = {
   downloadPending: boolean;
-  file: File | null;
   onDownload: () => void;
   result: GenerateScheduleResponse | null;
-  selectedMonths: number[];
-  year: number;
 };
-
-function SummaryRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-start justify-between gap-4 border-b py-3 last:border-b-0">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="max-w-48 text-right font-medium">{value}</span>
-    </div>
-  );
-}
 
 function ArtifactStatus({
   available,
@@ -44,8 +38,8 @@ function ArtifactStatus({
   label: string;
 }) {
   return (
-    <div className="flex items-center gap-3 border-b py-3 last:border-b-0">
-      <span className="grid size-8 place-items-center bg-muted text-muted-foreground">
+    <div className="flex items-center gap-3 rounded-lg border p-3">
+      <span className="grid size-9 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">
         <Icon aria-hidden="true" className="size-4" />
       </span>
       <div className="min-w-0 flex-1">
@@ -61,87 +55,77 @@ function ArtifactStatus({
 
 export function PlannerSummaryCard({
   downloadPending,
-  file,
   onDownload,
   result,
-  selectedMonths,
-  year,
 }: PlannerSummaryCardProps) {
   return (
-    <aside className="h-fit border-t pt-6 xl:sticky xl:top-6 xl:border-t-0 xl:border-l xl:pl-6">
-      <div>
-        <SectionTitle className="flex items-center gap-2">
-          <ListChecks aria-hidden="true" className="size-4 text-primary" />
-          Rezumat
-        </SectionTitle>
-        <p
-          className={textVariants({
-            variant: "corp",
-            className: "mt-1 leading-6 text-muted-foreground",
-          })}
-        >
-          Verifică selecția înainte de generare și descarcă rezultatul curent.
-        </p>
-      </div>
-
-      <div className="mt-6 grid gap-6">
-        <div>
-          <SummaryRow label="Fișier" value={file?.name ?? "Neselectat"} />
-          <SummaryRow label="An" value={String(year)} />
-          <SummaryRow label="Luni" value={formatSelectedMonths(selectedMonths)} />
-          <SummaryRow label="Zile libere" value="Preluate automat" />
-          <SummaryRow
-            label="Cursuri procesate"
-            value={result ? String(result.course_count) : "—"}
-          />
+    <Card className="h-fit xl:sticky xl:top-6">
+      <CardHeader className="border-b">
+        <div className="flex items-start gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+            <ListChecks aria-hidden="true" className="size-5" />
+          </span>
+          <div>
+            <CardTitle as="h2">Rezultat generare</CardTitle>
+            <CardDescription className="mt-1">
+              Fișierele apar aici imediat după ce planificarea este generată.
+            </CardDescription>
+          </div>
         </div>
+      </CardHeader>
 
-        <div className="grid gap-2">
-          <p
-            className={textVariants({
-              variant: "detaliu",
-              className: "font-semibold uppercase tracking-wide text-muted-foreground",
-            })}
-          >
-            Fișiere generate
-          </p>
-          <ArtifactStatus
-            available={Boolean(result?.generation.files.excel.available)}
-            icon={FileSpreadsheet}
-            label="Excel"
-          />
-          <ArtifactStatus available={false} icon={FileText} label="Word" />
-          <ArtifactStatus available={false} icon={FileCode2} label="XML" />
-        </div>
-
+      <CardContent className="grid gap-6 pt-6">
         {!result ? (
-          <div className="py-2 text-center">
-            <CalendarDays aria-hidden="true" className="mx-auto size-6 text-muted-foreground" />
-            <p className={textVariants({ variant: "eticheta", className: "mt-2" })}>
-              Nicio planificare generată
-            </p>
+          <div className="flex flex-col items-center gap-2 py-8 text-center">
+            <CalendarDays aria-hidden="true" className="size-6 text-muted-foreground" />
+            <p className={textVariants({ variant: "eticheta" })}>Nicio planificare generată</p>
             <p
               className={textVariants({
                 variant: "detaliu",
-                className: "mt-1 leading-5 text-muted-foreground",
+                className: "max-w-56 leading-5 text-muted-foreground",
               })}
             >
-              Rezultatul și opțiunea de descărcare vor apărea aici după generare.
+              Completează formularul din stânga și apasă „Generează planificarea”.
             </p>
           </div>
-        ) : null}
-      </div>
+        ) : (
+          <>
+            <div className="flex items-baseline gap-2 rounded-lg bg-primary/5 px-4 py-3">
+              <span className="text-3xl font-bold tabular-nums text-primary">
+                {result.course_count}
+              </span>
+              <span
+                className={textVariants({ variant: "corp", className: "text-muted-foreground" })}
+              >
+                {result.course_count === 1 ? "curs procesat" : "cursuri procesate"}
+              </span>
+            </div>
 
-      <Button
-        className="mt-6 w-full"
-        disabled={!result || downloadPending}
-        onClick={onDownload}
-        type="button"
-        variant="outline"
-      >
-        <Download aria-hidden="true" />
-        {downloadPending ? "Se descarcă…" : "Descarcă Excel"}
-      </Button>
-    </aside>
+            <div className="grid gap-2">
+              <ArtifactStatus
+                available={Boolean(result.generation.files.excel.available)}
+                icon={FileSpreadsheet}
+                label="Excel"
+              />
+              <ArtifactStatus available={false} icon={FileText} label="Word" />
+              <ArtifactStatus available={false} icon={FileCode2} label="XML" />
+            </div>
+          </>
+        )}
+      </CardContent>
+
+      <CardFooter>
+        <Button
+          className="w-full"
+          disabled={!result || downloadPending}
+          onClick={onDownload}
+          type="button"
+          variant="outline"
+        >
+          <Download aria-hidden="true" />
+          {downloadPending ? "Se descarcă…" : "Descarcă Excel"}
+        </Button>
+      </CardFooter>
+    </Card>
   );
 }

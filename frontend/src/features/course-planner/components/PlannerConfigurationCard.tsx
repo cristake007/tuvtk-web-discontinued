@@ -5,7 +5,14 @@ import { CalendarCheck2, FileSpreadsheet, Save, Sparkles } from "lucide-react";
 import { textVariants } from "@/components/ui/text";
 import { FileUploadField } from "@/components/FileUploadField";
 import { Button } from "@/components/ui/button";
-import { SectionTitle } from "@/components/ui/heading";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -71,24 +78,23 @@ export function PlannerConfigurationCard({
   });
 
   return (
-    <form className="grid gap-8" noValidate onSubmit={onGenerate}>
-      <section className="grid gap-6">
-        <div>
-          <SectionTitle className="flex items-center gap-2">
-            <Sparkles aria-hidden="true" className="size-4 text-primary" />
-            Configurare planificare
-          </SectionTitle>
-          <p
-            className={textVariants({
-              variant: "corp",
-              className: "mt-1 leading-6 text-muted-foreground",
-            })}
-          >
-            Fișierul, lunile și regulile de distribuție folosite pentru această generare.
-          </p>
+    <Card>
+      <CardHeader className="border-b">
+        <div className="flex items-start gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+            <Sparkles aria-hidden="true" className="size-5" />
+          </span>
+          <div>
+            <CardTitle as="h2">Configurare planificare</CardTitle>
+            <CardDescription className="mt-1">
+              Fișierul, lunile și regulile de distribuție folosite pentru această generare.
+            </CardDescription>
+          </div>
         </div>
+      </CardHeader>
 
-        <div className="grid gap-7">
+      <form noValidate onSubmit={onGenerate}>
+        <CardContent className="grid gap-6 pt-6">
           <FileUploadField
             accept=".csv,.xlsx,.xls"
             description="Coloane obligatorii: Title, Durata Curs și Permalink. Coloana investitie este opțională."
@@ -337,19 +343,19 @@ export function PlannerConfigurationCard({
               ) : null}
             </div>
           </section>
-        </div>
-      </section>
+        </CardContent>
 
-      <div className="flex flex-wrap justify-between gap-3 border-t pt-6">
-        <Button disabled={busy} onClick={onSave} type="button" variant="outline">
-          <Save aria-hidden="true" />
-          {savePending ? "Se salvează…" : "Salvează setările"}
-        </Button>
-        <Button disabled={busy} size="lg" type="submit">
-          <FileSpreadsheet aria-hidden="true" />
-          {generatePending ? "Se generează…" : "Generează planificarea"}
-        </Button>
-      </div>
-    </form>
+        <CardFooter className="flex-wrap justify-between gap-3">
+          <Button disabled={busy} onClick={onSave} type="button" variant="outline">
+            <Save aria-hidden="true" />
+            {savePending ? "Se salvează…" : "Salvează setările"}
+          </Button>
+          <Button disabled={busy} size="lg" type="submit">
+            <FileSpreadsheet aria-hidden="true" />
+            {generatePending ? "Se generează…" : "Generează planificarea"}
+          </Button>
+        </CardFooter>
+      </form>
+    </Card>
   );
 }

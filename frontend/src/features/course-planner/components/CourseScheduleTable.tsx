@@ -2,7 +2,16 @@ import { useEffect, useMemo, useState } from "react";
 import { FileSpreadsheet } from "lucide-react";
 
 import { textVariants } from "@/components/ui/text";
-import { SectionTitle } from "@/components/ui/heading";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardAction,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Pagination,
   PaginationContent,
@@ -68,29 +77,29 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
   }, [schedule]);
 
   return (
-    <section className="min-w-0 border-t pt-6" id="planificare-generata">
-      <div className="flex flex-wrap items-start justify-between gap-3 px-1">
-        <div>
-          <SectionTitle className="flex items-center gap-2">
-            <FileSpreadsheet aria-hidden="true" className="size-4 text-primary" />
-            Planificare generată
-          </SectionTitle>
-          <p
-            className={textVariants({
-              variant: "corp",
-              className: "mt-1 leading-6 text-muted-foreground",
-            })}
-          >
-            {rows.length} cursuri distincte distribuite în lunile selectate.
-          </p>
+    <Card className="gap-0 py-0" id="planificare-generata">
+      <CardHeader className="border-b py-4">
+        <div className="flex items-start gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+            <FileSpreadsheet aria-hidden="true" className="size-5" />
+          </span>
+          <div>
+            <CardTitle as="h2">Planificare generată</CardTitle>
+            <CardDescription className="mt-1">
+              {rows.length} cursuri distincte distribuite în lunile selectate.
+            </CardDescription>
+          </div>
         </div>
-        <p className={textVariants({ variant: "detaliu", className: "text-muted-foreground" })}>
-          {rows.length === 0 ? "Niciun curs" : `${pageStart + 1}–${pageStart + visibleRows.length}`}{" "}
-          din {rows.length}
-        </p>
-      </div>
+        <CardAction>
+          <Badge variant="secondary">
+            {rows.length === 0
+              ? "Niciun curs"
+              : `${pageStart + 1}–${pageStart + visibleRows.length} din ${rows.length}`}
+          </Badge>
+        </CardAction>
+      </CardHeader>
 
-      <div className="mt-5 border-y">
+      <CardContent className="p-0">
         <Table
           className="min-w-[118rem] table-fixed"
           containerClassName="max-h-[calc(100svh-14rem)] overflow-auto"
@@ -127,10 +136,10 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
             ))}
           </TableBody>
         </Table>
-      </div>
+      </CardContent>
 
       {pageCount > 1 ? (
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-4">
+        <CardFooter className="flex flex-wrap items-center justify-between gap-4 border-t py-4">
           <p className={textVariants({ variant: "detaliu", className: "text-muted-foreground" })}>
             Pagina {currentPage} din {pageCount}
           </p>
@@ -166,8 +175,8 @@ export function CourseScheduleTable({ schedule }: { schedule: ScheduledCourse[] 
               </PaginationItem>
             </PaginationContent>
           </Pagination>
-        </div>
+        </CardFooter>
       ) : null}
-    </section>
+    </Card>
   );
 }
