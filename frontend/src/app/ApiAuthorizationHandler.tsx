@@ -25,13 +25,13 @@ export function ApiAuthorizationHandler() {
 
       if (detail.code === "csrf_failed" || detail.code === "csrf_missing") {
         toast.error("Sesiune de securitate expirată", {
-          description: detail.detail,
+          description: "Reîncarcă pagina și încearcă din nou.",
         });
         return;
       }
 
       toast.error("Acces interzis", {
-        description: detail.detail,
+        description: "Nu ai permisiunea necesară pentru această acțiune.",
       });
     }
 

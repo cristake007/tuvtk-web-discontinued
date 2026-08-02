@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { SectionTitle } from "@/components/ui/heading";
 import { Input } from "@/components/ui/input";
+import { Spinner } from "@/components/ui/spinner";
 
 import type { PublicHoliday } from "../types";
 
@@ -61,7 +62,11 @@ export function PublicHolidayTable({
       </CardHeader>
 
       <CardContent className="px-0">
-        {loading ? null : holidays.length ? (
+        {loading ? (
+          <div className="flex min-h-56 items-center justify-center" aria-label="Se încarcă zilele nelucrătoare">
+            <Spinner className="size-6 text-primary" />
+          </div>
+        ) : holidays.length ? (
           <div className="overflow-x-auto">
             <table
               className={textVariants({

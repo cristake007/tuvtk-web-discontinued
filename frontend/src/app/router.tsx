@@ -77,7 +77,7 @@ export const appRoutes = [
       {
         path: "tablou-de-bord",
         element: <TablouDeBordPage />,
-        handle: { pageTitle: "Dashboard" },
+        handle: { pageTitle: "Tablou de bord" },
       },
       ...placeholderRoutes.map(({ applicationKey, description, pageTitle, path, title }) => ({
         element: <ApplicationAccessRoute applicationKey={applicationKey} />,

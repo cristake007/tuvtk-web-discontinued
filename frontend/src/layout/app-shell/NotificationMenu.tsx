@@ -17,10 +17,10 @@ export function NotificationMenu() {
       <DropdownMenuTrigger
         render={
           <Button
-            aria-label="Open notifications"
+            aria-label="Deschide notificările"
             className="relative cursor-pointer rounded-sm text-primary hover:bg-primary/5 hover:text-brand-red"
             size="icon-lg"
-            title="Notifications"
+            title="Notificări"
             variant="ghost"
           />
         }
@@ -37,7 +37,7 @@ export function NotificationMenu() {
                 className: "block font-semibold text-foreground",
               })}
             >
-              Notifications
+              Notificări
             </span>
             <span
               className={textVariants({
@@ -45,7 +45,7 @@ export function NotificationMenu() {
                 className: "mt-0.5 block font-normal text-muted-foreground",
               })}
             >
-              Updates that require your attention will appear here.
+              Actualizările care necesită atenția ta vor apărea aici.
             </span>
           </DropdownMenuLabel>
         </DropdownMenuGroup>
@@ -55,7 +55,7 @@ export function NotificationMenu() {
             <Bell aria-hidden="true" className="size-4" />
           </span>
           <p className={textVariants({ variant: "eticheta", className: "mt-3 text-foreground" })}>
-            No new notifications
+            Nu există notificări noi
           </p>
           <p
             className={textVariants({
@@ -63,7 +63,7 @@ export function NotificationMenu() {
               className: "mt-1 leading-5 text-muted-foreground",
             })}
           >
-            You are up to date.
+            Ești la zi.
           </p>
         </div>
       </DropdownMenuContent>
