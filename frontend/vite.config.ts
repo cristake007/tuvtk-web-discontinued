@@ -38,7 +38,6 @@ export default defineConfig({
             {
               name: "base-ui-vendor",
               test: /node_modules\/(?:@base-ui|@floating-ui)\//,
-              maxSize: 240_000,
               priority: 30,
             },
             {
