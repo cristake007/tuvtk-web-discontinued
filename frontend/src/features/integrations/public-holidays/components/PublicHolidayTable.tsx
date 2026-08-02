@@ -41,7 +41,7 @@ export function PublicHolidayTable({
             <CalendarDays aria-hidden="true" className="size-5" />
           </span>
           <div>
-            <CardTitle>Calendar zile nelucrătoare</CardTitle>
+            <CardTitle as="h2">Calendar zile nelucrătoare</CardTitle>
             <CardDescription className="mt-1">
               Sărbătorile legale și zilele interne sunt expuse în același calendar central.
             </CardDescription>

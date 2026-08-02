@@ -28,7 +28,7 @@ export function BrandingPanel({
             <Palette aria-hidden="true" className="size-5" />
           </span>
           <div>
-            <CardTitle>Branding</CardTitle>
+            <CardTitle as="h2">Branding</CardTitle>
             <CardDescription className="mt-1">
               Culorile și sigla care definesc identitatea vizuală a platformei.
             </CardDescription>

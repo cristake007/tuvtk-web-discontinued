@@ -43,7 +43,7 @@ export function IntegrationsPage() {
                       <Icon aria-hidden="true" className="size-5" />
                     </span>
                     <div className="min-w-0">
-                      <CardTitle>{integration.name}</CardTitle>
+                      <CardTitle as="h2">{integration.name}</CardTitle>
                       <CardDescription className="mt-1">{integration.provider}</CardDescription>
                     </div>
                   </div>
