@@ -2,11 +2,7 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { NavLink, useLocation } from "react-router-dom";
 
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import {
   Sidebar,
   SidebarContent,
@@ -21,11 +17,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-import {
-  getNavigationIcon,
-  isNavigationPathActive,
-  type NavigationNode,
-} from "./navigation";
+import { getNavigationIcon, isNavigationPathActive, type NavigationNode } from "./navigation";
 import { MeniuFlyoutNavigatie } from "./NavigationFlyoutMenu";
 
 type AppSidebarProps = {
@@ -74,15 +66,8 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
   if (item.is_separator) {
     return (
       <SidebarMenuItem className="px-4 py-2.5 group-data-[collapsible=icon]:px-2">
-        <div
-          aria-label={item.label}
-          className="flex w-full items-center gap-2"
-          role="separator"
-        >
-          <span
-            aria-hidden="true"
-            className="h-px min-w-3 flex-1 bg-sidebar-border"
-          />
+        <div aria-label={item.label} className="flex w-full items-center gap-2" role="separator">
+          <span aria-hidden="true" className="h-px min-w-3 flex-1 bg-sidebar-border" />
           <span className="max-w-28 truncate text-[calc(10px*var(--app-font-scale))] font-semibold uppercase tracking-[0.14em] text-muted-foreground group-data-[collapsible=icon]:hidden">
             {item.label}
           </span>
@@ -143,12 +128,7 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
                   <SidebarMenuSubButton
                     className={navigationSubLinkClassName}
                     isActive={isNavigationPathActive(location.pathname, copil.path)}
-                    render={
-                      <NavLink
-                        onClick={() => setOpenMobile(false)}
-                        to={copil.path}
-                      />
-                    }
+                    render={<NavLink onClick={() => setOpenMobile(false)} to={copil.path} />}
                   >
                     <span>{copil.label}</span>
                   </SidebarMenuSubButton>
@@ -167,11 +147,7 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
         className={navigationLinkClassName}
         isActive={activ}
         render={
-          <NavLink
-            end={item.path === "/"}
-            onClick={() => setOpenMobile(false)}
-            to={item.path}
-          />
+          <NavLink end={item.path === "/"} onClick={() => setOpenMobile(false)} to={item.path} />
         }
         tooltip={{
           children: item.label,
@@ -181,7 +157,6 @@ function NavigationEntry({ item }: { item: NavigationNode }) {
         <Icon aria-hidden="true" />
         <span className="whitespace-nowrap">{item.label}</span>
       </SidebarMenuButton>
-
     </SidebarMenuItem>
   );
 }

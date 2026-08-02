@@ -6,12 +6,7 @@ import { NotFoundPage } from "./NotFoundPage";
 
 describe("paginile de mesaj", () => {
   it("prezintă placeholderul ca modul în pregătire", () => {
-    render(
-      <ModulePlaceholderPage
-        description="Modulul va fi disponibil aici."
-        title="Contacte"
-      />,
-    );
+    render(<ModulePlaceholderPage description="Modulul va fi disponibil aici." title="Contacte" />);
 
     expect(screen.getByText("Modul în pregătire")).toBeInTheDocument();
     expect(screen.getByRole("heading", { level: 1, name: "Contacte" })).toBeInTheDocument();

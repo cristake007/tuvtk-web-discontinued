@@ -88,10 +88,7 @@ export function fetchUtilizator(userId: number): Promise<Utilizator> {
   return apiRequest<Utilizator>(`${basePath}/${userId}`, { cache: "no-store" });
 }
 
-export function updateUtilizator(
-  userId: number,
-  values: UtilizatorWrite,
-): Promise<Utilizator> {
+export function updateUtilizator(userId: number, values: UtilizatorWrite): Promise<Utilizator> {
   return apiRequest<Utilizator>(`${basePath}/${userId}`, {
     method: "PATCH",
     body: JSON.stringify(values),

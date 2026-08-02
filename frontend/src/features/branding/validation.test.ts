@@ -1,21 +1,12 @@
 import assert from "node:assert/strict";
 import { describe, it } from "vitest";
 
-import {
-  MAX_COMPANY_LOGO_BYTES,
-  validateCompanyLogo,
-} from "./validation.js";
+import { MAX_COMPANY_LOGO_BYTES, validateCompanyLogo } from "./validation.js";
 
 describe("validateCompanyLogo", () => {
   it("accepts SVG files by MIME type or extension", () => {
-    assert.equal(
-      validateCompanyLogo({ name: "logo", size: 100, type: "image/svg+xml" }),
-      null,
-    );
-    assert.equal(
-      validateCompanyLogo({ name: "logo.SVG", size: 100, type: "" }),
-      null,
-    );
+    assert.equal(validateCompanyLogo({ name: "logo", size: 100, type: "image/svg+xml" }), null);
+    assert.equal(validateCompanyLogo({ name: "logo.SVG", size: 100, type: "" }), null);
   });
 
   it("rejects non-SVG files", () => {

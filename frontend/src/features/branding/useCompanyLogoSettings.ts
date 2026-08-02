@@ -1,30 +1,17 @@
 import { useEffect, useState } from "react";
-import {
-  type QueryClient,
-  useMutation,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { type QueryClient, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { coreBootstrapQueryKey } from "@/api/core";
 import type { CoreBootstrap, ShellConfiguration } from "@/features/core/types";
 import { formatApiError } from "@/lib/api-errors";
 
-import {
-  fetchUserInterfaceSettings,
-  removeCompanyLogo,
-  uploadCompanyLogo,
-} from "./api";
+import { fetchUserInterfaceSettings, removeCompanyLogo, uploadCompanyLogo } from "./api";
 import { userInterfaceQueryKeys } from "./queryKeys";
 import { validateCompanyLogo } from "./validation";
 
-const mutationErrorFallback =
-  "Sigla companiei nu a putut fi actualizată. Încearcă din nou.";
+const mutationErrorFallback = "Sigla companiei nu a putut fi actualizată. Încearcă din nou.";
 
-function updateCachedConfiguration(
-  queryClient: QueryClient,
-  configuration: ShellConfiguration,
-) {
+function updateCachedConfiguration(queryClient: QueryClient, configuration: ShellConfiguration) {
   queryClient.setQueryData(userInterfaceQueryKeys.settings(), configuration);
   queryClient.setQueryData<CoreBootstrap>(coreBootstrapQueryKey, (current) =>
     current ? { ...current, configuration } : current,

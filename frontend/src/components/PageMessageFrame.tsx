@@ -1,11 +1,6 @@
 import { useId } from "react";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { PageTitle } from "@/components/ui/heading";
 
 type PageMessageFrameProps = {
@@ -14,11 +9,7 @@ type PageMessageFrameProps = {
   title: string;
 };
 
-export function PageMessageFrame({
-  context,
-  description,
-  title,
-}: PageMessageFrameProps) {
+export function PageMessageFrame({ context, description, title }: PageMessageFrameProps) {
   const titleId = useId();
 
   return (

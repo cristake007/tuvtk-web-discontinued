@@ -21,9 +21,7 @@ describe("ApplicationState", () => {
     );
 
     expect(container.querySelector("main")).not.toBeInTheDocument();
-    expect(
-      screen.getByRole("region", { name: "Pagina nu este disponibilă" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("region", { name: "Pagina nu este disponibilă" })).toBeInTheDocument();
     expect(
       screen.getByRole("heading", { level: 1, name: "Pagina nu este disponibilă" }),
     ).toBeInTheDocument();

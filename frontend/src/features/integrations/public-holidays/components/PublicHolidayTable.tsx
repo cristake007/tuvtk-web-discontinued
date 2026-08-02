@@ -136,9 +136,7 @@ export function PublicHolidayTable({
         ) : (
           <div className="flex min-h-56 flex-col items-center justify-center px-6 text-center">
             <CalendarDays aria-hidden="true" className="size-8 text-muted-foreground" />
-            <SectionTitle className="mt-3">
-              Nu există zile salvate pentru {year}
-            </SectionTitle>
+            <SectionTitle className="mt-3">Nu există zile salvate pentru {year}</SectionTitle>
             <p className="mt-1 max-w-md text-base leading-6 text-muted-foreground">
               Rulează sincronizarea Nager.Date sau adaugă o zi internă.
             </p>

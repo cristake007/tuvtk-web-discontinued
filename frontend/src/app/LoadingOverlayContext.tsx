@@ -1,11 +1,4 @@
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from "react";
 
 type LoadingOverlayContextValue = {
   beginLoading: () => () => void;
@@ -30,11 +23,7 @@ export function LoadingOverlayProvider({ children }: { children: ReactNode }) {
     [beginLoading, loadingCount],
   );
 
-  return (
-    <LoadingOverlayContext.Provider value={value}>
-      {children}
-    </LoadingOverlayContext.Provider>
-  );
+  return <LoadingOverlayContext.Provider value={value}>{children}</LoadingOverlayContext.Provider>;
 }
 
 export function useLoadingOverlay() {

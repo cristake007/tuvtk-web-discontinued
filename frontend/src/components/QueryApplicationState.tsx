@@ -19,13 +19,7 @@ export function QueryApplicationState({
   onRetry: () => void;
 }) {
   if (loading) {
-    return (
-      <ApplicationState
-        description={loadingDescription}
-        loading
-        title={loadingTitle}
-      />
-    );
+    return <ApplicationState description={loadingDescription} loading title={loadingTitle} />;
   }
 
   if (error) {

@@ -6,9 +6,7 @@ export type LoginCredentials = {
 export type LoginField = keyof LoginCredentials;
 export type LoginFieldErrors = Partial<Record<LoginField, string>>;
 
-export function validateLoginCredentials(
-  credentials: LoginCredentials,
-): LoginFieldErrors {
+export function validateLoginCredentials(credentials: LoginCredentials): LoginFieldErrors {
   const errors: LoginFieldErrors = {};
 
   if (!credentials.username.trim()) {

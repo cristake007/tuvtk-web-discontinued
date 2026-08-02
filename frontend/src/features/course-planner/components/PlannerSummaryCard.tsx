@@ -24,13 +24,7 @@ type PlannerSummaryCardProps = {
   year: number;
 };
 
-function SummaryRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function SummaryRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-start justify-between gap-4 border-b py-3 last:border-b-0">
       <span className="text-muted-foreground">{label}</span>

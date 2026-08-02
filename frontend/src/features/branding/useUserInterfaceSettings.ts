@@ -44,9 +44,8 @@ function actualizeazaNavigatiaDinCache(
   queryClient: ReturnType<typeof useQueryClient>,
   actualizare: (elemente: NavigationItem[]) => NavigationItem[],
 ) {
-  queryClient.setQueryData<NavigationItem[]>(
-    userInterfaceQueryKeys.navigation(),
-    (current) => (current ? actualizare(current) : current),
+  queryClient.setQueryData<NavigationItem[]>(userInterfaceQueryKeys.navigation(), (current) =>
+    current ? actualizare(current) : current,
   );
   queryClient.setQueryData<CoreBootstrap>(coreBootstrapQueryKey, (current) =>
     current ? { ...current, navigation: actualizare(current.navigation) } : current,

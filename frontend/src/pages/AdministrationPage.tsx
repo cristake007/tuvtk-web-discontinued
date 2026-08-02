@@ -144,9 +144,7 @@ export function AdministrationPage() {
           <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
             <Search aria-hidden="true" className="size-5 text-muted-foreground" />
             <p className="font-medium">Nu am găsit rezultate</p>
-            <p className="text-sm text-muted-foreground">
-              Încearcă un alt termen de căutare.
-            </p>
+            <p className="text-sm text-muted-foreground">Încearcă un alt termen de căutare.</p>
           </CardContent>
         </Card>
       )}

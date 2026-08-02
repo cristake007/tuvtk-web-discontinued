@@ -2,13 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { AntetAplicatie } from "@/components/AntetAplicatie";
 import { QueryApplicationState } from "@/components/QueryApplicationState";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { cheieInterogareDocumente, obtineRezumatDocumente } from "./api";
 
@@ -43,8 +37,8 @@ export function DocumentePanou() {
         <CardHeader>
           <CardTitle>Documentele vor apărea aici</CardTitle>
           <CardDescription>
-            Modulul este pregătit pentru fluxurile viitoare de încărcare, organizare și
-            consultare a documentelor.
+            Modulul este pregătit pentru fluxurile viitoare de încărcare, organizare și consultare a
+            documentelor.
           </CardDescription>
         </CardHeader>
         <CardContent>

@@ -50,9 +50,15 @@ export function UtilizatorFormPage() {
   });
 
   if (!editing && userId) {
-    return <ApplicationState description="Identificatorul utilizatorului nu este valid." title="Utilizator indisponibil" />;
+    return (
+      <ApplicationState
+        description="Identificatorul utilizatorului nu este valid."
+        title="Utilizator indisponibil"
+      />
+    );
   }
-  const queryPending = groupsQuery.isPending || applicationsQuery.isPending || (editing && userQuery.isPending);
+  const queryPending =
+    groupsQuery.isPending || applicationsQuery.isPending || (editing && userQuery.isPending);
   const queryError = groupsQuery.error ?? applicationsQuery.error ?? userQuery.error;
   if (queryPending || groupsQuery.isError || applicationsQuery.isError || userQuery.isError) {
     return (
@@ -81,7 +87,7 @@ export function UtilizatorFormPage() {
       onCancel={() => navigate("/administrare/utilizatori")}
       onSubmit={(values) => saveMutation.mutate(values)}
       pending={saveMutation.isPending}
-      user={editing ? userQuery.data ?? null : null}
+      user={editing ? (userQuery.data ?? null) : null}
     />
   );
 }

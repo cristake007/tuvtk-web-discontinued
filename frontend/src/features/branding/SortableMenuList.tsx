@@ -98,14 +98,10 @@ function ElementMeniuSortabil<Element extends ElementSortabil>({
   onRedenumesteSeparator?: (element: Element) => void;
   onStergeSeparator?: (key: string) => void;
 }) {
-  const {
-    attributes,
-    isDragging,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id: element.key, disabled });
+  const { attributes, isDragging, listeners, setNodeRef, transform, transition } = useSortable({
+    id: element.key,
+    disabled,
+  });
   const stil = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -130,7 +126,12 @@ function ElementMeniuSortabil<Element extends ElementSortabil>({
       >
         <GripVertical aria-hidden="true" className="size-5" />
       </button>
-      <span className={cn("min-w-0 flex-1 font-medium", element.is_separator && "text-muted-foreground")}>
+      <span
+        className={cn(
+          "min-w-0 flex-1 font-medium",
+          element.is_separator && "text-muted-foreground",
+        )}
+      >
         {element.label}
       </span>
       {element.is_separator && onRedenumesteSeparator ? (

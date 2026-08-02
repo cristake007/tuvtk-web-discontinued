@@ -33,9 +33,7 @@ export function fetchPublicHolidays(year: number): Promise<PublicHoliday[]> {
   return apiRequest<PublicHoliday[]>(`${basePath}/holidays?year=${year}`);
 }
 
-export function createInternalHoliday(
-  values: InternalHolidayInput,
-): Promise<PublicHoliday> {
+export function createInternalHoliday(values: InternalHolidayInput): Promise<PublicHoliday> {
   return apiRequest<PublicHoliday>(`${basePath}/internal`, {
     method: "POST",
     body: JSON.stringify(values),

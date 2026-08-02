@@ -43,9 +43,7 @@ export function fetchUserInterfaceNavigation(): Promise<NavigationItem[]> {
   return apiRequest<NavigationItem[]>(`${userInterfacePath}/navigation`, { cache: "no-store" });
 }
 
-export function updateUserInterfaceNavigation(
-  chei: string[],
-): Promise<NavigationItem[]> {
+export function updateUserInterfaceNavigation(chei: string[]): Promise<NavigationItem[]> {
   return apiRequest<NavigationItem[]>(`${userInterfacePath}/navigation`, {
     method: "PUT",
     body: JSON.stringify({ chei }),
@@ -59,10 +57,7 @@ export function createUserInterfaceSeparator(label: string): Promise<NavigationI
   });
 }
 
-export function renameUserInterfaceSeparator(
-  key: string,
-  label: string,
-): Promise<NavigationItem> {
+export function renameUserInterfaceSeparator(key: string, label: string): Promise<NavigationItem> {
   return apiRequest<NavigationItem>(`${userInterfacePath}/navigation/separators/${key}`, {
     method: "PATCH",
     body: JSON.stringify({ label }),

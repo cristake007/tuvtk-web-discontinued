@@ -26,5 +26,4 @@ describe("guardurile de rută", () => {
     assert.equal(canAccessApplicationRoute(["planificator-cursuri"], "planificator-cursuri"), true);
     assert.equal(canAccessApplicationRoute([], "planificator-cursuri"), false);
   });
-
 });

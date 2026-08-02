@@ -23,9 +23,7 @@ function DeferredView({
   title: string;
 }) {
   return (
-    <Suspense
-      fallback={<ApplicationState description={description} loading title={title} />}
-    >
+    <Suspense fallback={<ApplicationState description={description} loading title={title} />}>
       {children}
     </Suspense>
   );
@@ -41,22 +39,15 @@ export function AuthenticationGate() {
   });
   const siteName = bootstrapQuery.data?.configuration.site_name;
   const fontScale = bootstrapQuery.data?.configuration.font_scale;
-  const authenticated = Boolean(
-    bootstrapQuery.data?.authenticated && bootstrapQuery.data.user,
-  );
+  const authenticated = Boolean(bootstrapQuery.data?.authenticated && bootstrapQuery.data.user);
   const pageTitle = matches
-    .map(
-      (match) =>
-        (match.handle as { pageTitle?: string } | undefined)?.pageTitle,
-    )
+    .map((match) => (match.handle as { pageTitle?: string } | undefined)?.pageTitle)
     .findLast((title): title is string => Boolean(title));
 
   useEffect(() => {
     if (siteName) {
       const currentPageTitle = authenticated ? pageTitle : "Autentificare";
-      document.title = currentPageTitle
-        ? `${currentPageTitle} | ${siteName}`
-        : siteName;
+      document.title = currentPageTitle ? `${currentPageTitle} | ${siteName}` : siteName;
     }
   }, [authenticated, pageTitle, siteName]);
 

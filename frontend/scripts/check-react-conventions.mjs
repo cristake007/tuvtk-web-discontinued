@@ -34,24 +34,22 @@ function report(sourceFile, node, message) {
 }
 
 function isNamedCall(node, names) {
-  return ts.isCallExpression(node) && ts.isIdentifier(node.expression) && names.has(node.expression.text);
+  return (
+    ts.isCallExpression(node) && ts.isIdentifier(node.expression) && names.has(node.expression.text)
+  );
 }
 
 function hasJsxAttribute(attributes, name) {
   return attributes.properties.some(
     (property) =>
-      ts.isJsxAttribute(property) &&
-      ts.isIdentifier(property.name) &&
-      property.name.text === name,
+      ts.isJsxAttribute(property) && ts.isIdentifier(property.name) && property.name.text === name,
   );
 }
 
 function getStaticJsxAttributeText(attributes, name) {
   const attribute = attributes.properties.find(
     (property) =>
-      ts.isJsxAttribute(property) &&
-      ts.isIdentifier(property.name) &&
-      property.name.text === name,
+      ts.isJsxAttribute(property) && ts.isIdentifier(property.name) && property.name.text === name,
   );
 
   if (!attribute || !ts.isJsxAttribute(attribute) || !attribute.initializer) {
@@ -169,7 +167,11 @@ function inspectFile(fileName, sourceText) {
         isUiPrimitive &&
         (importPath.startsWith("@/features") || importPath.startsWith("@/pages"))
       ) {
-        report(sourceFile, node, "UI primitives must remain independent from application features.");
+        report(
+          sourceFile,
+          node,
+          "UI primitives must remain independent from application features.",
+        );
       }
     }
 

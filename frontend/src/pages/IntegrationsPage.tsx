@@ -37,20 +37,18 @@ export function IntegrationsPage() {
             <li key={integration.href}>
               <Card className="h-full transition-shadow hover:shadow-md">
                 <CardHeader>
-                <div className="flex items-start gap-3">
-                  <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                    <Icon aria-hidden="true" className="size-5" />
-                  </span>
-                  <div className="min-w-0">
-                    <CardTitle>{integration.name}</CardTitle>
-                    <CardDescription className="mt-1">
-                      {integration.provider}
-                    </CardDescription>
+                  <div className="flex items-start gap-3">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+                      <Icon aria-hidden="true" className="size-5" />
+                    </span>
+                    <div className="min-w-0">
+                      <CardTitle>{integration.name}</CardTitle>
+                      <CardDescription className="mt-1">{integration.provider}</CardDescription>
+                    </div>
                   </div>
-                </div>
-                <CardAction>
-                  <Badge variant="secondary">{integration.status}</Badge>
-                </CardAction>
+                  <CardAction>
+                    <Badge variant="secondary">{integration.status}</Badge>
+                  </CardAction>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm leading-6 text-muted-foreground">

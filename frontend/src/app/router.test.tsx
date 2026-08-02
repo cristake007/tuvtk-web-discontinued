@@ -22,8 +22,14 @@ function bootstrap(accessibleApplicationKeys: string[] = []): CoreBootstrap {
   return {
     authenticated: true,
     configuration: {
-      site_name: "TUVTK", organization_name: "TUVTK", sidebar_title: "Workspace",
-      logo_url: null, culoare_primara: "#164194", culoare_accent: "#d41131", culoare_fundal: "#ffffff", culoare_titluri: "#1b2230",
+      site_name: "TUVTK",
+      organization_name: "TUVTK",
+      sidebar_title: "Workspace",
+      logo_url: null,
+      culoare_primara: "#164194",
+      culoare_accent: "#d41131",
+      culoare_fundal: "#ffffff",
+      culoare_titluri: "#1b2230",
       font_scale: 1,
     },
     user: normalUser,
@@ -35,21 +41,36 @@ function bootstrap(accessibleApplicationKeys: string[] = []): CoreBootstrap {
 function renderRoute(path: string, data = bootstrap()) {
   const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
     if (String(input).includes("/api/v1/core/bootstrap")) {
-      return new Response(JSON.stringify(data), { status: 200, headers: { "Content-Type": "application/json" } });
+      return new Response(JSON.stringify(data), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
     }
     return new Response(JSON.stringify({ detail: "Nu trebuie cerut" }), { status: 500 });
   });
   vi.stubGlobal("fetch", fetchMock);
   const router = createMemoryRouter(appRoutes, { initialEntries: [path] });
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  render(<QueryClientProvider client={queryClient}><LoadingOverlayProvider><RouterProvider router={router} /></LoadingOverlayProvider></QueryClientProvider>);
+  render(
+    <QueryClientProvider client={queryClient}>
+      <LoadingOverlayProvider>
+        <RouterProvider router={router} />
+      </LoadingOverlayProvider>
+    </QueryClientProvider>,
+  );
   return { fetchMock, queryClient, router };
 }
 
 afterEach(() => vi.unstubAllGlobals());
 
 describe("rutele protejate", () => {
-  for (const path of ["/administrare", "/administrare/utilizatori", "/administrare/utilizatori/1", "/administrare/grupuri", "/administrare/integrari"]) {
+  for (const path of [
+    "/administrare",
+    "/administrare/utilizatori",
+    "/administrare/utilizatori/1",
+    "/administrare/grupuri",
+    "/administrare/integrari",
+  ]) {
     it(`nu montează administrarea pentru utilizator normal: ${path}`, async () => {
       const { fetchMock } = renderRoute(path);
       await screen.findByRole("heading", { name: "Acces interzis" });
@@ -106,9 +127,7 @@ describe("rutele protejate", () => {
       );
     });
 
-    await waitFor(() =>
-      expect(document.title).toBe("Pagina nu a fost găsită | Portal actualizat"),
-    );
+    await waitFor(() => expect(document.title).toBe("Pagina nu a fost găsită | Portal actualizat"));
   });
 
   it("aplică și actualizează scala globală a textului", async () => {
@@ -119,9 +138,7 @@ describe("rutele protejate", () => {
     });
 
     await waitFor(() =>
-      expect(document.documentElement.style.getPropertyValue("--app-font-scale")).toBe(
-        "1.125",
-      ),
+      expect(document.documentElement.style.getPropertyValue("--app-font-scale")).toBe("1.125"),
     );
 
     act(() => {
@@ -136,9 +153,7 @@ describe("rutele protejate", () => {
     });
 
     await waitFor(() =>
-      expect(document.documentElement.style.getPropertyValue("--app-font-scale")).toBe(
-        "1.25",
-      ),
+      expect(document.documentElement.style.getPropertyValue("--app-font-scale")).toBe("1.25"),
     );
   });
 

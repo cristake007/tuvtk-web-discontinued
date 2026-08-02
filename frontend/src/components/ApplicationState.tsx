@@ -3,12 +3,7 @@ import { ServerCrash } from "lucide-react";
 
 import { useLoadingOverlay } from "@/app/LoadingOverlayContext";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 
 type ApplicationStateProps = {
   title: string;

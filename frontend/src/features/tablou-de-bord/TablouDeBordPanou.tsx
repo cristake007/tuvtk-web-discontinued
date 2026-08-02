@@ -2,13 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 
 import { AntetAplicatie } from "@/components/AntetAplicatie";
 import { QueryApplicationState } from "@/components/QueryApplicationState";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 import { cheieInterogareTablouDeBord, obtineRezumatTablouDeBord } from "./api";
 
@@ -43,8 +37,8 @@ export function TablouDeBordPanou() {
         <CardHeader>
           <CardTitle>Modulele tale vor apărea aici</CardTitle>
           <CardDescription>
-            Pe măsură ce modulele sunt activate, acest tablou de bord le va centraliza
-            accesul și informațiile utile.
+            Pe măsură ce modulele sunt activate, acest tablou de bord le va centraliza accesul și
+            informațiile utile.
           </CardDescription>
         </CardHeader>
         <CardContent>

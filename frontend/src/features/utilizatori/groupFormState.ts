@@ -4,10 +4,7 @@ export type GroupFormValues = {
   user_ids: number[];
 };
 
-export function updateGroupName(
-  values: GroupFormValues,
-  name: string,
-): GroupFormValues {
+export function updateGroupName(values: GroupFormValues, name: string): GroupFormValues {
   return { ...values, name };
 }
 

@@ -14,11 +14,7 @@ import {
   updatePublicHolidaySettings,
 } from "./api";
 import { publicHolidayQueryKeys } from "./queryKeys";
-import type {
-  InternalHolidayInput,
-  PublicHoliday,
-  PublicHolidaySettingsUpdate,
-} from "./types";
+import type { InternalHolidayInput, PublicHoliday, PublicHolidaySettingsUpdate } from "./types";
 
 const emptyHoliday: InternalHolidayInput = {
   date: "",
@@ -42,10 +38,8 @@ function romanianDateToIso(value: string): string {
 export function usePublicHolidaysIntegration() {
   const queryClient = useQueryClient();
   const [year, setYear] = useState(new Date().getFullYear());
-  const [settingsDraft, setSettingsDraft] =
-    useState<PublicHolidaySettingsUpdate>(defaultSettings);
-  const [holidayDraft, setHolidayDraft] =
-    useState<InternalHolidayInput>(emptyHoliday);
+  const [settingsDraft, setSettingsDraft] = useState<PublicHolidaySettingsUpdate>(defaultSettings);
+  const [holidayDraft, setHolidayDraft] = useState<InternalHolidayInput>(emptyHoliday);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [deleteCandidate, setDeleteCandidate] = useState<PublicHoliday | null>(null);
 
@@ -66,8 +60,7 @@ export function usePublicHolidaysIntegration() {
     }
     setSettingsDraft({
       enabled: settingsQuery.data.enabled ?? defaultSettings.enabled,
-      automatic_sync:
-        settingsQuery.data.automatic_sync ?? defaultSettings.automatic_sync,
+      automatic_sync: settingsQuery.data.automatic_sync ?? defaultSettings.automatic_sync,
       frequency: settingsQuery.data.frequency ?? defaultSettings.frequency,
     });
   }, [settingsQuery.data]);
@@ -120,13 +113,8 @@ export function usePublicHolidaysIntegration() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({
-      holidayId,
-      values,
-    }: {
-      holidayId: string;
-      values: InternalHolidayInput;
-    }) => updateInternalHoliday(holidayId, values),
+    mutationFn: ({ holidayId, values }: { holidayId: string; values: InternalHolidayInput }) =>
+      updateInternalHoliday(holidayId, values),
     onError: (error) =>
       toast.error("Ziua internă nu a putut fi modificată", {
         description: formatApiError(error, operationErrorFallback),
@@ -207,7 +195,7 @@ export function usePublicHolidaysIntegration() {
     createOrUpdatePending: createMutation.isPending || updateMutation.isPending,
     deleteCandidate,
     deletePending: deleteMutation.isPending,
-    deletePendingId: deleteMutation.isPending ? deleteMutation.variables ?? null : null,
+    deletePendingId: deleteMutation.isPending ? (deleteMutation.variables ?? null) : null,
     editing: editingId !== null,
     handleHolidaySubmit,
     holidayDraft,

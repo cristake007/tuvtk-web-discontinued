@@ -44,9 +44,7 @@ describe("UpdateWordPressPanel", () => {
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Încearcă din nou" }));
 
-    expect(
-      await screen.findByRole("heading", { name: "Update WordPress" }),
-    ).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Update WordPress" })).toBeInTheDocument();
   });
 
   it("afișează un empty state când previzualizarea nu conține cursuri", async () => {

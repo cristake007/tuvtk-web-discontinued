@@ -4,9 +4,7 @@ import process from "node:process";
 
 const [inputPath, outputPath] = process.argv.slice(2);
 if (!inputPath || !outputPath) {
-  console.error(
-    "Usage: node scripts/generate-api-types.mjs <openapi.json> <output.ts>",
-  );
+  console.error("Usage: node scripts/generate-api-types.mjs <openapi.json> <output.ts>");
   process.exit(2);
 }
 
@@ -51,10 +49,7 @@ function renderSchema(schema, depth = 0) {
   }
   if (schema.oneOf || schema.anyOf) {
     const values = schema.oneOf ?? schema.anyOf;
-    return withNullable(
-      schema,
-      values.map((value) => renderSchema(value, depth)).join(" | "),
-    );
+    return withNullable(schema, values.map((value) => renderSchema(value, depth)).join(" | "));
   }
   if (schema.allOf) {
     return withNullable(
@@ -87,9 +82,7 @@ function renderSchema(schema, depth = 0) {
     }
     return withNullable(
       schema,
-      lines.length
-        ? `{\n${lines.join("\n")}\n${closingIndentation}}`
-        : "Record<string, unknown>",
+      lines.length ? `{\n${lines.join("\n")}\n${closingIndentation}}` : "Record<string, unknown>",
     );
   }
   if (schema.type === "integer" || schema.type === "number") {
@@ -106,10 +99,7 @@ function renderSchema(schema, depth = 0) {
 
 const schemaLines = Object.keys(schemas)
   .sort((left, right) => left.localeCompare(right))
-  .map(
-    (name) =>
-      `    ${JSON.stringify(name)}: ${renderSchema(schemas[name], 2)};`,
-  );
+  .map((name) => `    ${JSON.stringify(name)}: ${renderSchema(schemas[name], 2)};`);
 
 const output = `/* eslint-disable */\n/* This file is generated from the backend OpenAPI schema. Do not edit manually. */\n\nexport interface components {\n  schemas: {\n${schemaLines.join("\n")}\n  };\n}\n`;
 
