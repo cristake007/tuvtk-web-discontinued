@@ -35,8 +35,10 @@ import {
 } from "@/components/ui/table";
 import { formatRomanianDateTime } from "@/lib/dates";
 import { cn } from "@/lib/utils";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 import { fetchGrupuri, fetchUtilizatori } from "./api";
+import { canEditUtilizator } from "./permissions";
 import { utilizatoriQueryKeys } from "./queryKeys";
 import type { Utilizator, UtilizatorRoleFilter, UtilizatorStatusFilter } from "./types";
 
@@ -66,18 +68,14 @@ export function UtilizatoriPanel() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
   const [searchValue, setSearchValue] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(searchValue.trim(), 300);
   const [statusFilter, setStatusFilter] = useState<UtilizatorStatusFilter>("all");
   const [roleFilter, setRoleFilter] = useState<UtilizatorRoleFilter>("all");
   const [groupFilter, setGroupFilter] = useState<string>("all");
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      setDebouncedSearch(searchValue.trim());
-      setPage(1);
-    }, 300);
-    return () => window.clearTimeout(timeout);
-  }, [searchValue]);
+    setPage(1);
+  }, [debouncedSearch]);
 
   const bootstrap = useAuthenticatedBootstrap();
 
@@ -103,16 +101,21 @@ export function UtilizatoriPanel() {
   const nextDisabled = page >= pageCount || usersQuery.isFetching;
   const currentUser = bootstrap.user;
 
-  if (usersQuery.isPending || usersQuery.isError) {
+  const queryPending = usersQuery.isPending || groupsQuery.isPending;
+  const queryError = usersQuery.error ?? groupsQuery.error;
+  if (queryPending || usersQuery.isError || groupsQuery.isError) {
     return (
       <QueryApplicationState
-        error={usersQuery.error}
-        errorDescription="Lista utilizatorilor nu a putut fi încărcată."
+        error={queryError}
+        errorDescription="Lista utilizatorilor și grupurile nu au putut fi încărcate."
         errorTitle="Utilizatorii nu sunt disponibili"
-        loading={usersQuery.isPending}
+        loading={queryPending}
         loadingDescription="Se încarcă utilizatorii și drepturile conturilor."
         loadingTitle="Se încarcă utilizatorii"
-        onRetry={() => void usersQuery.refetch()}
+        onRetry={() => {
+          void usersQuery.refetch();
+          void groupsQuery.refetch();
+        }}
       />
     );
   }
@@ -223,7 +226,7 @@ export function UtilizatoriPanel() {
             </TableHeader>
             <TableBody>
               {usersQuery.data.results.map((user) => {
-                const editDisabled = user.is_superuser && !currentUser?.is_superuser;
+                const editDisabled = !canEditUtilizator(user, Boolean(currentUser?.is_superuser));
                 return (
                   <TableRow className="even:bg-muted/25" key={user.id}>
                     <TableCell>
