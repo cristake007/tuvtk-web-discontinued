@@ -59,14 +59,17 @@ function normalizeErrorPayload(body: unknown, status: number): ApiErrorPayload {
               ? "permission_denied"
               : "api_error",
       detail:
-        typeof candidate.detail === "string" ? candidate.detail : `API request failed: ${status}`,
+        typeof candidate.detail === "string"
+          ? candidate.detail
+          : `Cererea către server a eșuat (cod ${status}).`,
       fields: candidate.fields && typeof candidate.fields === "object" ? candidate.fields : {},
     };
   }
 
   return {
     code: status === 401 ? "authentication_required" : "api_error",
-    detail: typeof body === "string" && body ? body : `API request failed: ${status}`,
+    detail:
+      typeof body === "string" && body ? body : `Cererea către server a eșuat (cod ${status}).`,
     fields: {},
   };
 }
@@ -97,7 +100,7 @@ async function readResponseBody(response: Response): Promise<unknown> {
     throw new ApiError(
       {
         code: "invalid_json",
-        detail: "The server returned invalid JSON.",
+        detail: "Serverul a returnat un răspuns JSON nevalid.",
         fields: {},
       },
       response.status,
@@ -125,7 +128,7 @@ async function fetchCsrfCookie(): Promise<void> {
           throw new ApiError(
             {
               code: "csrf_missing",
-              detail: "Security token is missing.",
+              detail: "Tokenul de securitate lipsește.",
               fields: {},
             },
             403,
@@ -162,7 +165,7 @@ async function buildRequestHeaders(options: ApiRequestOptions): Promise<{
       throw new ApiError(
         {
           code: "csrf_missing",
-          detail: "Security token is missing.",
+          detail: "Tokenul de securitate lipsește.",
           fields: {},
         },
         403,

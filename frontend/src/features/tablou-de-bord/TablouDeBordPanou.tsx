@@ -22,7 +22,7 @@ export function TablouDeBordPanou() {
         errorTitle="Tabloul de bord nu este disponibil"
         loading={interogare.isPending}
         loadingDescription="Se pregătește spațiul de lucru."
-        loadingTitle="Se încarcă Dashboard"
+        loadingTitle="Se încarcă tabloul de bord"
         onRetry={() => void interogare.refetch()}
       />
     );

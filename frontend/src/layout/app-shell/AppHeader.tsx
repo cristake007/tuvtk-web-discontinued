@@ -39,7 +39,7 @@ function HeaderBrand({
 
   return (
     <NavLink
-      aria-label={`${configuration.site_name} — Dashboard`}
+      aria-label={`${configuration.site_name} — Tablou de bord`}
       className={cn(
         "flex shrink-0 items-center outline-none focus-visible:ring-2 focus-visible:ring-ring",
         className,
