@@ -13,7 +13,7 @@ class Migration(migrations.Migration):
                 ("id", models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name="ID")),
                 ("name", models.CharField(db_index=True, max_length=255, verbose_name="nume")),
                 ("legal_name", models.CharField(blank=True, max_length=255, verbose_name="denumire juridică")),
-                ("cui", models.CharField(blank=True, max_length=32, null=True, verbose_name="CUI")),
+                ("cui", models.CharField(blank=True, max_length=32, verbose_name="CUI")),
                 ("trade_registry_number", models.CharField(blank=True, max_length=64, verbose_name="număr registrul comerțului")),
                 ("vat_status", models.CharField(choices=[("TVA_PLATITOR", "Plătitor de TVA"), ("TVA_NEPLATITOR", "Neplătitor de TVA")], max_length=20, verbose_name="statut TVA")),
                 ("status", models.CharField(choices=[("ACTIV", "Activ"), ("PROSPECT", "Prospect"), ("INACTIV", "Inactiv")], db_index=True, default="PROSPECT", max_length=20, verbose_name="statut")),
@@ -34,7 +34,7 @@ class Migration(migrations.Migration):
             ],
             options={"ordering": ("name", "pk")},
         ),
-        migrations.AddConstraint(model_name="companie", constraint=models.UniqueConstraint(condition=models.Q(("cui__isnull", False), models.Q(("cui", ""), _negated=True)), fields=("cui",), name="companii_unique_present_cui")),
+        migrations.AddConstraint(model_name="companie", constraint=models.UniqueConstraint(condition=models.Q(("cui", ""), _negated=True), fields=("cui",), name="companii_unique_present_cui")),
         migrations.AddIndex(model_name="companie", index=models.Index(fields=["owner"], name="companii_owner_idx")),
         migrations.AddIndex(model_name="companie", index=models.Index(fields=["is_archived", "updated_at"], name="companii_arch_updated_idx")),
     ]

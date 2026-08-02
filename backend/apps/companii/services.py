@@ -6,9 +6,9 @@ from django.utils import timezone
 from .models import Companie
 
 
-def normalize_cui(value: str | None) -> str | None:
+def normalize_cui(value: str | None) -> str:
     if not value or not value.strip():
-        return None
+        return ""
     normalized = re.sub(r"\s+", "", value).upper()
     digits = normalized[2:] if normalized.startswith("RO") else normalized
     if not digits.isdigit():

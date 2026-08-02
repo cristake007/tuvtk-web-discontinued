@@ -15,10 +15,14 @@ class Companie(models.Model):
 
     name = models.CharField("nume", max_length=255, db_index=True)
     legal_name = models.CharField("denumire juridică", max_length=255, blank=True)
-    cui = models.CharField("CUI", max_length=32, blank=True, null=True)
-    trade_registry_number = models.CharField("număr registrul comerțului", max_length=64, blank=True)
+    cui = models.CharField("CUI", max_length=32, blank=True)
+    trade_registry_number = models.CharField(
+        "număr registrul comerțului", max_length=64, blank=True
+    )
     vat_status = models.CharField("statut TVA", max_length=20, choices=VatStatus.choices)
-    status = models.CharField("statut", max_length=20, choices=Status.choices, default=Status.PROSPECT, db_index=True)
+    status = models.CharField(
+        "statut", max_length=20, choices=Status.choices, default=Status.PROSPECT, db_index=True
+    )
     website = models.URLField("website", blank=True)
     email = models.EmailField("e-mail general", blank=True)
     phone = models.CharField("telefon", max_length=64, blank=True)
@@ -45,7 +49,7 @@ class Companie(models.Model):
         constraints = [
             models.UniqueConstraint(
                 fields=("cui",),
-                condition=Q(cui__isnull=False) & ~Q(cui=""),
+                condition=~Q(cui=""),
                 name="companii_unique_present_cui",
             )
         ]
@@ -56,3 +60,9 @@ class Companie(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    def save(self, *args, **kwargs):
+        from .services import normalize_cui
+
+        self.cui = normalize_cui(self.cui)
+        return super().save(*args, **kwargs)

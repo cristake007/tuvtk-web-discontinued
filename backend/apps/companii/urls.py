@@ -7,4 +7,7 @@ router = SimpleRouter()
 router.register("", CompanieViewSet, basename="companie")
 
 app_name = "companii"
-urlpatterns = [path("owners/", OwnerListView.as_view(), name="owners"), path("", include(router.urls))]
+urlpatterns = [
+    path("owners/", OwnerListView.as_view(), name="owners"),
+    path("", include(router.urls)),
+]
