@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 
 import { textVariants } from "@/components/ui/text";
+import { ApplicationState } from "@/components/ApplicationState";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
@@ -16,6 +17,7 @@ import type {
   UtilizatorFormValues,
   UtilizatorWrite,
 } from "./types";
+import { canEditUtilizator } from "./permissions";
 
 const emptyValues: UtilizatorFormValues = {
   username: "",
@@ -66,6 +68,7 @@ export function UtilizatorForm({
   const [values, setValues] = useState<UtilizatorFormValues>(emptyValues);
   const [localErrors, setLocalErrors] = useState<Record<string, string>>({});
   const editing = Boolean(user);
+  const canEditTarget = !user || canEditUtilizator(user, canManageStaff);
 
   useEffect(() => {
     setValues(valuesForUser(user));
@@ -129,6 +132,15 @@ export function UtilizatorForm({
         .flatMap((group) => group.applications.map((application) => [application.id, application])),
     ).values(),
   ];
+
+  if (!canEditTarget) {
+    return (
+      <ApplicationState
+        description="Doar un superutilizator poate modifica acest cont administrativ."
+        title="Contul nu poate fi modificat"
+      />
+    );
+  }
 
   return (
     <section className="flex min-w-0 flex-1 flex-col gap-6">

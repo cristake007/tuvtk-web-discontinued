@@ -30,6 +30,7 @@ import {
 import { Field, FieldDescription, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { formatApiError, getApiFieldError } from "@/lib/api-errors";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 
 import {
   createGrup,
@@ -79,13 +80,8 @@ function GrupDialog({
 }) {
   const [values, setValues] = useState<GrupAplicatiiFormValues>(emptyValues);
   const [userSearch, setUserSearch] = useState("");
-  const [debouncedUserSearch, setDebouncedUserSearch] = useState("");
+  const debouncedUserSearch = useDebouncedValue(userSearch, 300);
   const [userPage, setUserPage] = useState(1);
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => setDebouncedUserSearch(userSearch), 300);
-    return () => window.clearTimeout(timeout);
-  }, [userSearch]);
 
   useEffect(() => setUserPage(1), [debouncedUserSearch]);
 
@@ -312,6 +308,9 @@ export function GrupuriAplicatiiPanel() {
       setGroupToDelete(null);
       void queryClient.invalidateQueries({ queryKey: utilizatoriQueryKeys.all });
       toast.success("Grupul a fost șters.");
+    },
+    onError: (error) => {
+      toast.error(formatApiError(error, "Grupul nu a putut fi șters."));
     },
   });
   const filteredGroups = useMemo(
