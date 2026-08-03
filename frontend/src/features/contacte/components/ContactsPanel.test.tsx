@@ -3,6 +3,8 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
+import { LoadingOverlayProvider } from "@/app/LoadingOverlayContext";
+
 import { fetchContactCompanies, fetchContactOwners, fetchContacts } from "../api";
 import { ContactsPanel } from "./ContactsPanel";
 
@@ -48,9 +50,11 @@ describe("lista contactelor", () => {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
     render(
       <MemoryRouter>
-        <QueryClientProvider client={client}>
-          <ContactsPanel />
-        </QueryClientProvider>
+        <LoadingOverlayProvider>
+          <QueryClientProvider client={client}>
+            <ContactsPanel />
+          </QueryClientProvider>
+        </LoadingOverlayProvider>
       </MemoryRouter>,
     );
     await screen.findByText("Nu există contacte");
