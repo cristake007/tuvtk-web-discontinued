@@ -1,7 +1,8 @@
 import { Users } from "lucide-react";
 import { useNavigate } from "react-router";
 import { ContentEmptyState } from "@/components/ContentEmptyState";
-import { QueryApplicationState } from "@/components/QueryApplicationState";
+import { Button } from "@/components/ui/button";
+import { Text } from "@/components/ui/text";
 import {
   Table,
   TableBody,
@@ -14,17 +15,16 @@ import { useContactsByCompany } from "../hooks/useContactsByCompany";
 export function ContactsByCompany({ companyId }: { companyId: number }) {
   const query = useContactsByCompany(companyId);
   const navigate = useNavigate();
-  if (query.isPending || query.isError)
+  if (query.isPending)
+    return <Text className="text-muted-foreground">Se încarcă contactele companiei...</Text>;
+  if (query.isError)
     return (
-      <QueryApplicationState
-        error={query.error}
-        errorDescription="Contactele companiei nu au putut fi încărcate."
-        errorTitle="Contactele nu sunt disponibile"
-        loading={query.isPending}
-        loadingDescription="Se încarcă contactele companiei."
-        loadingTitle="Se încarcă contactele"
-        onRetry={() => void query.refetch()}
-      />
+      <div className="flex items-center justify-between gap-3" role="alert">
+        <Text>Contactele companiei nu au putut fi încărcate.</Text>
+        <Button variant="outline" onClick={() => void query.refetch()}>
+          Reîncearcă
+        </Button>
+      </div>
     );
   if (!query.data.results.length)
     return (

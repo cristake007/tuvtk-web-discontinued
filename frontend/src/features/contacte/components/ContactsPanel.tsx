@@ -51,6 +51,20 @@ export function ContactsPanel() {
     queryFn: fetchContactCompanies,
   });
   const owners = useQuery({ queryKey: contactQueryKeys.owners, queryFn: fetchContactOwners });
+  const header = (
+    <div className="flex items-center justify-between">
+      <div>
+        <PageTitle>Contacte</PageTitle>
+        <Text className="text-muted-foreground">
+          Administrează persoanele de contact ale companiilor.
+        </Text>
+      </div>
+      <Button onClick={() => navigate("/crm/contacte/adaugare")}>
+        <Plus aria-hidden="true" />
+        Adaugă contact
+      </Button>
+    </div>
+  );
   if (
     contacts.isPending ||
     contacts.isError ||
@@ -60,34 +74,26 @@ export function ContactsPanel() {
     owners.isError
   )
     return (
-      <QueryApplicationState
-        error={contacts.error ?? companies.error ?? owners.error}
-        errorDescription="Lista contactelor nu a putut fi încărcată."
-        errorTitle="Contactele nu sunt disponibile"
-        loading={contacts.isPending || companies.isPending || owners.isPending}
-        loadingDescription="Se încarcă lista contactelor."
-        loadingTitle="Se încarcă contactele"
-        onRetry={() => {
-          void contacts.refetch();
-          void companies.refetch();
-          void owners.refetch();
-        }}
-      />
+      <section className="flex flex-col gap-6">
+        {header}
+        <QueryApplicationState
+          error={contacts.error ?? companies.error ?? owners.error}
+          errorDescription="Lista contactelor nu a putut fi încărcată."
+          errorTitle="Contactele nu sunt disponibile"
+          loading={contacts.isPending || companies.isPending || owners.isPending}
+          loadingDescription="Se încarcă lista contactelor."
+          loadingTitle="Se încarcă contactele"
+          onRetry={() => {
+            void contacts.refetch();
+            void companies.refetch();
+            void owners.refetch();
+          }}
+        />
+      </section>
     );
   return (
     <section className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <PageTitle>Contacte</PageTitle>
-          <Text className="text-muted-foreground">
-            Administrează persoanele de contact ale companiilor.
-          </Text>
-        </div>
-        <Button onClick={() => navigate("/crm/contacte/adaugare")}>
-          <Plus aria-hidden="true" />
-          Adaugă contact
-        </Button>
-      </div>
+      {header}
       <Card className="gap-0 py-0">
         <CardContent className="grid gap-3 border-b p-4 lg:grid-cols-6">
           <div className="relative lg:col-span-2">
@@ -204,21 +210,24 @@ export function ContactsPanel() {
     </section>
   );
 }
-function Filter({
+function Filter<T extends number | string>({
   value,
   setValue,
   all,
   items,
 }: {
-  value: number | string;
-  setValue: (v: any) => void;
+  value: T;
+  setValue: (value: T) => void;
   all: string;
   items: (string | number)[][];
 }) {
   return (
     <Select
       value={String(value)}
-      onValueChange={(v) => setValue(v === "all" ? "all" : Number.isNaN(Number(v)) ? v : Number(v))}
+      onValueChange={(v) => {
+        const nextValue = v === "all" || Number.isNaN(Number(v)) ? v : Number(v);
+        setValue(nextValue as T);
+      }}
     >
       <SelectTrigger>
         <SelectValue />

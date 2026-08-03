@@ -64,9 +64,9 @@ export function ContactForm({
     e.preventDefault();
     if (!values.first_name.trim()) return setError("Prenumele este obligatoriu.");
     if (!values.last_name.trim()) return setError("Numele este obligatoriu.");
-    if (!values.company) return setError("Compania este obligatorie.");
     if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email))
       return setError("Adresa de e-mail nu este validă.");
+    if (!values.company) return setError("Compania este obligatorie.");
     setError("");
     onSubmit({
       ...values,
