@@ -50,7 +50,9 @@ export function ContactsTable({
             <TableCell className="font-medium">
               {contact.first_name} {contact.last_name}
             </TableCell>
-            {showCompany ? <TableCell>{contact.company_detail?.name ?? "Fără companie"}</TableCell> : null}
+            {showCompany ? (
+              <TableCell>{contact.company_detail?.name ?? "Fără companie"}</TableCell>
+            ) : null}
             <TableCell>{contact.job_title || "—"}</TableCell>
             <TableCell>
               <Badge variant={contact.is_archived ? "outline" : "secondary"}>
