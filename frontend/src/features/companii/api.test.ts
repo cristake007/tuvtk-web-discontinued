@@ -29,6 +29,29 @@ describe("API companii", () => {
     expect(path).toContain("status=ACTIV");
     expect(path).toContain("vat_status=TVA_PLATITOR");
     expect(path).toContain("owner=7");
+    expect(path).toContain("archived=false");
     expect(path).toContain("ordering=-updated_at");
+  });
+
+  it("solicită explicit companiile arhivate", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(JSON.stringify({ count: 0, next: null, previous: null, results: [] }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      }),
+    );
+    vi.stubGlobal("fetch", fetchMock);
+
+    await fetchCompanies({
+      page: 1,
+      search: "",
+      status: "all",
+      vatStatus: "all",
+      owner: "all",
+      archived: true,
+      ordering: "name",
+    });
+
+    expect(String(fetchMock.mock.calls[0]?.[0])).toContain("archived=true");
   });
 });
