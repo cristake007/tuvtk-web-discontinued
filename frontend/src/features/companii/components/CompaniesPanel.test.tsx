@@ -58,13 +58,11 @@ const activeCompany: Company = {
 beforeEach(() => {
   vi.mocked(fetchCompanies).mockReset();
   vi.mocked(fetchOwners).mockReset().mockResolvedValue([]);
-  vi.mocked(restoreCompany)
-    .mockReset()
-    .mockResolvedValue({
-      ...archivedCompany,
-      is_archived: false,
-      archived_at: null,
-    });
+  vi.mocked(restoreCompany).mockReset().mockResolvedValue({
+    ...archivedCompany,
+    is_archived: false,
+    archived_at: null,
+  });
   vi.mocked(fetchCompanies).mockImplementation(async (filters) => ({
     count: 1,
     next: null,
