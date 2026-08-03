@@ -19,7 +19,7 @@ const emptyValues: ContactWrite = {
   first_name: "",
   last_name: "",
   job_title: "",
-  company: 0,
+  company: null,
   email: "",
   phone: "",
   mobile_phone: "",
@@ -66,7 +66,6 @@ export function ContactForm({
     if (!values.last_name.trim()) return setError("Numele este obligatoriu.");
     if (values.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email))
       return setError("Adresa de e-mail nu este validă.");
-    if (!values.company) return setError("Compania este obligatorie.");
     setError("");
     onSubmit({
       ...values,
@@ -100,16 +99,16 @@ export function ContactForm({
             </div>
           ))}
           <div className="grid gap-2">
-            <Label>Companie *</Label>
+            <Label>Companie</Label>
             <Select
               value={values.company ? String(values.company) : "none"}
-              onValueChange={(v) => update("company", v === "none" ? 0 : Number(v))}
+              onValueChange={(v) => update("company", v === "none" ? null : Number(v))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selectează compania" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="none">Selectează compania</SelectItem>
+                <SelectItem value="none">Fără companie</SelectItem>
                 {companies.data?.map((c) => (
                   <SelectItem key={c.id} value={String(c.id)}>
                     {c.name}

@@ -7,8 +7,8 @@ export type Contact = {
   first_name: string;
   last_name: string;
   job_title: string;
-  company: number;
-  company_detail: CompanyReference;
+  company: number | null;
+  company_detail: CompanyReference | null;
   email: string;
   phone: string;
   mobile_phone: string;

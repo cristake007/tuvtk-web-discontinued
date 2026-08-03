@@ -40,4 +40,12 @@ describe("formular contact", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Adresa de e-mail nu este validă.");
     expect(onSubmit).not.toHaveBeenCalled();
   });
+
+  it("permite salvarea fără companie", () => {
+    const onSubmit = renderForm();
+    fireEvent.change(screen.getByLabelText("Prenume *"), { target: { value: "Ana" } });
+    fireEvent.change(screen.getByLabelText("Nume *"), { target: { value: "Pop" } });
+    fireEvent.click(screen.getByRole("button", { name: "Salvează" }));
+    expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ company: null }));
+  });
 });

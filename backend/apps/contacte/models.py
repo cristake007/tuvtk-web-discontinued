@@ -12,7 +12,11 @@ class Contact(models.Model):
     last_name = models.CharField("nume", max_length=128)
     job_title = models.CharField("funcție", max_length=255, blank=True)
     company = models.ForeignKey(
-        "companii.Companie", on_delete=models.PROTECT, related_name="contacts"
+        "companii.Companie",
+        blank=True,
+        null=True,
+        on_delete=models.SET_NULL,
+        related_name="contacts",
     )
     email = models.EmailField("e-mail", blank=True)
     phone = models.CharField("telefon", max_length=64, blank=True)
