@@ -40,6 +40,7 @@ class ContactSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             "first_name": {"allow_blank": False},
             "last_name": {"allow_blank": False},
+            "company": {"allow_null": True, "required": False},
         }
 
     def validate_first_name(self, value: str) -> str:

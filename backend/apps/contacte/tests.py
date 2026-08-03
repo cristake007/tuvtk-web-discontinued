@@ -36,14 +36,35 @@ class ContactApiTests(TestCase):
     def test_create_update_and_validation(self):
         self.authenticate()
         url = reverse("api-v1:contacte:contact-list")
-        self.assertEqual(self.client.post(url, self.payload(company=None), format="json").status_code, 400)
         self.assertEqual(self.client.post(url, self.payload(email="invalid"), format="json").status_code, 400)
-        response = self.client.post(url, self.payload(email="ana@example.test"), format="json")
+        response = self.client.post(
+            url,
+            self.payload(
+                job_title="",
+                email="ana@example.test",
+                phone="",
+                mobile_phone="",
+                owner=None,
+                notes="",
+            ),
+            format="json",
+        )
         self.assertEqual(response.status_code, 201)
         detail = reverse("api-v1:contacte:contact-detail", args=(response.data["id"],))
         response = self.client.patch(detail, {"job_title": "Director"}, format="json")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data["job_title"], "Director")
+
+    def test_create_contact_without_company(self):
+        self.authenticate()
+        response = self.client.post(
+            reverse("api-v1:contacte:contact-list"),
+            {"first_name": "Ioana", "last_name": "Ionescu", "status": "ACTIV"},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertIsNone(response.data["company"])
+        self.assertIsNone(response.data["company_detail"])
 
     def test_filter_sort_pagination_and_search(self):
         self.authenticate()

@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Navigate, useNavigate, useParams } from "react-router";
 import { toast } from "sonner";
+import { ApiError } from "@/api/http";
 import { QueryApplicationState } from "@/components/QueryApplicationState";
 import { Button } from "@/components/ui/button";
 import { createContact, updateContact } from "@/features/contacte/api";
@@ -80,7 +81,9 @@ export function ContactFormPage() {
       />
       {mutation.error ? (
         <p className="text-destructive" role="alert">
-          Salvarea contactului a eșuat. Verifică datele introduse.
+          {mutation.error instanceof ApiError
+            ? mutation.error.message
+            : "Salvarea contactului a eșuat. Încearcă din nou."}
         </p>
       ) : null}
     </section>

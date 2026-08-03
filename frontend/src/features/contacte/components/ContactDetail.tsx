@@ -44,7 +44,7 @@ export function ContactDetail({ contact }: { contact: Contact }) {
       ),
   });
   const rows = [
-    ["Companie", contact.company_detail.name],
+    ["Companie", contact.company_detail?.name ?? "Fără companie"],
     ["Funcție", contact.job_title],
     ["Statut", contact.status_label],
     ["Responsabil", contact.owner_detail?.display_name],

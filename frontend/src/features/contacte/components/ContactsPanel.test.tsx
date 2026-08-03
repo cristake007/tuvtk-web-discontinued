@@ -29,8 +29,8 @@ describe("lista contactelor", () => {
               first_name: "Ana",
               last_name: "Arhivată",
               job_title: "",
-              company: 7,
-              company_detail: { id: 7, name: "Exemplu SRL", is_archived: false },
+              company: null,
+              company_detail: null,
               email: "",
               phone: "",
               mobile_phone: "",
@@ -60,6 +60,7 @@ describe("lista contactelor", () => {
     await screen.findByText("Nu există contacte");
     fireEvent.click(screen.getByRole("checkbox", { name: "Afișează arhivate" }));
     expect(await screen.findByText("Ana Arhivată")).toBeInTheDocument();
+    expect(screen.getByText("Fără companie")).toBeInTheDocument();
     await waitFor(() =>
       expect(fetchContacts).toHaveBeenLastCalledWith(expect.objectContaining({ archived: true })),
     );
