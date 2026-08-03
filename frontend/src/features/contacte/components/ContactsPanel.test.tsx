@@ -60,6 +60,7 @@ describe("lista contactelor", () => {
     await screen.findByText("Nu există contacte");
     fireEvent.click(screen.getByRole("checkbox", { name: "Afișează arhivate" }));
     expect(await screen.findByText("Ana Arhivată")).toBeInTheDocument();
+    expect(screen.getByText("Fără companie")).toBeInTheDocument();
     await waitFor(() =>
       expect(fetchContacts).toHaveBeenLastCalledWith(expect.objectContaining({ archived: true })),
     );
