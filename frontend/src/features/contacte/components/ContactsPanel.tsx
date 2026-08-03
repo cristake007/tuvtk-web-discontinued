@@ -1,10 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Search, Users } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { ContentEmptyState } from "@/components/ContentEmptyState";
 import { QueryApplicationState } from "@/components/QueryApplicationState";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,19 +14,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Text, textVariants } from "@/components/ui/text";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import { fetchContactCompanies, fetchContactOwners, fetchContacts } from "../api";
+import { fetchContactCompanies, fetchContactOwners } from "../api";
+import { useContacts } from "../hooks/useContacts";
 import { contactQueryKeys } from "../queryKeys";
 import type { ContactStatus } from "../types";
+import { ContactsTable } from "./ContactsTable";
 export function ContactsPanel() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
@@ -41,11 +33,7 @@ export function ContactsPanel() {
   const [ordering, setOrdering] = useState("last_name");
   useEffect(() => setPage(1), [debouncedSearch, company, status, owner, archived, ordering]);
   const filters = { page, search: debouncedSearch, company, status, owner, archived, ordering };
-  const contacts = useQuery({
-    queryKey: contactQueryKeys.list(filters),
-    queryFn: () => fetchContacts(filters),
-    placeholderData: (old) => old,
-  });
+  const contacts = useContacts(filters);
   const companies = useQuery({
     queryKey: contactQueryKeys.companies,
     queryFn: fetchContactCompanies,
@@ -147,46 +135,10 @@ export function ContactsPanel() {
             Afișează arhivate
           </label>
         </CardContent>
-        {contacts.data.results.length ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Contact</TableHead>
-                <TableHead>Companie</TableHead>
-                <TableHead>Funcție</TableHead>
-                <TableHead>Statut</TableHead>
-                <TableHead>Contact</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {contacts.data.results.map((c) => (
-                <TableRow
-                  className="cursor-pointer"
-                  key={c.id}
-                  onClick={() => navigate(`/crm/contacte/${c.id}`)}
-                >
-                  <TableCell className="font-medium">
-                    {c.first_name} {c.last_name}
-                  </TableCell>
-                  <TableCell>{c.company_detail.name}</TableCell>
-                  <TableCell>{c.job_title || "—"}</TableCell>
-                  <TableCell>
-                    <Badge variant={c.is_archived ? "outline" : "secondary"}>
-                      {c.is_archived ? "Arhivat" : c.status_label}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{c.email || c.mobile_phone || c.phone || "—"}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <ContentEmptyState
-            icon={Users}
-            title="Nu există contacte"
-            description="Adaugă primul contact sau modifică filtrele curente."
-          />
-        )}
+        <ContactsTable
+          contacts={contacts.data.results}
+          emptyDescription="Adaugă primul contact sau modifică filtrele curente."
+        />
         <CardContent className="flex items-center justify-between border-t p-4">
           <span>{contacts.data.count} contacte</span>
           <div className="flex gap-2">

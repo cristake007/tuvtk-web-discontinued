@@ -1,6 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
-import { fetchContacts } from "../api";
-import { contactQueryKeys } from "../queryKeys";
+import { useContacts } from "./useContacts";
 export function useContactsByCompany(company: number) {
   const filters = {
     page: 1,
@@ -11,8 +9,5 @@ export function useContactsByCompany(company: number) {
     archived: false,
     ordering: "last_name",
   };
-  return useQuery({
-    queryKey: contactQueryKeys.list(filters),
-    queryFn: () => fetchContacts(filters),
-  });
+  return useContacts(filters);
 }
