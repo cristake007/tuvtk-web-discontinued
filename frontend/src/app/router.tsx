@@ -65,6 +65,9 @@ const PublicHolidaysIntegrationPage = lazyRoute(
 const CompaniiPage = lazyRoute(() => import("@/pages/CompaniiPage"), "CompaniiPage");
 const CompanieDetailPage = lazyRoute(() => import("@/pages/CompaniiPage"), "CompanieDetailPage");
 const CompanieFormPage = lazyRoute(() => import("@/pages/CompaniiPage"), "CompanieFormPage");
+const ContactePage = lazyRoute(() => import("@/pages/ContactePage"), "ContactePage");
+const ContactDetailPage = lazyRoute(() => import("@/pages/ContactePage"), "ContactDetailPage");
+const ContactFormPage = lazyRoute(() => import("@/pages/ContactePage"), "ContactFormPage");
 
 export const appRoutes = [
   {
@@ -113,6 +116,27 @@ export const appRoutes = [
             path: "crm/companii/:companyId/editare",
             element: <CompanieFormPage />,
             handle: { pageTitle: "Editează companie" },
+          },
+        ],
+      },
+      {
+        element: <ApplicationAccessRoute applicationKey="contacte" />,
+        children: [
+          { path: "crm/contacte", element: <ContactePage />, handle: { pageTitle: "Contacte" } },
+          {
+            path: "crm/contacte/adaugare",
+            element: <ContactFormPage />,
+            handle: { pageTitle: "Adaugă contact" },
+          },
+          {
+            path: "crm/contacte/:contactId",
+            element: <ContactDetailPage />,
+            handle: { pageTitle: "Detalii contact" },
+          },
+          {
+            path: "crm/contacte/:contactId/editare",
+            element: <ContactFormPage />,
+            handle: { pageTitle: "Editează contact" },
           },
         ],
       },

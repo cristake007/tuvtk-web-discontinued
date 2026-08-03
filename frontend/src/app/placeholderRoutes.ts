@@ -15,13 +15,6 @@ export const placeholderRoutes = [
     pageTitle: "CRM",
   },
   {
-    applicationKey: "contacte",
-    path: "crm/contacte",
-    title: "Contacte",
-    description: "Modulul pentru gestionarea contactelor va fi disponibil aici.",
-    pageTitle: "Contacte",
-  },
-  {
     applicationKey: "oportunitati",
     path: "crm/oportunitati",
     title: "Oportunități",

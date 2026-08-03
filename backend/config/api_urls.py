@@ -25,6 +25,7 @@ urlpatterns = [
     path("update-wordpress/", include("apps.update_wordpress.urls")),
     path("utilizatori/", include("apps.utilizatori.urls")),
     path("companii/", include("apps.companii.urls")),
+    path("contacte/", include("apps.contacte.urls")),
     path(
         "integrations/public-holidays/",
         include("apps.public_holidays.urls"),

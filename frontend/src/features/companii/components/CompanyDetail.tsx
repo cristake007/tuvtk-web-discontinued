@@ -1,14 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Archive, RotateCcw, Users } from "lucide-react";
+import { Archive, RotateCcw } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
-import { ContentEmptyState } from "@/components/ContentEmptyState";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { PageTitle } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
+import { ContactsByCompany } from "@/features/contacte/components/ContactsByCompany";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -134,11 +134,7 @@ export function CompanyDetail({ company }: { company: Company }) {
           <CardTitle>Contacte asociate</CardTitle>
         </CardHeader>
         <CardContent>
-          <ContentEmptyState
-            icon={Users}
-            title="Contactele vor apărea aici"
-            description="Modulul Contacte nu este disponibil încă. Această secțiune va afișa contactele filtrate după companie."
-          />
+          <ContactsByCompany companyId={company.id} />
         </CardContent>
       </Card>
     </section>
