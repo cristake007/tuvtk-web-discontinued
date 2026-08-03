@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Plus, Search } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
-import { QueryApplicationState } from "@/components/QueryApplicationState";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,10 +16,9 @@ import {
 import { Text, textVariants } from "@/components/ui/text";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { fetchContactCompanies, fetchContactOwners } from "../api";
-import { useContacts } from "../hooks/useContacts";
 import { contactQueryKeys } from "../queryKeys";
 import type { ContactStatus } from "../types";
-import { ContactsTable } from "./ContactsTable";
+import { ContactsList } from "./ContactsList";
 export function ContactsPanel() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
@@ -33,7 +31,6 @@ export function ContactsPanel() {
   const [ordering, setOrdering] = useState("last_name");
   useEffect(() => setPage(1), [debouncedSearch, company, status, owner, archived, ordering]);
   const filters = { page, search: debouncedSearch, company, status, owner, archived, ordering };
-  const contacts = useContacts(filters);
   const companies = useQuery({
     queryKey: contactQueryKeys.companies,
     queryFn: fetchContactCompanies,
@@ -53,30 +50,28 @@ export function ContactsPanel() {
       </Button>
     </div>
   );
-  if (
-    contacts.isPending ||
-    contacts.isError ||
-    companies.isPending ||
-    companies.isError ||
-    owners.isPending ||
-    owners.isError
-  )
+  if (companies.isPending || companies.isError || owners.isPending || owners.isError)
     return (
       <section className="flex flex-col gap-6">
         {header}
-        <QueryApplicationState
-          error={contacts.error ?? companies.error ?? owners.error}
-          errorDescription="Lista contactelor nu a putut fi încărcată."
-          errorTitle="Contactele nu sunt disponibile"
-          loading={contacts.isPending || companies.isPending || owners.isPending}
-          loadingDescription="Se încarcă lista contactelor."
-          loadingTitle="Se încarcă contactele"
-          onRetry={() => {
-            void contacts.refetch();
-            void companies.refetch();
-            void owners.refetch();
-          }}
-        />
+        <div className="flex items-center justify-between gap-3" role="alert">
+          <Text>
+            {companies.isPending || owners.isPending
+              ? "Se încarcă filtrele contactelor..."
+              : "Filtrele contactelor nu au putut fi încărcate."}
+          </Text>
+          {companies.isError || owners.isError ? (
+            <Button
+              variant="outline"
+              onClick={() => {
+                void companies.refetch();
+                void owners.refetch();
+              }}
+            >
+              Reîncearcă
+            </Button>
+          ) : null}
+        </div>
       </section>
     );
   return (
@@ -135,29 +130,14 @@ export function ContactsPanel() {
             Afișează arhivate
           </label>
         </CardContent>
-        <ContactsTable
-          contacts={contacts.data.results}
+        <ContactsList
+          filters={filters}
           emptyDescription="Adaugă primul contact sau modifică filtrele curente."
+          pagination={{
+            onPrevious: () => setPage((value) => value - 1),
+            onNext: () => setPage((value) => value + 1),
+          }}
         />
-        <CardContent className="flex items-center justify-between border-t p-4">
-          <span>{contacts.data.count} contacte</span>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              disabled={!contacts.data.previous}
-              onClick={() => setPage((v) => v - 1)}
-            >
-              Anterior
-            </Button>
-            <Button
-              variant="outline"
-              disabled={!contacts.data.next}
-              onClick={() => setPage((v) => v + 1)}
-            >
-              Următor
-            </Button>
-          </div>
-        </CardContent>
       </Card>
     </section>
   );
