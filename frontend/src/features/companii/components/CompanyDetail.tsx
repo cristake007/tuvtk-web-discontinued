@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Archive, RotateCcw, Users } from "lucide-react";
+import { useState } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
@@ -27,6 +28,7 @@ import type { Company } from "../types";
 export function CompanyDetail({ company }: { company: Company }) {
   const navigate = useNavigate();
   const client = useQueryClient();
+  const [confirmationOpen, setConfirmationOpen] = useState(false);
   const toggle = useMutation({
     mutationFn: () =>
       company.is_archived ? restoreCompany(company.id) : archiveCompany(company.id),
@@ -36,6 +38,7 @@ export function CompanyDetail({ company }: { company: Company }) {
       toast.success(
         updated.is_archived ? "Compania a fost arhivată." : "Compania a fost restaurată.",
       );
+      setConfirmationOpen(false);
     },
     onError: () => {
       toast.error(
@@ -77,7 +80,7 @@ export function CompanyDetail({ company }: { company: Company }) {
           <Button variant="outline" onClick={() => navigate(`/crm/companii/${company.id}/editare`)}>
             Editează
           </Button>
-          <AlertDialog>
+          <AlertDialog open={confirmationOpen} onOpenChange={setConfirmationOpen}>
             <AlertDialogTrigger
               render={<Button variant={company.is_archived ? "default" : "destructive"} />}
             >
