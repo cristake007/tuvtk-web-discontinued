@@ -18,7 +18,7 @@ import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { fetchContactCompanies, fetchContactOwners } from "../api";
 import { contactQueryKeys } from "../queryKeys";
 import type { ContactStatus } from "../types";
-import { ContactsList } from "./ContactsList";
+import { ContactsByCompany } from "./ContactsByCompany";
 export function ContactsPanel() {
   const navigate = useNavigate();
   const [page, setPage] = useState(1);
@@ -130,9 +130,8 @@ export function ContactsPanel() {
             Afișează arhivate
           </label>
         </CardContent>
-        <ContactsList
+        <ContactsByCompany
           filters={filters}
-          emptyDescription="Adaugă primul contact sau modifică filtrele curente."
           pagination={{
             onPrevious: () => setPage((value) => value - 1),
             onNext: () => setPage((value) => value + 1),
